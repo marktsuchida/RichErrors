@@ -27,72 +27,11 @@
 
 #include "RichErrors/RichErrors.h"
 
+#include "Threads.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
-//
-// Cross-platform mutex (Win32 or pthreads)
-//
-
-#ifdef _WIN32
-#define USE_WIN32THREADS 1
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#else
-#include <pthreads.h>
-#endif
-
-#if USE_WIN32THREADS
-typedef CRITICAL_SECTION Mutex;
-#define MUTEX_INITIALIZER
-typedef INIT_ONCE SafeInitState;
-#define SAFE_INIT_STATE_INITIALIZER = INIT_ONCE_STATIC_INIT
-#else
-typedef pthread_mutex_t Mutex;
-#define MUTEX_INITIALIZER = PTHREAD_MUTEX_INITIALIZER
-typedef int SafeInitState; // Not used
-#define SAFE_INIT_STATE_INITIALIZER
-#endif
-
-#if USE_WIN32THREADS
-static BOOL InitializeMutexCallback(PINIT_ONCE i, PVOID param, PVOID* c)
-{
-    InitializeCriticalSection((Mutex*)param);
-    return TRUE;
-}
-#endif
-
-static inline void EnsureInitMutex(Mutex* mutex, SafeInitState* init)
-{
-#if USE_WIN32THREADS
-    InitOnceExecuteOnce(init, InitializeMutexCallback, mutex, NULL);
-#else
-    // pthread mutex uses static initializer
-#endif
-}
-
-static inline void LockMutex(Mutex* mutex)
-{
-#if USE_WIN32THREADS
-    EnterCriticalSection(mutex);
-#else
-    pthread_mutex_lock(mutex);
-#endif
-}
-
-static inline void UnlockMutex(Mutex* mutex) {
-#if USE_WIN32THREADS
-    LeaveCriticalSection(mutex);
-#else
-    pthread_mutex_unlock(mutex);
-#endif
-}
-
-//
-// End of cross-platform mutex definitions
-//
 
 
 // Error domains are stored in a global sorted dynamic array, allowing binary
@@ -100,8 +39,8 @@ static inline void UnlockMutex(Mutex* mutex) {
 static const char** domains; // Sorted in naive (ascii) lexicographical order
 static size_t domainsSize; // Number of registered domains
 static size_t domainsCapacity; // Allocated length of 'domains'
-static Mutex domainsLock MUTEX_INITIALIZER;
-static SafeInitState domainsInitState SAFE_INIT_STATE_INITIALIZER;
+static RecursiveMutex DECLARE_STATIC_MUTEX(domainsLock);
+static MutexInitializer DECLARE_MUTEX_INITIALIZER(domainsLockInit);
 
 
 #define MAX_DOMAIN_LENGTH 63 // Not including null terminator
@@ -173,7 +112,7 @@ static const char* Domain_Find(const char* domain)
         return RERR_DOMAIN_RICHERRORS;
     }
 
-    EnsureInitMutex(&domainsLock, &domainsInitState);
+    EnsureInitMutex(&domainsLock, &domainsLockInit);
 
     LockMutex(&domainsLock);
 
@@ -251,7 +190,7 @@ RERR_ErrorPtr Domain_Insert(const char* domain)
 
 void RERR_Domain_UnregisterAll(void)
 {
-    EnsureInitMutex(&domainsLock, &domainsInitState);
+    EnsureInitMutex(&domainsLock, &domainsLockInit);
     LockMutex(&domainsLock);
     for (size_t i = 0; i < domainsSize; ++i) {
         free((char*)domains[i]);
@@ -271,7 +210,7 @@ RERR_ErrorPtr RERR_Domain_Register(const char* domain)
         return err;
     }
 
-    EnsureInitMutex(&domainsLock, &domainsInitState);
+    EnsureInitMutex(&domainsLock, &domainsLockInit);
 
     RERR_ErrorPtr ret = RERR_NO_ERROR;
     LockMutex(&domainsLock);
