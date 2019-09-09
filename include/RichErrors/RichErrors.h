@@ -134,6 +134,11 @@ enum {
     RERR_ECODE_DOMAIN_NAME_INVALID = 203, ///< Domain name contains forbidden characters
     RERR_ECODE_DOMAIN_ALREADY_EXISTS = 204, ///< Domain alraedy registered
     RERR_ECODE_DOMAIN_NOT_REGISTERED = 205, ///< Domain not registered
+
+    // Error maps
+    RERR_ECODE_MAP_INVALID_RANGE = 301,
+    RERR_ECODE_MAP_INVALID_CODE = 302,
+    RERR_ECODE_MAP_FULL = 303,
 };
 
 /// Unregister all previously registered error domains (for testing).

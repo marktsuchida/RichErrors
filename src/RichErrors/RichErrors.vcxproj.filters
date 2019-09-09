@@ -18,12 +18,18 @@
     <ClCompile Include="RichErrors.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Err2Code.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\RichErrors\RichErrors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Threads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\RichErrors\Err2Code.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\RichErrors\RichErrors.hpp">
