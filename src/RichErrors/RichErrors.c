@@ -132,6 +132,7 @@ RERR_ErrorPtr Domain_EnsureCapacity()
         domainsCapacity = 32;
         domains = malloc(domainsCapacity * sizeof(const char*));
         if (!domains) {
+            domainsCapacity = 0;
             return RERR_OUT_OF_MEMORY;
         }
     }
@@ -139,6 +140,7 @@ RERR_ErrorPtr Domain_EnsureCapacity()
         domainsCapacity += 32;
         const char** newDomains = realloc((char*)domains, domainsCapacity);
         if (!newDomains) {
+            domainsCapacity -= 32;
             return RERR_OUT_OF_MEMORY;
         }
         domains = newDomains;
