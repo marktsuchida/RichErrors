@@ -44,16 +44,16 @@
 /// C++ interface for RichErrors.
 namespace RERR {
 
-#if __cplusplus >= 201703L // C++17 has inline variables
-    namespace Domains {
-        inline std::string RichErrors(RERR_DOMAIN_RICHERRORS);
+    /// Return the error code domain for errors arising in RichErrors.
+    inline std::string const& RichErrorsDomain() {
+        static std::string const s = RERR_DOMAIN_RICHERRORS;
+        return s;
     }
 
-    [[deprecated("Use RERR::Domains::RichErrors")]]
-#endif
-    /// Return the error code domain for errors arising in RichErrors.
-    inline std::string RichErrorsDomain() {
-        return RERR_DOMAIN_RICHERRORS;
+    /// Return the error code domain for out-of-memory errors.
+    inline std::string const& OutOfMemoryDomain() {
+        static std::string const s = RERR_DOMAIN_OUT_OF_MEMORY;
+        return s;
     }
 
 
