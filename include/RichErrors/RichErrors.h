@@ -126,12 +126,14 @@ enum {
 enum {
     // Maintainer: do not change once released!
 
-    RERR_ECODE_DOMAIN_NULL = 201, ///< Domain cannot be NULL
-    RERR_ECODE_DOMAIN_NARERR_EMPTY = 202, ///< Domain name cannot be empty
-    RERR_ECODE_DOMAIN_NARERR_TOO_LONG = 203, ///< Domain name too long
-    RERR_ECODE_DOMAIN_NARERR_INVALID = 204, ///< Domain name contains forbidden characters
-    RERR_ECODE_DOMAIN_ALREADY_EXISTS = 205, ///< Domain alraedy registered
-    RERR_ECODE_DOMAIN_NOT_REGISTERED = 206, ///< Domain not registered
+    RERR_ECODE_NULL_ARGUMENT = 101, ///< Argument NULL when not allowed
+
+    // Domain errors
+    RERR_ECODE_DOMAIN_NAME_EMPTY = 201, ///< Domain name cannot be empty
+    RERR_ECODE_DOMAIN_NAME_TOO_LONG = 202, ///< Domain name too long
+    RERR_ECODE_DOMAIN_NAME_INVALID = 203, ///< Domain name contains forbidden characters
+    RERR_ECODE_DOMAIN_ALREADY_EXISTS = 204, ///< Domain alraedy registered
+    RERR_ECODE_DOMAIN_NOT_REGISTERED = 205, ///< Domain not registered
 };
 
 /// Unregister all previously registered error domains (for testing).

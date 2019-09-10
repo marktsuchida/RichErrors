@@ -77,7 +77,7 @@ TEST_CASE("Reject invalid domain registration") {
     REQUIRE(err_null != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_null));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_null), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_null) == RERR_ECODE_DOMAIN_NULL);
+    REQUIRE(RERR_Error_GetCode(err_null) == RERR_ECODE_NULL_ARGUMENT);
     REQUIRE(RERR_Error_GetMessage(err_null) != NULL);
     RERR_Error_Destroy(err_null);
 
@@ -85,7 +85,7 @@ TEST_CASE("Reject invalid domain registration") {
     REQUIRE(err_empty != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_empty));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_empty), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_empty) == RERR_ECODE_DOMAIN_NARERR_EMPTY);
+    REQUIRE(RERR_Error_GetCode(err_empty) == RERR_ECODE_DOMAIN_NAME_EMPTY);
     REQUIRE(RERR_Error_GetMessage(err_empty) != NULL);
     RERR_Error_Destroy(err_empty);
 
@@ -97,7 +97,7 @@ TEST_CASE("Reject invalid domain registration") {
     REQUIRE(err_too_long != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_too_long));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_too_long), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_too_long) == RERR_ECODE_DOMAIN_NARERR_TOO_LONG);
+    REQUIRE(RERR_Error_GetCode(err_too_long) == RERR_ECODE_DOMAIN_NAME_TOO_LONG);
     REQUIRE(RERR_Error_GetMessage(err_too_long) != NULL);
     RERR_Error_Destroy(err_too_long);
 
@@ -117,7 +117,7 @@ TEST_CASE("Reject invalid domain registration") {
     REQUIRE(err_invalid != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_invalid));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_invalid), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_invalid) == RERR_ECODE_DOMAIN_NARERR_INVALID);
+    REQUIRE(RERR_Error_GetCode(err_invalid) == RERR_ECODE_DOMAIN_NAME_INVALID);
     REQUIRE(RERR_Error_GetMessage(err_invalid) != NULL);
     RERR_Error_Destroy(err_invalid);
 
@@ -200,7 +200,7 @@ TEST_CASE("Create with code") {
     err = RERR_Error_CreateWithCode(NULL, 42, msg);
     REQUIRE(RERR_Error_GetDomain(err) != NULL);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_DOMAIN_NULL);
+    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_NULL_ARGUMENT);
     RERR_Error_Destroy(err);
 
     RERR_Domain_UnregisterAll();

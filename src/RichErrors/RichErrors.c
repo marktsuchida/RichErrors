@@ -64,11 +64,11 @@ static RERR_ErrorPtr Domain_Check(const char* domain)
 {
     if (!domain) {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_NULL, "Null error domain");
+            RERR_ECODE_NULL_ARGUMENT, "Null error domain");
     }
     if (domain[0] == '\0') {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_NARERR_EMPTY, "Empty error domain name");
+            RERR_ECODE_DOMAIN_NAME_EMPTY, "Empty error domain name");
     }
 
     size_t len = strnlen_s(domain, MAX_DOMAIN_LENGTH + 1);
@@ -80,7 +80,7 @@ static RERR_ErrorPtr Domain_Check(const char* domain)
         strcat_s(msg, sizeof(msg), "...");
 
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_NARERR_TOO_LONG, msg);
+            RERR_ECODE_DOMAIN_NAME_TOO_LONG, msg);
     }
 
     for (int i = 0; i < len; ++i) {
@@ -89,7 +89,7 @@ static RERR_ErrorPtr Domain_Check(const char* domain)
         if (domain[i] < ' ' || domain[i] > '~' || domain[i] == '/' ||
             domain[i] == '\\' || domain[i] == ':') {
             return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-                RERR_ECODE_DOMAIN_NARERR_INVALID,
+                RERR_ECODE_DOMAIN_NAME_INVALID,
                 "Error domain containing unallowed characters");
         }
     }
