@@ -49,10 +49,10 @@ TEST_CASE("No-error should behave normally") {
 
 
 TEST_CASE("Out-of-memory error should behave normally") {
-    RERR_ErrorPtr oom = RERR_Error_OutOfMemory();
+    RERR_ErrorPtr oom = RERR_Error_CreateOutOfMemory();
     REQUIRE(oom != NULL);
     REQUIRE(RERR_Error_HasCode(oom));
-    REQUIRE(strcmp(RERR_Error_GetDomain(oom), RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(strcmp(RERR_Error_GetDomain(oom), RERR_DOMAIN_OUT_OF_MEMORY) == 0);
     REQUIRE(RERR_Error_GetCode(oom) == RERR_ECODE_OUT_OF_MEMORY);
     REQUIRE(RERR_Error_GetMessage(oom) != NULL);
     REQUIRE(!RERR_Error_HasCause(oom));

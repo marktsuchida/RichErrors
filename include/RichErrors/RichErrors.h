@@ -88,8 +88,8 @@ extern "C" {
  * directly compared to #RERR_NO_ERROR using the `==` operator.
  *
  * Error objects can be created by RERR_Error_Create(),
- * RERR_Error_CreateWithCode(), RERR_Error_OutOfMemory(), RERR_Error_Wrap(), or
- * RERR_Error_WrapWithCode().
+ * RERR_Error_CreateWithCode(), RERR_Error_CreateOutOfMemory(),
+ * RERR_Error_Wrap(), or RERR_Error_WrapWithCode().
  *
  * An error object (unless known to be #RERR_NO_ERROR) must be deallocated by
  * RERR_Error_Destroy().
@@ -97,21 +97,35 @@ extern "C" {
  * Information contained in an error object can be accessed via these
  * functions: RERR_Error_HasCode(), RERR_Error_GetDomain(),
  * RERR_Error_GetCode(), RERR_Error_GetMessage(), RERR_Error_HasCause(),
- * RERR_Error_GetCause().
+ * RERR_Error_GetCause(), RERR_Error_IsOutOfMemory().
  */
 typedef struct RERR_Error* RERR_ErrorPtr;
 
 /// Value of type ::RERR_ErrorPtr representing success (lack of error).
 #define RERR_NO_ERROR ((RERR_ErrorPtr) NULL)
 
+/// Error domain for out-of-memory error.
+#define RERR_DOMAIN_OUT_OF_MEMORY "Out of memory"
+
+/// Error code belonging to the #RERR_DOMAIN_OUT_OF_MEMORY domain.
+enum {
+    // Maintainer: do not change once released!
+
+    /// Out of memory
+    /**
+     * Ran out of memory, either during the original operation or during error
+     * handling.
+     */
+    RERR_ECODE_OUT_OF_MEMORY = 1,
+};
+
 /// Error domain for errors arising in RichErrors functions.
 #define RERR_DOMAIN_RICHERRORS "RichErrors"
 
 /// Error codes belonging to the #RERR_DOMAIN_RICHERRORS domain.
 enum {
-    // Maintainer: do not change existing error codes!
+    // Maintainer: do not change once released!
 
-    RERR_ECODE_OUT_OF_MEMORY = 101, ///< Out of memory
     RERR_ECODE_DOMAIN_NULL = 201, ///< Domain cannot be NULL
     RERR_ECODE_DOMAIN_NARERR_EMPTY = 202, ///< Domain name cannot be empty
     RERR_ECODE_DOMAIN_NARERR_TOO_LONG = 203, ///< Domain name too long
@@ -186,7 +200,7 @@ void RERR_Error_Destroy(RERR_ErrorPtr error);
  * the error creation functions when memory is low, because they all handle
  * allocation failures and return the same value as RERR_Create_OutOfMemory().
  */
-RERR_ErrorPtr RERR_Error_OutOfMemory(void);
+RERR_ErrorPtr RERR_Error_CreateOutOfMemory(void);
 
 /// Create a nested error, talking ownership of an original error.
 /**
@@ -265,7 +279,15 @@ bool RERR_Error_HasCause(RERR_ErrorPtr error);
  * The returned error is not owned by the caller and is valid for the lifetime
  * of the given error.
  */
-RERR_ErrorPtr RERR_Error_GetCause(RERR_ErrorPtr);
+RERR_ErrorPtr RERR_Error_GetCause(RERR_ErrorPtr error);
+
+/// Return whether the given error is an out-of-memory error.
+/**
+ * The return value is true if the error was created by
+ * RERR_Error_CreateOutOfMemory() or if the error was returned by RichErrors as
+ * a result of allocation failure.
+ */
+bool RERR_Error_IsOutOfMemory(RERR_ErrorPtr error);
 
 
 #ifdef __cplusplus

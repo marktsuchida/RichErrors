@@ -173,6 +173,11 @@ namespace RERR {
             }
             return ret;
         }
+
+        /// Return whether this error is an out-of-memory error.
+        bool IsOutOfMemory() const noexcept {
+            return RERR_Error_IsOutOfMemory(ptr);
+        }
     };
 
 
@@ -260,7 +265,7 @@ namespace RERR {
 
         /// Create an out-of-memory error.
         static Error OutOfMemory() noexcept {
-            return Error(RERR_Error_OutOfMemory());
+            return Error(RERR_Error_CreateOutOfMemory());
         }
     };
 

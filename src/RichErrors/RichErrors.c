@@ -304,7 +304,7 @@ void RERR_Error_Destroy(RERR_ErrorPtr error)
 }
 
 
-RERR_ErrorPtr RERR_Error_OutOfMemory(void)
+RERR_ErrorPtr RERR_Error_CreateOutOfMemory(void)
 {
     return RERR_OUT_OF_MEMORY;
 }
@@ -353,7 +353,7 @@ const char* RERR_Error_GetDomain(RERR_ErrorPtr error)
         return "";
     }
     if (error == RERR_OUT_OF_MEMORY) {
-        return RERR_DOMAIN_RICHERRORS;
+        return RERR_DOMAIN_OUT_OF_MEMORY;
     }
     if (!error->domain) {
         return "";
@@ -407,4 +407,10 @@ RERR_ErrorPtr RERR_Error_GetCause(RERR_ErrorPtr error)
         return NULL;
     }
     return error->cause;
+}
+
+
+bool RERR_Error_IsOutOfMemory(RERR_ErrorPtr error)
+{
+    return error == RERR_OUT_OF_MEMORY;
 }

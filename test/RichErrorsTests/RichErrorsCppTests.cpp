@@ -36,6 +36,8 @@ TEST_CASE("Example") {
     RERR::Error noerror;
     REQUIRE(noerror.IsSuccess());
 
+    REQUIRE(RERR::Error::OutOfMemory().IsOutOfMemory());
+
     RERR::Error e = RERR::RegisterDomain("TestDomain");
     REQUIRE(e.IsSuccess());
 
