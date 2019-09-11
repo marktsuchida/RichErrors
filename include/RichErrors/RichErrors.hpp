@@ -58,137 +58,13 @@ namespace RERR {
     }
 
 
-    /// A reference to a non-owned error.
-    class WeakError {
-    protected:
-        // ptr is non-owning in WeakError and owning in Error
-
-        /// The C pointer.
-        RERR_ErrorPtr ptr;
-
-        // No construction by user other than copy/move.
-
-        /// Construct a non-error.
-        WeakError() noexcept :
-            ptr{ RERR_NO_ERROR }
-        {}
-
-        /// Construct from non-owned C pointer.
-        explicit WeakError(RERR_ErrorPtr ptr) noexcept :
-            ptr{ ptr }
-        {}
-
-    public:
-        ~WeakError() = default;
-
-        /// Copy construct.
-        WeakError(WeakError const&) noexcept = default;
-        /// Copy assign.
-        WeakError& operator=(WeakError const&) noexcept = default;
-
-        /// Move construct.
-        WeakError(WeakError&&) noexcept = default;
-        /// Move assign.
-        WeakError& operator=(WeakError&&) noexcept = default;
-
-        /// Return whether this instance represents an error.
-        bool IsError() const noexcept {
-            return ptr != RERR_NO_ERROR;
-        }
-
-        /// Return whether this instance represents no error.
-        bool IsSuccess() const noexcept {
-            return ptr == RERR_NO_ERROR;
-        }
-
-        /// Return whether this error has a code and domain.
-        bool HasCode() const noexcept {
-            return RERR_Error_HasCode(ptr);
-        }
-
-        /// Return the error code domain.
-        /**
-         * If this error does not have a code, an empty string is returned.
-         */
-        std::string GetDomain() const {
-            return RERR_Error_GetDomain(ptr);
-        }
-
-        /// Return a pointer to the internal error code domain.
-        /**
-         * The returned C string is valid for the lifetime of this error.
-         */
-        char const* GetDomainCStr() const noexcept {
-            return RERR_Error_GetDomain(ptr);
-        }
-
-        /// Return the error code.
-        /**
-         * If this error does not have a code, zero is returned.
-         */
-        int32_t GetCode() const noexcept {
-            return RERR_Error_GetCode(ptr);
-        }
-
-        /// Return the error message.
-        /**
-         * This function returns a copy of the message.
-         */
-        std::string GetMessage() const {
-            return RERR_Error_GetMessage(ptr);
-        }
-
-        /// Return a pointer to the internal error message.
-        /**
-         * The returned C string is valid for the lifetime of this error.
-         */
-        char const* GetMessageCStr() const noexcept {
-            return RERR_Error_GetMessage(ptr);
-        }
-
-        /// Return whether this error has a cause, or original error.
-        bool HasCause() const noexcept {
-            return RERR_Error_HasCause(ptr);
-        }
-
-        /// Return a reference to the cause, or original error.
-        /**
-         * If this error has no cause, the returned object represents no error.
-         *
-         * The returned error is valid for the lifetime of this error.
-         */
-        WeakError GetCause() const noexcept {
-            return WeakError{ RERR_Error_GetCause(ptr) };
-        }
-
-        /// Return references to all errors in the chain of causes.
-        /**
-         * If this object represents no error, the returned vector is empty.
-         *
-         * The returned errors are valid for the lifetime of this error.
-         */
-        std::vector<WeakError> GetCauseChain() const {
-            std::vector<WeakError> ret;
-            for (auto err = *this; err.IsError(); err = err.GetCause()) {
-                ret.push_back(err);
-            }
-            return ret;
-        }
-
-        /// Return whether this error is an out-of-memory error.
-        bool IsOutOfMemory() const noexcept {
-            return RERR_Error_IsOutOfMemory(ptr);
-        }
-    };
-
-
     /// An error.
     /**
      * This is the primary error object.
      */
-    class Error final : public WeakError {
-        // WeakPtr::ptr is managed similarly to unique_ptr, except for copy
-        // support.
+    class Error final {
+        /// The C pointer.
+        RERR_ErrorPtr ptr;
 
     public:
         ~Error() {
@@ -221,16 +97,18 @@ namespace RERR {
         }
 
         /// Construct a non-error.
-        Error() noexcept : WeakError{} {}
+        Error() noexcept :
+            ptr{ RERR_NO_ERROR }
+        {}
 
         /// Construct without error code.
         explicit Error(std::string const& message) noexcept :
-            WeakError{ RERR_Error_Create(message.c_str()) }
+            ptr{ RERR_Error_Create(message.c_str()) }
         {}
 
         /// Construct with error code.
         Error(std::string const& domain, int32_t code, std::string const& message) noexcept :
-            WeakError{ RERR_Error_CreateWithCode(domain.c_str(), code, message.c_str()) }
+            ptr{ RERR_Error_CreateWithCode(domain.c_str(), code, message.c_str()) }
         {}
 
         /// Construct with cause, without error code.
@@ -239,7 +117,7 @@ namespace RERR {
          * be an rvalue (use `std::move()` if necessary).
          */
         Error(Error&& cause, std::string const& message) noexcept :
-            WeakError{ RERR_Error_Wrap(cause.ptr, message.c_str()) }
+            ptr{ RERR_Error_Wrap(cause.ptr, message.c_str()) }
         {
             cause.ptr = nullptr;
         }
@@ -250,7 +128,7 @@ namespace RERR {
          * be an rvalue (use `std::move()` if necessary).
          */
         Error(Error&& cause, std::string const& domain, int32_t code, std::string const& message) noexcept :
-            WeakError{ RERR_Error_WrapWithCode(cause.ptr, domain.c_str(), code, message.c_str()) }
+            ptr{ RERR_Error_WrapWithCode(cause.ptr, domain.c_str(), code, message.c_str()) }
         {
             cause.ptr = nullptr;
         }
@@ -264,7 +142,7 @@ namespace RERR {
          * pointer. Use `std::move()` if necessary.
          */
         explicit Error(RERR_ErrorPtr&& cError) noexcept :
-            WeakError{ cError }
+            ptr{ cError }
         {
             cError = nullptr;
         }
@@ -285,6 +163,106 @@ namespace RERR {
         /// Create an out-of-memory error.
         static Error OutOfMemory() noexcept {
             return Error(RERR_Error_CreateOutOfMemory());
+        }
+
+        /// Return whether this instance represents an error.
+        bool IsError() const noexcept {
+            return ptr != RERR_NO_ERROR;
+        }
+
+        /// Return whether this instance represents no error.
+        bool IsSuccess() const noexcept {
+            return ptr == RERR_NO_ERROR;
+        }
+
+        /// Return whether this error has a code and domain.
+        bool HasCode() const noexcept {
+            return RERR_Error_HasCode(ptr);
+        }
+
+        /// Return the error code domain.
+        /**
+         * If this error does not have a code, an empty string is returned.
+         *
+         * May throw `std::bad_alloc` if the return value could not be
+         * allocated.
+         */
+        std::string GetDomain() const {
+            return RERR_Error_GetDomain(ptr);
+        }
+
+        /// Return a pointer to the internal error code domain.
+        /**
+         * The returned C string is valid for the lifetime of this error.
+         */
+        char const* GetDomainCStr() const noexcept {
+            return RERR_Error_GetDomain(ptr);
+        }
+
+        /// Return the error code.
+        /**
+         * If this error does not have a code, zero is returned.
+         */
+        int32_t GetCode() const noexcept {
+            return RERR_Error_GetCode(ptr);
+        }
+
+        /// Return the error message.
+        /**
+         * This function returns a copy of the message.
+         *
+         * May throw `std::bad_alloc` if the return value could not be
+         * allocated.
+         */
+        std::string GetMessage() const {
+            return RERR_Error_GetMessage(ptr);
+        }
+
+        /// Return a pointer to the internal error message.
+        /**
+         * The returned C string is valid for the lifetime of this error.
+         */
+        char const* GetMessageCStr() const noexcept {
+            return RERR_Error_GetMessage(ptr);
+        }
+
+        /// Return whether this error has a cause, or original error.
+        bool HasCause() const noexcept {
+            return RERR_Error_HasCause(ptr);
+        }
+
+        /// Return a reference to the cause, or original error.
+        /**
+         * If this error has no cause, the returned object represents no error.
+         */
+        Error GetCause() const noexcept {
+            RERR_ErrorPtr cause = RERR_Error_GetCause(ptr);
+            RERR_ErrorPtr causeCopy;
+            RERR_Error_Copy(cause, &causeCopy);
+            return Error(std::move(causeCopy));
+        }
+
+        /// Return references to all errors in the chain of causes.
+        /**
+         * The returned vector includes this error (unless this object
+         * represents no error). If this object represents no error, the
+         * returned vector is empty.
+         *
+         * May throw `std::bad_alloc` if the return value could not be
+         * allocated.
+         */
+        std::vector<Error> GetCauseChain() const {
+            std::vector<Error> ret;
+            // Copying is cheap enough
+            for (auto err = *this; err.IsError(); err = err.GetCause()) {
+                ret.push_back(err);
+            }
+            return ret;
+        }
+
+        /// Return whether this error is an out-of-memory error.
+        bool IsOutOfMemory() const noexcept {
+            return RERR_Error_IsOutOfMemory(ptr);
         }
     };
 

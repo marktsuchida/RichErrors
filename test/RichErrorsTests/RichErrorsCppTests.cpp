@@ -55,6 +55,7 @@ TEST_CASE("Example") {
     REQUIRE(wrapped.IsError());
     REQUIRE(wrapped.HasCause());
 
+    REQUIRE(wrapped.GetCauseChain().size() == 2);
     for (auto e : wrapped.GetCauseChain()) {
         REQUIRE(!e.GetMessage().empty());
     }
@@ -70,15 +71,6 @@ TEST_CASE("Example") {
     err3 = RERR::Error(std::move(cptr));
     REQUIRE(err3.GetMessage() == msg3);
     REQUIRE(cptr == RERR_NO_ERROR);
-
-    // Non-owning copy can be made
-    RERR::WeakError w1(err3);
-
-    // But cannot take ownership of non-owning
-    // RERR::Error e1(w1); // error
-
-    // Not even from rvalue
-    // RERR::Error e2(std::move(w1)); // error
 
     RERR::UnregisterAllDomains();
 }
