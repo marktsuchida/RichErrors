@@ -254,7 +254,9 @@ namespace RERR {
          */
         explicit Error(RERR_ErrorPtr&& cError) noexcept :
             WeakError{ cError }
-        {}
+        {
+            cError = nullptr;
+        }
 
         /// Return the C pointer, relinquishing ownership.
         RERR_ErrorPtr ReleaseCPtr() noexcept {

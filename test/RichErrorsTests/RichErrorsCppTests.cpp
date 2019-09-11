@@ -69,6 +69,7 @@ TEST_CASE("Example") {
     // C to C++
     err3 = RERR::Error(std::move(cptr));
     REQUIRE(err3.GetMessage() == msg3);
+    REQUIRE(cptr == RERR_NO_ERROR);
 
     // Non-owning copy can be made
     RERR::WeakError w1(err3);
