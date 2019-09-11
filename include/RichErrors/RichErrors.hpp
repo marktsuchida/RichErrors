@@ -37,6 +37,7 @@
 
 #include "RichErrors/RichErrors.h"
 
+#include <exception>
 #include <string>
 #include <vector>
 
@@ -183,18 +184,28 @@ namespace RERR {
 
     /// An error.
     /**
-     * This is the primary error object. It is movable but not copyable.
+     * This is the primary error object.
      */
     class Error final : public WeakError {
-        // WeakPtr::ptr is managed similarly to unique_ptr
+        // WeakPtr::ptr is managed similarly to unique_ptr, except for copy
+        // support.
 
     public:
         ~Error() {
             RERR_Error_Destroy(ptr);
         }
 
-        Error(Error const&) = delete;
-        Error& operator=(Error const&) = delete;
+        /// Copy construct.
+        Error(Error const& rhs) noexcept {
+            RERR_Error_Copy(rhs.ptr, &ptr);
+        }
+
+        /// Copy assign.
+        Error& operator=(Error const& rhs) noexcept {
+            RERR_Error_Destroy(ptr);
+            RERR_Error_Copy(rhs.ptr, &ptr);
+            return *this;
+        }
 
         /// Move construct.
         Error(Error&& rhs) noexcept {
@@ -265,6 +276,12 @@ namespace RERR {
             return ret;
         }
 
+        /// Throw an exception containing this error.
+        /**
+         * The thrown exception is of type Exception.
+         */
+        [[noreturn]] void Throw();
+
         /// Create an out-of-memory error.
         static Error OutOfMemory() noexcept {
             return Error(RERR_Error_CreateOutOfMemory());
@@ -279,6 +296,52 @@ namespace RERR {
     /// Register an error code domain.
     inline Error RegisterDomain(std::string const& domain) noexcept {
         return Error(RERR_Domain_Register(domain.c_str()));
+    }
+
+    /// An exception that wraps Error.
+    class Exception : public virtual std::exception {
+        Error error;
+
+    public:
+        ~Exception() = default;
+
+        /// Copy construct.
+        Exception(Exception const& rhs) noexcept = default;
+
+        /// Copy assign.
+        Exception& operator=(Exception const& rhs) noexcept = default;
+
+        /// Move construct.
+        Exception(Exception&& rhs) noexcept = default;
+
+        /// Move assign.
+        Exception& operator=(Exception&& rhs) noexcept = default;
+
+        /// Move construct from an error.
+        explicit Exception(Error&& error) noexcept :
+            error{ std::move(error) }
+        {}
+
+        /// Return an explanatory string.
+        /**
+         * Like `std::exception::what()`, this is not intended to be used for
+         * displaying to the user. Rather, it is bear-minimum information for
+         * e.g. logging an unrecoverable failure. As such, this method only
+         * returns the message of the directly wrapped error, ignoring any
+         * cause chain.
+         */
+        const char* what() const noexcept override {
+            return error.GetMessageCStr();
+        }
+
+        /// Access the wrapped error.
+        Error const& GetError() const noexcept {
+            return error;
+        }
+    };
+
+    inline void Error::Throw() {
+        throw Exception(std::move(*this));
     }
 
 } // namespace RERR

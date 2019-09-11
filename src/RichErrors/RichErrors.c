@@ -51,6 +51,7 @@ struct RERR_Error {
     int32_t code; // Zero if no domain
     const char* message; // String owned by this RERR_Error object
     struct RERR_Error* cause; // Original error, owned by this RERR_Error
+    uint32_t refCount;
 };
 
 
@@ -259,6 +260,7 @@ RERR_ErrorPtr RERR_Error_Create(const char* message)
         ret->message = msgCopy;
     }
 
+    ++ret->refCount;
     return ret;
 }
 
@@ -299,8 +301,25 @@ void RERR_Error_Destroy(RERR_ErrorPtr error)
 {
     if (!error || error == RERR_OUT_OF_MEMORY)
         return;
-    free((char*)error->message);
-    RERR_Error_Destroy(error->cause);
+
+    if (--error->refCount == 0) {
+        free((char*)error->message);
+        RERR_Error_Destroy(error->cause);
+        free(error);
+    }
+}
+
+
+void RERR_Error_Copy(RERR_ErrorPtr source, RERR_ErrorPtr* destination)
+{
+    *destination = source;
+
+    if (!source || source == RERR_OUT_OF_MEMORY) {
+        return;
+    }
+
+    ++source->refCount;
+    return;
 }
 
 

@@ -80,9 +80,9 @@ extern "C" {
 
 /// Handle for error information.
 /**
- * This is an opaque type, designed to be used as function return values (or
- * output parameters) or as a parameter to a function that sends asynchronous
- * error notifications.
+ * This is an opaque, immutable type, designed to be used as function return
+ * values (or output parameters) or as a parameter to a function that sends
+ * asynchronous error notifications.
  *
  * A special value, #RERR_NO_ERROR, indicates success. An RERR_ErrorPtr can be
  * directly compared to #RERR_NO_ERROR using the `==` operator.
@@ -198,6 +198,22 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domain, int32_t code,
  * #RERR_NO_ERROR and lightweight out-of-memory errors.
  */
 void RERR_Error_Destroy(RERR_ErrorPtr error);
+
+/// Copy an error object.
+/**
+ * Note that there should normally be no need to copy errors in C code. This
+ * function exists to support copy construction of C++ exceptions that wrap an
+ * error.
+ *
+ * Because C++ exception objects must be no-throw copyable, this function is
+ * designed not to return an error. How this is achieved is an implementation
+ * detail that user code should not depend upon, but the error pointer returned
+ * in destination may potentially be equal to the source pointer (with internal
+ * reference counting) or it may indicate an out-of-memory error. In any case,
+ * the source remains owned by the caller, who is also responsible for
+ * destroying the destination when done with it.
+ */
+void RERR_Error_Copy(RERR_ErrorPtr source, RERR_ErrorPtr* destination);
 
 /// Create a lightweight out-of-memory error.
 /**
