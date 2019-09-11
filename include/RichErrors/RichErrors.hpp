@@ -189,7 +189,7 @@ namespace RERR {
         // WeakPtr::ptr is managed similarly to unique_ptr
 
     public:
-        ~Error() noexcept {
+        ~Error() {
             RERR_Error_Destroy(ptr);
         }
 
