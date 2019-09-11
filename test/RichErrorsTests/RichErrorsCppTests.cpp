@@ -32,7 +32,7 @@
 #include <utility>
 
 
-TEST_CASE("Example") {
+TEST_CASE("C++ Example") {
     RERR::Error noerror;
     REQUIRE(noerror.IsSuccess());
 

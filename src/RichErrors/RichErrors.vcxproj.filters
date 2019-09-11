@@ -35,5 +35,8 @@
     <ClInclude Include="..\..\include\RichErrors\RichErrors.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\RichErrors\Err2Code.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
