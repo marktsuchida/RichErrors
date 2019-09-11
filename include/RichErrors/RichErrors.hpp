@@ -157,19 +157,10 @@ namespace RERR {
 
         /// Throw an exception containing this error.
         /**
-         * The thrown exception is of type Exception.
-         *
-         * C errors can be converted to C++ exceptions, and back to C errors,
-         * as follows.
-         *
-         *    try {
-         *        Throw(c_func_returning_error_ptr());
-         *    }
-         *    catch (Exception const& e) {
-         *        return e.Error().ReleaseCPtr();
-         *    }
+         * The thrown exception is of type Exception. If this error represents
+         * no-error, no exception is thrown.
          */
-        [[noreturn]] void Throw();
+        void ThrowIfError();
 
         /// Create an out-of-memory error.
         static Error OutOfMemory() noexcept {
@@ -329,7 +320,10 @@ namespace RERR {
         }
     };
 
-    inline void Error::Throw() {
+    inline void Error::ThrowIfError() {
+        if (IsSuccess()) {
+            return;
+        }
         throw Exception(std::move(*this));
     }
 
@@ -337,18 +331,17 @@ namespace RERR {
     /**
      * The C error must be an rvalue, so this will work in
      *
-     *     Throw(c_func_returning_error_ptr());
+     *     ThrowIfError(c_func_returning_error_ptr());
      *
      * but will require `std::move()` if throwing a C error held in a variable.
      * If storing the error temporarily, it is better to wrap in Error:
      *
      *     auto err = Error(c_func_returning_error_ptr());
      *     // ...
-     *     err.Throw();
+     *     err.ThrowIfError();
      */
-    [[noreturn]]
-    inline void Throw(RERR_ErrorPtr&& error) {
-        Error(std::forward<RERR_ErrorPtr>(error)).Throw();
+    inline void ThrowIfError(RERR_ErrorPtr&& error) {
+        Error(std::forward<RERR_ErrorPtr>(error)).ThrowIfError();
     }
 
 } // namespace RERR

@@ -74,7 +74,7 @@ TEST_CASE("Example") {
 
     // Throw
     try {
-        RERR::Error("myerr").Throw();
+        RERR::Error("myerr").ThrowIfError();
     }
     catch (RERR::Exception const& e) {
         REQUIRE(e.what() != nullptr);
@@ -83,8 +83,8 @@ TEST_CASE("Example") {
 
     try {
         RERR_ErrorPtr lvalueErr = RERR_Error_Create("myerr");
-        // RERR::Throw(lvalueErr); // error
-        RERR::Throw(std::move(lvalueErr));
+        // RERR::ThrowIfError(lvalueErr); // error
+        RERR::ThrowIfError(std::move(lvalueErr));
     }
     catch (RERR::Exception const& e) {
         REQUIRE(e.Error().GetMessage() == "myerr");
