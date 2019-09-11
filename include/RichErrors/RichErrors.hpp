@@ -39,6 +39,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 
@@ -157,6 +158,16 @@ namespace RERR {
         /// Throw an exception containing this error.
         /**
          * The thrown exception is of type Exception.
+         *
+         * C errors can be converted to C++ exceptions, and back to C errors,
+         * as follows.
+         *
+         *    try {
+         *        Throw(c_func_returning_error_ptr());
+         *    }
+         *    catch (Exception const& e) {
+         *        return e.Error().ReleaseCPtr();
+         *    }
          */
         [[noreturn]] void Throw();
 
@@ -313,13 +324,31 @@ namespace RERR {
         }
 
         /// Access the wrapped error.
-        Error const& GetError() const noexcept {
+        Error const& Error() const noexcept {
             return error;
         }
     };
 
     inline void Error::Throw() {
         throw Exception(std::move(*this));
+    }
+
+    /// Convenience function to throw RERR_ErrorPtr as exception.
+    /**
+     * The C error must be an rvalue, so this will work in
+     *
+     *     Throw(c_func_returning_error_ptr());
+     *
+     * but will require `std::move()` if throwing a C error held in a variable.
+     * If storing the error temporarily, it is better to wrap in Error:
+     *
+     *     auto err = Error(c_func_returning_error_ptr());
+     *     // ...
+     *     err.Throw();
+     */
+    [[noreturn]]
+    inline void Throw(RERR_ErrorPtr&& error) {
+        Error(std::forward<RERR_ErrorPtr>(error)).Throw();
     }
 
 } // namespace RERR

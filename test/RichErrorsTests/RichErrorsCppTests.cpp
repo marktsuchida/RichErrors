@@ -72,5 +72,23 @@ TEST_CASE("Example") {
     REQUIRE(err3.GetMessage() == msg3);
     REQUIRE(cptr == RERR_NO_ERROR);
 
+    // Throw
+    try {
+        RERR::Error("myerr").Throw();
+    }
+    catch (RERR::Exception const& e) {
+        REQUIRE(e.what() != nullptr);
+        REQUIRE(e.Error().GetMessage() == "myerr");
+    }
+
+    try {
+        RERR_ErrorPtr lvalueErr = RERR_Error_Create("myerr");
+        // RERR::Throw(lvalueErr); // error
+        RERR::Throw(std::move(lvalueErr));
+    }
+    catch (RERR::Exception const& e) {
+        REQUIRE(e.Error().GetMessage() == "myerr");
+    }
+
     RERR::UnregisterAllDomains();
 }
