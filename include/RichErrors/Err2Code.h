@@ -62,7 +62,7 @@ extern "C" {
  */
 typedef struct RERR_ErrorMap* RERR_ErrorMapPtr;
 
-/// Create an error map.
+/// Configuration for error map.
 /**
  * The map will automatically assign error codes between `minMappedCode` and
  * `maxMappedCode`. It is allowed for `minMappedCode` to be greater than
@@ -70,13 +70,37 @@ typedef struct RERR_ErrorMap* RERR_ErrorMapPtr;
  * value of `int32_t`, as well as codes between the minimum value of `int32_t`
  * and `maxMappedCode`, are used.
  *
+ * `noErrorCode`, `outOfMemoryCode`, and `mapFailureCode` must not be in the
+ * above range. `outOfMemoryCode` and `mapFailureCode` may be equal to each
+ * other, but not to `noErrorCode`.
+ *
+ * The map will use `outOfMemoryCode` if it could not map an error to a code
+ * due to memory allocation failure. It will use `mapFailureCode` if it could
+ * not map an error to a code for any other reason (for example code range
+ * exhaustion). `outOfMemoryCode` is also used when the original error
+ * indicated out-of-memory.
+ */
+typedef struct RERR_ErrorMapConfig {
+    int32_t minMappedCode; ///< Minimum of code range
+    int32_t maxMappedCode; ///< Maximum of code range
+    int32_t noErrorCode; ///< Code to use when no error
+    int32_t outOfMemoryCode; ///< Code used when out of memory
+    int32_t mapFailureCode; ///< Code used when mapping failed
+
+    // Maintainer: Never change or add fields once released. In the unlikely
+    // event that new fields are needed, a struct with a different name should
+    // be used. This is to prevent silent misconfiguration.
+} RERR_ErrorMapConfig;
+
+/// Create an error map.
+/**
  * The created map can be accessed from any thread. The caller is responsible
  * for synchronizing creation of the map with access and destruction.
  *
  * An error is returned in the case of internal memory allocation failure.
  */
 RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
-    int32_t minMappedCode, int32_t maxMappedCode, int32_t noErrorCode);
+    const RERR_ErrorMapConfig* config);
 
 /// Destroy an error map.
 /**
@@ -87,34 +111,34 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map);
 
 /// Assign an integer code to a rich error object.
 /**
- * A code that is unique within the current thread is selected and returned in
- * the location given by `mappedCode`. This function takes ownership of the
- * error object, which should not be accessed after this function returns
- * successfully.
+ * A code that is unique within the current thread is selected and returned.
+ * If, for any reason, a code could not be assigned, a code indicating
+ * out-of-memory or failure is returned.
  *
- * An error is returned in the case of internal memory allocation failure, or
- * if all error codes allowed by the map have been registered on the current
- * thread.
- *
- * If this function returns an error, the error passed in remains valid and the
- * caller is responsible for destroying it. (This is so that fallback actions
- * can be taken, such as logging the error that could not be handled.)
+ * In either case, this function takes ownership of the error object, which
+ * should not be accessed after this function returns successfully.
  */
-RERR_ErrorPtr RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
-    RERR_ErrorPtr error, int32_t* mappedCode);
+int32_t RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
+    RERR_ErrorPtr error);
+
+/// Return whether an error is registered under the given code.
+/**
+ * In the case where the given code is one of the special codes (no-error,
+ * out-of-memory, map-failure), true is returned.
+ */
+bool RERR_ErrorMap_IsRegisteredThreadLocal(RERR_ErrorMapPtr map, int32_t code);
 
 /// Retrieve the rich error object registered with the given code.
 /**
  * The error, previously registered via RERR_ErrorMap_RegisterThreadLocal(), is
- * returned in the location given by the `error` parameter. The caller is
- * responsible for destroying the error when done with it. The error is
- * unregistered from the map.
+ * returned. The caller is responsible for destroying the error when done with
+ * it. The error is unregistered from the map.
  *
- * An error is returned if the given `mappedCode` has not been registered or
- * has already been retrieved or otherwise unregistered.
+ * If the given code is not registered, a new error is returned, with domain
+ * RERR_DOMAIN_RICHERRORS and code RERR_ECODE_MAP_INVALID_CODE.
  */
 RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
-    int32_t mappedCode, RERR_ErrorPtr* error);
+    int32_t mappedCode);
 
 /// Clear the error code registrations for the current thread.
 /**
@@ -122,6 +146,8 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
  * moments to prevent accumulation of leaked registrations (such leakage is
  * expected because there is no resource management in parts of legacy code
  * that pass around only the integer code).
+ *
+ * Nothing is done if the given map is NULL.
  */
 void RERR_ErrorMap_ClearThreadLocal(RERR_ErrorMapPtr map);
 

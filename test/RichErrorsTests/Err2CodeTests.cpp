@@ -31,89 +31,94 @@
 
 
 TEST_CASE("Map creation parameters") {
+    RERR_ErrorMapConfig config;
     RERR_ErrorMapPtr map;
     RERR_ErrorPtr err;
 
     RERR_ErrorMap_Destroy(NULL); // Must not crash
 
+    config.minMappedCode = 1;
+    config.maxMappedCode = 32767;
+    config.noErrorCode = 0;
+    config.outOfMemoryCode = -1;
+    config.mapFailureCode = -2;
+
     // Error: null
-    err = RERR_ErrorMap_Create(NULL, 1, 32767, 0);
+    err = RERR_ErrorMap_Create(NULL, &config);
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
     REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_NULL_ARGUMENT);
     RERR_Error_Destroy(err);
 
     // Typical
-    err = RERR_ErrorMap_Create(&map, 1, 32767, 0);
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
     REQUIRE(map != NULL);
+    REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, config.noErrorCode));
+    REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, config.outOfMemoryCode));
+    REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, config.mapFailureCode));
     RERR_ErrorMap_Destroy(map);
 
-    // All but zero
-    err = RERR_ErrorMap_Create(&map, 1, -1, 0);
+    // All but special codes
+    config.maxMappedCode = -3;
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
     RERR_ErrorMap_Destroy(map);
 
     // Error: range contains no-error code
-    err = RERR_ErrorMap_Create(&map, -1, 1, 0);
+    config.minMappedCode = 0;
+    config.maxMappedCode = 32767;
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_INVALID_RANGE);
+    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_INVALID_CONFIG);
     RERR_Error_Destroy(err);
 }
 
 
 TEST_CASE("Basic map and retrieve") {
+    RERR_ErrorMapConfig config;
     RERR_ErrorMapPtr map;
     RERR_ErrorPtr err;
 
-    err = RERR_ErrorMap_Create(&map, 1, 32767, 0);
+    config.minMappedCode = 1;
+    config.maxMappedCode = 32767;
+    config.noErrorCode = 0;
+    config.outOfMemoryCode = -1;
+    config.mapFailureCode = -2;
+
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
     int32_t code;
-    RERR_ErrorPtr testErr = RERR_Error_Create("Test message");
 
-    // Null map
-    err = RERR_ErrorMap_RegisterThreadLocal(NULL, testErr, &code);
-    REQUIRE(err != RERR_NO_ERROR);
-    REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_NULL_ARGUMENT);
-    RERR_Error_Destroy(err);
+    // Null map 
+    // code = RERR_ErrorMap_RegisterThreadLocal(NULL, testErr); // Aborts
 
     // No-error
-    code = 42;
-    err = RERR_ErrorMap_RegisterThreadLocal(map, RERR_NO_ERROR, &code);
-    REQUIRE(err == RERR_NO_ERROR);
-    REQUIRE(code == 0);
+    code = RERR_ErrorMap_RegisterThreadLocal(map, RERR_NO_ERROR);
+    REQUIRE(code == config.noErrorCode);
 
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err == RERR_NO_ERROR);
-    REQUIRE(code == 1);
-
-    RERR_ErrorPtr retrieved;
+    RERR_ErrorPtr testErr = RERR_Error_Create("Test message");
+    code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
+    REQUIRE(code == config.minMappedCode);
+    REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, code));
 
     // Null map
-    err = RERR_ErrorMap_RetrieveThreadLocal(NULL, code, &retrieved);
-    REQUIRE(err != RERR_NO_ERROR);
-    REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_NULL_ARGUMENT);
-    RERR_Error_Destroy(err);
-
-    // Null destination
-    err = RERR_ErrorMap_RetrieveThreadLocal(map, code, NULL);
+    err = RERR_ErrorMap_RetrieveThreadLocal(NULL, code);
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
     REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_NULL_ARGUMENT);
     RERR_Error_Destroy(err);
 
     // Normal retrieval
-    err = RERR_ErrorMap_RetrieveThreadLocal(map, code, &retrieved);
-    REQUIRE(err == RERR_NO_ERROR);
-    REQUIRE(retrieved == testErr); // No copying took place
-    RERR_Error_Destroy(retrieved);
+    err = RERR_ErrorMap_RetrieveThreadLocal(map, code);
+    REQUIRE(err == testErr); // Note testErr is technically dangling
+    RERR_Error_Destroy(err);
+    REQUIRE(!RERR_ErrorMap_IsRegisteredThreadLocal(map, code));
 
     // Unregistered code
-    err = RERR_ErrorMap_RetrieveThreadLocal(map, 42, &retrieved);
+    err = RERR_ErrorMap_RetrieveThreadLocal(map, 42);
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
     REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_INVALID_CODE);
@@ -124,50 +129,49 @@ TEST_CASE("Basic map and retrieve") {
 
 
 TEST_CASE("Code exhaustion") {
+    RERR_ErrorMapConfig config;
     RERR_ErrorMapPtr map;
     RERR_ErrorPtr err;
     int32_t code;
     RERR_ErrorPtr testErr;
 
-    err = RERR_ErrorMap_Create(&map, 1, 1, 0);
+    config.noErrorCode = 0;
+    config.outOfMemoryCode = -1;
+    config.mapFailureCode = -2;
+
+    // Single available code
+    config.minMappedCode = 1;
+    config.maxMappedCode = 1;
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
     testErr = RERR_Error_Create("Test message");
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err == RERR_NO_ERROR);
-    REQUIRE(code == 1);
+    code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
+    REQUIRE(code == config.minMappedCode);
 
     testErr = RERR_Error_Create("Test message 2");
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err != RERR_NO_ERROR);
-    REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_FULL);
-    RERR_Error_Destroy(err);
-    RERR_Error_Destroy(testErr);
+    code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
+    REQUIRE(code == config.mapFailureCode);
 
     RERR_ErrorMap_Destroy(map);
 
     // Wrap around
-    err = RERR_ErrorMap_Create(&map, INT32_MAX, INT32_MIN, 0);
+    config.minMappedCode = INT32_MAX;
+    config.maxMappedCode = INT32_MIN;
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
     testErr = RERR_Error_Create("Test message");
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err == RERR_NO_ERROR);
-    REQUIRE(code == INT32_MAX);
+    code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
+    REQUIRE(code == config.minMappedCode);
 
     testErr = RERR_Error_Create("Test message 2");
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err == RERR_NO_ERROR);
-    REQUIRE(code == INT32_MIN);
+    code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
+    REQUIRE(code == config.maxMappedCode);
 
     testErr = RERR_Error_Create("Test message 3");
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err != RERR_NO_ERROR);
-    REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_FULL);
-    RERR_Error_Destroy(err);
-    RERR_Error_Destroy(testErr);
+    code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
+    REQUIRE(code == config.mapFailureCode);
 
     RERR_ErrorMap_Destroy(map);
 }
@@ -176,26 +180,29 @@ TEST_CASE("Code exhaustion") {
 TEST_CASE("Clear") {
     RERR_ErrorMap_ClearThreadLocal(NULL); // Must not crash
 
+    RERR_ErrorMapConfig config;
     RERR_ErrorMapPtr map;
     RERR_ErrorPtr err;
 
-    err = RERR_ErrorMap_Create(&map, 1, 32767, 0);
+    config.minMappedCode = 1;
+    config.maxMappedCode = 32767;
+    config.noErrorCode = 0;
+    config.outOfMemoryCode = -1;
+    config.mapFailureCode = -2;
+
+    err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
     RERR_ErrorPtr testErr = RERR_Error_Create("Test message");
-
-    int32_t code;
-    err = RERR_ErrorMap_RegisterThreadLocal(map, testErr, &code);
-    REQUIRE(err == RERR_NO_ERROR);
+    int32_t code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
 
     RERR_ErrorMap_ClearThreadLocal(map);
 
-    RERR_ErrorPtr retrieved;
-    err = RERR_ErrorMap_RetrieveThreadLocal(map, code, &retrieved);
-    REQUIRE(err != RERR_NO_ERROR);
-    REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_INVALID_CODE);
-    RERR_Error_Destroy(err);
+    RERR_ErrorPtr retrieved = RERR_ErrorMap_RetrieveThreadLocal(map, code);
+    REQUIRE(retrieved != RERR_NO_ERROR);
+    REQUIRE(strcmp(RERR_Error_GetDomain(retrieved), RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(RERR_Error_GetCode(retrieved) == RERR_ECODE_MAP_INVALID_CODE);
+    RERR_Error_Destroy(retrieved);
 
     RERR_ErrorMap_Destroy(map);
 }

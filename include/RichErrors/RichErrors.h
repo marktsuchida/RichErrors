@@ -136,9 +136,9 @@ enum {
     RERR_ECODE_DOMAIN_NOT_REGISTERED = 205, ///< Domain not registered
 
     // Error maps
-    RERR_ECODE_MAP_INVALID_RANGE = 301,
-    RERR_ECODE_MAP_INVALID_CODE = 302,
-    RERR_ECODE_MAP_FULL = 303,
+    RERR_ECODE_MAP_INVALID_CONFIG = 301, ///< Invalid configuration
+    RERR_ECODE_MAP_INVALID_CODE = 302, ///< Unregistered code
+    RERR_ECODE_MAP_FAILURE = 303, ///< Could not assign code
 };
 
 /// Unregister all previously registered error domains (for testing).

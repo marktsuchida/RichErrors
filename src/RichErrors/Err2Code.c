@@ -49,9 +49,11 @@ struct MappedError {
 
 
 struct RERR_ErrorMap {
-    int32_t noErrorCode; // const
     int32_t minCode; // const
     int32_t maxCode; // const
+    int32_t noErrorCode; // const
+    int32_t oomCode; // const
+    int32_t failCode; // const
 
     RecursiveMutex mutex;
     int32_t nextCode;
@@ -237,8 +239,59 @@ static inline int32_t IncrementCode(int32_t code, int32_t minCode, int32_t maxCo
 }
 
 
+static inline bool CodeIsInRange(int32_t code, int32_t minCode, int32_t maxCode)
+{
+    bool continuousRange = minCode <= maxCode;
+    return (continuousRange && minCode <= code && code <= maxCode) ||
+        !continuousRange && (minCode <= code || code <= maxCode);
+}
+
+
+static inline RERR_ErrorPtr CheckConfig(const RERR_ErrorMapConfig* config)
+{
+    if (!config) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_NULL_ARGUMENT,
+            "Null error map config given");
+    }
+
+    if (CodeIsInRange(config->noErrorCode,
+        config->minMappedCode, config->maxMappedCode)) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_MAP_INVALID_CONFIG,
+            "Mapped code range contains no-error code");
+    }
+
+    if (CodeIsInRange(config->outOfMemoryCode,
+        config->minMappedCode, config->maxMappedCode)) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_MAP_INVALID_CONFIG,
+            "Mapped code range contains out-of-memory code");
+    }
+
+    if (CodeIsInRange(config->mapFailureCode,
+        config->minMappedCode, config->maxMappedCode)) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_MAP_INVALID_CONFIG,
+            "Mapped code range contains map-failure code");
+    }
+
+    if (config->outOfMemoryCode == config->noErrorCode) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_MAP_INVALID_CONFIG,
+            "Out-of-memory code cannot equal no-error code");
+    }
+    if (config->mapFailureCode == config->noErrorCode) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_MAP_INVALID_CONFIG,
+            "Map-failure code cannot equal no-error code");
+    }
+    return RERR_NO_ERROR;
+}
+
+
 RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
-    int32_t minMappedCode, int32_t maxMappedCode, int32_t noErrorCode)
+    const RERR_ErrorMapConfig* config)
 {
     if (!map) {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
@@ -247,26 +300,25 @@ RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
     }
     *map = NULL;
 
-    bool continuousRange = minMappedCode <= maxMappedCode;
-    if ((continuousRange &&
-        minMappedCode <= noErrorCode && noErrorCode <= maxMappedCode) ||
-        !continuousRange &&
-        (minMappedCode <= noErrorCode || noErrorCode <= maxMappedCode)) {
-
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_INVALID_RANGE,
-            "Mapped code range contains no-error code");
+    RERR_ErrorPtr err = CheckConfig(config);
+    if (err != RERR_NO_ERROR) {
+        return err;
     }
 
     *map = calloc(1, sizeof(struct RERR_ErrorMap));
     if (!*map) {
         return RERR_Error_CreateOutOfMemory();
     }
-    (*map)->noErrorCode = noErrorCode;
-    (*map)->minCode = minMappedCode;
-    (*map)->maxCode = maxMappedCode;
+
+    (*map)->minCode = config->minMappedCode;
+    (*map)->maxCode = config->maxMappedCode;
+    (*map)->noErrorCode = config->noErrorCode;
+    (*map)->oomCode = config->outOfMemoryCode;
+    (*map)->failCode = config->mapFailureCode;
+
     InitMutex(&(*map)->mutex);
-    (*map)->nextCode = minMappedCode;
+    (*map)->nextCode = (*map)->minCode;
+
     return RERR_NO_ERROR;
 }
 
@@ -290,27 +342,25 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map)
 }
 
 
-RERR_ErrorPtr RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
-    RERR_ErrorPtr error, int32_t* mappedCode)
+int32_t RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
+    RERR_ErrorPtr error)
 {
     if (!map) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT,
-            "Null error map pointer given");
+        // TODO We could call a user-supplied fatal error handler before
+        // crashing.
+        abort();
     }
-    if (!mappedCode) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT,
-            "Null address for code given");
-    }
+
     if (error == RERR_NO_ERROR) {
-        *mappedCode = map->noErrorCode;
-        return RERR_NO_ERROR;
+        return map->noErrorCode;
+    }
+    if (RERR_Error_IsOutOfMemory(error)) {
+        return map->oomCode;
     }
 
     ThreadID thread = GetThisThreadId();
 
-    RERR_ErrorPtr ret = RERR_NO_ERROR;
+    int32_t ret = map->noErrorCode;
     LockMutex(&map->mutex);
     {
         int32_t firstCandidate = map->nextCode;
@@ -319,19 +369,20 @@ RERR_ErrorPtr RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
         int32_t code = firstCandidate;
         for (;;) {
             struct MappedError* found = ErrorMap_Find(map, thread, code);
-            if (!found) {
-                ret = ErrorMap_Insert(map, thread, code, error);
-                if (ret == RERR_NO_ERROR) {
-                    *mappedCode = code;
+            if (!found) { // Code is available
+                RERR_ErrorPtr err = ErrorMap_Insert(map, thread, code, error);
+                if (err == RERR_NO_ERROR) {
+                    ret = code;
+                    break;
                 }
+                ret = RERR_Error_IsOutOfMemory(err) ? map->oomCode : map->failCode;
+                RERR_Error_Destroy(error);
                 break;
             }
 
             code = IncrementCode(code, map->minCode, map->maxCode);
-            if (code == firstCandidate) {
-                ret = RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-                    RERR_ECODE_MAP_FULL,
-                    "Cannot assign an error code (available range exhausted)");
+            if (code == firstCandidate) { // Range exhausted
+                ret = map->failCode;
                 break;
             }
         }
@@ -341,22 +392,43 @@ RERR_ErrorPtr RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
 }
 
 
-RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
-    int32_t mappedCode, RERR_ErrorPtr* error)
+bool RERR_ErrorMap_IsRegisteredThreadLocal(RERR_ErrorMapPtr map, int32_t code)
 {
     if (!map) {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
             RERR_ECODE_NULL_ARGUMENT,
             "Null error map pointer given");
     }
-    if (!error) {
+    if (code == map->noErrorCode ||
+        code == map->oomCode ||
+        code == map->failCode) {
+        // Special codes are implicitly "registered"
+        return true;
+    }
+    LockMutex(&map->mutex);
+    struct MappedError* found = ErrorMap_Find(map, GetThisThreadId(), code);
+    UnlockMutex(&map->mutex);
+    return found != NULL;
+}
+
+
+RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
+    int32_t mappedCode)
+{
+    if (!map) {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
             RERR_ECODE_NULL_ARGUMENT,
-            "Null address for error pointer given");
+            "Null error map pointer given");
     }
     if (mappedCode == map->noErrorCode) {
-        *error = RERR_NO_ERROR;
         return RERR_NO_ERROR;
+    }
+    if (mappedCode == map->oomCode) {
+        return RERR_Error_CreateOutOfMemory();
+    }
+    if (mappedCode == map->failCode) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_MAP_FAILURE, "Failed to assign an error code");
     }
 
     RERR_ErrorPtr ret = RERR_NO_ERROR;
@@ -364,7 +436,7 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
     {
         struct MappedError* found = ErrorMap_Find(map, GetThisThreadId(), mappedCode);
         if (found) {
-            *error = found->error;
+            ret = found->error;
             ErrorMap_Erase(map, found);
         }
         else {
