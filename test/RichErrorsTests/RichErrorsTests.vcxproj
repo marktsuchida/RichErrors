@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="Err2CodeCppTests.cpp" />
     <ClCompile Include="Err2CodeTests.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="RichErrorsCppTests.cpp" />
     <ClCompile Include="RichErrorsTests.cpp" />
   </ItemGroup>
