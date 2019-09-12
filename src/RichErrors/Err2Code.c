@@ -332,7 +332,7 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map)
     struct MappedError* begin = map->mappings;
     struct MappedError* end = begin + map->mapSize;
     for (struct MappedError* i = begin; i < end; ++i) {
-        free(i->error);
+        RERR_Error_Destroy(i->error);
     }
 
     free(map->mappings);
@@ -383,6 +383,7 @@ int32_t RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
             code = IncrementCode(code, map->minCode, map->maxCode);
             if (code == firstCandidate) { // Range exhausted
                 ret = map->failCode;
+                RERR_Error_Destroy(error);
                 break;
             }
         }

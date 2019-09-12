@@ -61,6 +61,7 @@ namespace RERR {
 
         /// Move assign.
         ErrorMap& operator=(ErrorMap&& rhs) noexcept {
+            RERR_ErrorMap_Destroy(ptr);
             ptr = rhs.ptr;
             rhs.ptr = nullptr;
         }

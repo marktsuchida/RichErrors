@@ -29,6 +29,8 @@
 
 #include "RichErrors/Err2Code.hpp"
 
+#include "TestDefs.h"
+
 
 TEST_CASE("Err2Code C++ Example") {
     RERR::ErrorMap map(RERR::ErrorMap::Config().
@@ -37,7 +39,8 @@ TEST_CASE("Err2Code C++ Example") {
         SetMapFailureCode(-2).
         SetMappedRange(1, 32767));
 
-    int32_t code = map.RegisterThreadLocal(RERR::Error("test"));
+    const char* msg = TESTSTR("msg");
+    int32_t code = map.RegisterThreadLocal(RERR::Error(msg));
     REQUIRE(code == 1);
 
     code = map.RegisterThreadLocal(RERR::Error());
@@ -47,7 +50,7 @@ TEST_CASE("Err2Code C++ Example") {
     REQUIRE(code == -1);
 
     auto err = map.RetrieveThreadLocal(1);
-    REQUIRE(err.GetMessage() == "test");
+    REQUIRE(err.GetMessage() == msg);
     err = map.RetrieveThreadLocal(0);
     REQUIRE(err.IsSuccess());
     err = map.RetrieveThreadLocal(-1);

@@ -138,6 +138,9 @@
     <ClCompile Include="RichErrorsCppTests.cpp" />
     <ClCompile Include="RichErrorsTests.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TestDefs.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

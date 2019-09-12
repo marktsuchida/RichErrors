@@ -29,6 +29,8 @@
 
 #include "RichErrors/RichErrors.h"
 
+#include "TestDefs.h"
+
 #include <cstring>
 
 
@@ -61,13 +63,14 @@ TEST_CASE("Out-of-memory error should behave normally") {
 
 
 TEST_CASE("Reject duplicate domain registration") {
-    const char d[] = "domain";
+    const char* d = TESTSTR("domain");
     RERR_ErrorPtr err_first = RERR_Domain_Register(d);
     RERR_ErrorPtr err_second = RERR_Domain_Register(d);
     RERR_Domain_UnregisterAll();
 
     REQUIRE(err_first == RERR_NO_ERROR);
     REQUIRE(err_second != RERR_NO_ERROR);
+    RERR_Error_Destroy(err_second);
 }
 
 
@@ -134,7 +137,7 @@ TEST_CASE("Reject invalid domain registration") {
 
 
 TEST_CASE("Create without code") {
-    const char msg[] = "test";
+    const char* msg = TESTSTR("msg");
     RERR_ErrorPtr err = RERR_Error_Create(msg);
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(!RERR_Error_HasCode(err));
@@ -164,8 +167,8 @@ TEST_CASE("Create without code") {
 
 
 TEST_CASE("Create with code") {
-    const char domain[] = "domain";
-    const char msg[] = "test";
+    const char* domain = TESTSTR("domain");
+    const char* msg = TESTSTR("msg");
     RERR_ErrorPtr e = RERR_Domain_Register(domain);
     REQUIRE(e == RERR_NO_ERROR);
 
@@ -183,20 +186,20 @@ TEST_CASE("Create with code") {
     RERR_Error_Destroy(err);
 
     // Cannot create with unregistered domain
-    err = RERR_Error_CreateWithCode("bad domain", 42, msg);
+    err = RERR_Error_CreateWithCode("bad domain", 42, TESTSTR("msg"));
     REQUIRE(RERR_Error_GetDomain(err) != NULL);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
     REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_DOMAIN_NOT_REGISTERED);
     RERR_Error_Destroy(err);
 
     // Create without code if domain == NULL and code == 0
-    err = RERR_Error_CreateWithCode(NULL, 0, msg);
+    err = RERR_Error_CreateWithCode(NULL, 0, TESTSTR("msg"));
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(!RERR_Error_HasCode(err));
     RERR_Error_Destroy(err);
 
     // But reject domain == NULL with nonzero code (likely a programming error)
-    err = RERR_Error_CreateWithCode(NULL, 42, msg);
+    err = RERR_Error_CreateWithCode(NULL, 42, TESTSTR("msg"));
     REQUIRE(RERR_Error_GetDomain(err) != NULL);
     REQUIRE(strcmp(RERR_Error_GetDomain(err), RERR_DOMAIN_RICHERRORS) == 0);
     REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_NULL_ARGUMENT);
@@ -207,10 +210,8 @@ TEST_CASE("Create with code") {
 
 
 TEST_CASE("Wrap without code") {
-    const char msg0[] = "original";
-    const char msg1[] = "wrap";
-    RERR_ErrorPtr cause = RERR_Error_Create(msg0);
-    RERR_ErrorPtr wrap = RERR_Error_Wrap(cause, msg1);
+    RERR_ErrorPtr cause = RERR_Error_Create(TESTSTR("msg"));
+    RERR_ErrorPtr wrap = RERR_Error_Wrap(cause, TESTSTR("msg"));
     REQUIRE(wrap != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCause(wrap));
 

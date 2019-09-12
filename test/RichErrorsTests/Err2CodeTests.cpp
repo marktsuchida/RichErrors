@@ -29,6 +29,10 @@
 
 #include "RichErrors/Err2Code.h"
 
+#include "TestDefs.h"
+
+#include <cstring>
+
 
 TEST_CASE("Map creation parameters") {
     RERR_ErrorMapConfig config;
@@ -99,7 +103,7 @@ TEST_CASE("Basic map and retrieve") {
     code = RERR_ErrorMap_RegisterThreadLocal(map, RERR_NO_ERROR);
     REQUIRE(code == config.noErrorCode);
 
-    RERR_ErrorPtr testErr = RERR_Error_Create("Test message");
+    RERR_ErrorPtr testErr = RERR_Error_Create(TESTSTR("msg"));
     code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
     REQUIRE(code == config.minMappedCode);
     REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, code));
@@ -145,11 +149,11 @@ TEST_CASE("Code exhaustion") {
     err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
-    testErr = RERR_Error_Create("Test message");
+    testErr = RERR_Error_Create(TESTSTR("msg"));
     code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
     REQUIRE(code == config.minMappedCode);
 
-    testErr = RERR_Error_Create("Test message 2");
+    testErr = RERR_Error_Create(TESTSTR("msg"));
     code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
     REQUIRE(code == config.mapFailureCode);
 
@@ -161,15 +165,15 @@ TEST_CASE("Code exhaustion") {
     err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
-    testErr = RERR_Error_Create("Test message");
+    testErr = RERR_Error_Create(TESTSTR("msg"));
     code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
     REQUIRE(code == config.minMappedCode);
 
-    testErr = RERR_Error_Create("Test message 2");
+    testErr = RERR_Error_Create(TESTSTR("msg"));
     code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
     REQUIRE(code == config.maxMappedCode);
 
-    testErr = RERR_Error_Create("Test message 3");
+    testErr = RERR_Error_Create(TESTSTR("msg"));
     code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
     REQUIRE(code == config.mapFailureCode);
 
@@ -193,7 +197,7 @@ TEST_CASE("Clear") {
     err = RERR_ErrorMap_Create(&map, &config);
     REQUIRE(err == RERR_NO_ERROR);
 
-    RERR_ErrorPtr testErr = RERR_Error_Create("Test message");
+    RERR_ErrorPtr testErr = RERR_Error_Create(TESTSTR("msg"));
     int32_t code = RERR_ErrorMap_RegisterThreadLocal(map, testErr);
 
     RERR_ErrorMap_ClearThreadLocal(map);

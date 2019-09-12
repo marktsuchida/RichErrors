@@ -92,6 +92,7 @@ namespace RERR {
 
         /// Move assign.
         Error& operator=(Error&& rhs) noexcept {
+            RERR_Error_Destroy(ptr);
             ptr = rhs.ptr;
             rhs.ptr = nullptr;
             return *this;

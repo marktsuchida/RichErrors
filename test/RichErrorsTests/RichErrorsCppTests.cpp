@@ -29,6 +29,8 @@
 
 #include "RichErrors/RichErrors.hpp"
 
+#include "TestDefs.h"
+
 #include <utility>
 
 
@@ -41,16 +43,17 @@ TEST_CASE("C++ Example") {
     REQUIRE(RERR::Error::OutOfMemory().GetDomain() == RERR::OutOfMemoryDomain());
     REQUIRE(RERR::Error::OutOfMemory().GetCode() == RERR_ECODE_OUT_OF_MEMORY);
 
-    RERR::Error e = RERR::RegisterDomain("TestDomain");
+    const char* domain = TESTSTR("domain");
+    RERR::Error e = RERR::RegisterDomain(domain);
     REQUIRE(e.IsSuccess());
 
-    RERR::Error err("TestDomain", 42, "Test message");
+    RERR::Error err(domain, 42, TESTSTR("msg"));
 
     RERR::Error err2 = std::move(err);
     REQUIRE(!err.IsError()); // Moved out
     REQUIRE(err2.IsError());
 
-    RERR::Error wrapped(std::move(err2), "Higher-level message");
+    RERR::Error wrapped(std::move(err2), TESTSTR("msg"));
     REQUIRE(!err2.IsError()); // Moved out
     REQUIRE(wrapped.IsError());
     REQUIRE(wrapped.HasCause());
@@ -61,7 +64,7 @@ TEST_CASE("C++ Example") {
     }
 
     // C++ to C
-    RERR::Error err3("Another message");
+    RERR::Error err3(TESTSTR("msg"));
     std::string msg3 = err3.GetMessage();
     RERR_ErrorPtr cptr = err3.ReleaseCPtr();
     REQUIRE(cptr != RERR_NO_ERROR);
@@ -73,21 +76,23 @@ TEST_CASE("C++ Example") {
     REQUIRE(cptr == RERR_NO_ERROR);
 
     // Throw
+    const char* msg = TESTSTR("msg");
     try {
-        RERR::Error("myerr").ThrowIfError();
+        RERR::Error(msg).ThrowIfError();
     }
     catch (RERR::Exception const& e) {
         REQUIRE(e.what() != nullptr);
-        REQUIRE(e.Error().GetMessage() == "myerr");
+        REQUIRE(e.Error().GetMessage() == msg);
     }
 
+    const char* msg2 = TESTSTR("msg");
     try {
-        RERR_ErrorPtr lvalueErr = RERR_Error_Create("myerr");
+        RERR_ErrorPtr lvalueErr = RERR_Error_Create(msg2);
         // RERR::ThrowIfError(lvalueErr); // error
         RERR::ThrowIfError(std::move(lvalueErr));
     }
     catch (RERR::Exception const& e) {
-        REQUIRE(e.Error().GetMessage() == "myerr");
+        REQUIRE(e.Error().GetMessage() == msg2);
     }
 
     RERR::UnregisterAllDomains();
