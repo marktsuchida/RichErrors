@@ -104,7 +104,7 @@ static inline void InitMutex(RecursiveMutex* mutex)
 
 #if USE_WIN32THREADS
 // Nonstatic since we take the pointer (won't be inlined)
-inline BOOL RERR_Internal_InitializeMutexCallback(PINIT_ONCE i, PVOID param, PVOID* c)
+inline BOOL __stdcall RERR_Internal_InitializeMutexCallback(PINIT_ONCE i, PVOID param, PVOID* c)
 {
     InitializeCriticalSection((RecursiveMutex*)param);
     return TRUE;
