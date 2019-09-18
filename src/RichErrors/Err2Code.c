@@ -27,7 +27,8 @@
 
 #include "RichErrors/Err2Code.h"
 
-#include "../RichErrors/Threads.h"
+#include "DynArray.h"
+#include "Threads.h"
 
 #include <limits.h>
 #include <stdbool.h>
@@ -89,39 +90,14 @@ static struct MappedError* ErrorMap_Find(RERR_ErrorMapPtr map, ThreadID thread, 
     key.code = code;
     key.error = NULL;
 
-    return bsearch(&key, map->mappings, map->mapSize,
+    return DynArray_BSearchExact(map->mappings, &key, map->mapSize,
         sizeof(struct MappedError), MappedError_Compare);
 }
 
 
-// Returns stepped capacity >= given size
 static inline size_t ErrorMap_CapacityForSize(size_t size)
 {
-    // Zero - const - exponential - linear
-
-    const unsigned minPow = 6;
-    const unsigned maxPow = 16;
-
-    if (size == 0) {
-        return 0;
-    }
-
-    const size_t minThresh = (size_t)1 << (minPow - 1);
-    if (size <= minThresh) {
-        return minThresh;
-    }
-
-    const size_t linThresh = (size_t)1 << (maxPow - 1);
-    if (size >= linThresh) {
-        return ((size - 1) / linThresh + 1) * linThresh;
-    }
-
-    size_t s = size - 1;
-    size_t ret = 1;
-    while (s >>= 1) {
-        ret <<= 1;
-    }
-    return ret;
+    return DynArray_CapacityForSize(size, 16, 6);
 }
 
 
@@ -135,17 +111,11 @@ static RERR_ErrorPtr ErrorMap_EnsureCapacity(RERR_ErrorMapPtr map)
     }
 
     size_t newCapacity = ErrorMap_CapacityForSize(newSize);
-    struct MappedError* newMappings;
-    if (map->mapCapacity == 0) {
-        newMappings = malloc(sizeof(struct MappedError) * newCapacity);
-    }
-    else {
-        newMappings = realloc(map->mappings, sizeof(struct MappedError) * newCapacity);
-    }
-    if (!newMappings) {
+    bool ok = DynArray_SetCapacity(&map->mappings, newCapacity,
+        sizeof(struct MappedError));
+    if (!ok) {
         return RERR_Error_CreateOutOfMemory();
     }
-    map->mappings = newMappings;
     map->mapCapacity = newCapacity;
     return RERR_NO_ERROR;
 }
@@ -159,20 +129,12 @@ static void ErrorMap_ShrinkCapacity(RERR_ErrorMapPtr map)
         return;
     }
 
-    struct MappedError* newMappings;
-    if (map->mapSize == 0) {
-        free(map->mappings);
-        newMappings = NULL;
+    bool ok = DynArray_SetCapacity(&map->mappings, newCapacity,
+        sizeof(struct MappedError));
+    if (!ok) {
+        // Failed to shrink, but haven't broken anything.
+        return;
     }
-    else {
-        newMappings = realloc(map->mappings,
-            sizeof(struct MappedError) * newCapacity);
-        if (!newMappings) {
-            // Unexpected error, but we haven't broken anything.
-            return;
-        }
-    }
-    map->mappings = newMappings;
     map->mapCapacity = newCapacity;
 }
 
@@ -191,29 +153,13 @@ static RERR_ErrorPtr ErrorMap_Insert(RERR_ErrorMapPtr map,
     key.code = code;
     key.error = NULL;
 
-    struct MappedError* begin = map->mappings;
-    struct MappedError* end = begin + map->mapSize;
-
-    // Binary search for insertion point (like std::lower_bound)
-    struct MappedError* left = begin;
-    struct MappedError* right = end;
-    while (left < right) {
-        struct MappedError* middle = left + (right - left) / 2;
-        if (MappedError_Compare(&key, middle) < 0) {
-            right = middle;
-        }
-        else {
-            left = middle;
-        }
-    }
-    // Now left == right == insertion point
-
-    memmove(left + 1, left, sizeof(struct MappedError) * (end - left));
-    ++map->mapSize;
-    left->thread = thread;
-    left->code = code;
-    left->error = error;
-
+    struct MappedError* ins = DynArray_BSearchInsertionPoint(map->mappings,
+        &key, map->mapSize, sizeof(struct MappedError), MappedError_Compare);
+    DynArray_InsertElem(ins, map->mappings + map->mapSize, &map->mapSize,
+        sizeof(struct MappedError));
+    ins->thread = thread;
+    ins->code = code;
+    ins->error = error;
     return RERR_NO_ERROR;
 }
 
@@ -222,9 +168,9 @@ static RERR_ErrorPtr ErrorMap_Insert(RERR_ErrorMapPtr map,
 // It is assumed that the item has already been destroyed.
 static void ErrorMap_Erase(RERR_ErrorMapPtr map, struct MappedError* item)
 {
-    size_t tailCount = map->mapSize - (item - map->mappings);
-    memmove(item, item + 1, sizeof(struct MappedError) * tailCount);
-    --map->mapSize;
+    DynArray_EraseElem(map->mappings, map->mappings + map->mapSize,
+        &map->mapSize, sizeof(struct MappedError));
+
     ErrorMap_ShrinkCapacity(map);
 }
 
@@ -335,8 +281,7 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map)
         RERR_Error_Destroy(i->error);
     }
 
-    free(map->mappings);
-    map->mappings = NULL;
+    DynArray_Dealloc(&map->mappings);
 
     free(map);
 }

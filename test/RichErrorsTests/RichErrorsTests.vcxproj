@@ -132,6 +132,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DynArrayTests.cpp" />
     <ClCompile Include="Err2CodeCppTests.cpp" />
     <ClCompile Include="Err2CodeTests.cpp" />
     <ClCompile Include="main.cpp" />
