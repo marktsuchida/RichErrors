@@ -109,9 +109,12 @@ static int Domain_Compare(const char* const* lhs, const char* const* rhs)
 // Argument must be pre-checked by caller
 static const char* Domain_Find(const char* domain)
 {
-    // The system domain always exists, but is not sotred in the array.
+    // The system domains always exist, but is not sotred in the array.
     if (strcmp(domain, RERR_DOMAIN_RICHERRORS) == 0) {
         return RERR_DOMAIN_RICHERRORS;
+    }
+    if (strcmp(domain, RERR_DOMAIN_OUT_OF_MEMORY) == 0) {
+        return RERR_DOMAIN_OUT_OF_MEMORY;
     }
 
     EnsureInitMutex(&domainsLock, &domainsLockInit);
