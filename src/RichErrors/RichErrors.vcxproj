@@ -148,6 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DynArray.c" />
     <ClCompile Include="Err2Code.c" />
     <ClCompile Include="RichErrors.c" />
   </ItemGroup>

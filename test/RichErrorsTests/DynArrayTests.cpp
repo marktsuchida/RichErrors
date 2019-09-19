@@ -30,170 +30,66 @@
 #include "../../src/RichErrors/DynArray.h"
 
 
-// Zero -> Zero
-static_assert(DynArray_CapacityForSize(0, 0, 0) == 0, "");
-static_assert(DynArray_CapacityForSize(0, 1, 0) == 0, "");
-static_assert(DynArray_CapacityForSize(0, 0, 1) == 0, "");
-static_assert(DynArray_CapacityForSize(0, 1, 1) == 0, "");
-
-// Fixed
-static_assert(DynArray_CapacityForSize(1, 1, 0) == 1, "");
-static_assert(DynArray_CapacityForSize(1, 2, 0) == 2, "");
-static_assert(DynArray_CapacityForSize(2, 2, 0) == 2, "");
-static_assert(DynArray_CapacityForSize(1, 1, 1) == 1, "");
-static_assert(DynArray_CapacityForSize(1, 1, 2) == 1, "");
-static_assert(DynArray_CapacityForSize(1, 2, 1) == 2, "");
-static_assert(DynArray_CapacityForSize(2, 2, 1) == 2, "");
-static_assert(DynArray_CapacityForSize(1, 2, 2) == 2, "");
-static_assert(DynArray_CapacityForSize(2, 2, 2) == 2, "");
-
-// Linear
-static_assert(DynArray_CapacityForSize(1, 0, 0) == 1, "");
-static_assert(DynArray_CapacityForSize(2, 0, 0) == 2, "");
-static_assert(DynArray_CapacityForSize(1, 0, 1) == 2, "");
-static_assert(DynArray_CapacityForSize(2, 0, 1) == 2, "");
-static_assert(DynArray_CapacityForSize(3, 0, 1) == 4, "");
-static_assert(DynArray_CapacityForSize(4, 0, 1) == 4, "");
-static_assert(DynArray_CapacityForSize(5, 0, 1) == 6, "");
-static_assert(DynArray_CapacityForSize(4, 0, 2) == 4, "");
-static_assert(DynArray_CapacityForSize(5, 0, 2) == 8, "");
-static_assert(DynArray_CapacityForSize(8, 0, 2) == 8, "");
-static_assert(DynArray_CapacityForSize(9, 0, 2) == 12, "");
-
-// Power of 2
-static_assert(DynArray_CapacityForSize(1, 0, 2) == 2, "");
-static_assert(DynArray_CapacityForSize(1, 0, 3) == 2, "");
-static_assert(DynArray_CapacityForSize(2, 0, 3) == 2, "");
-static_assert(DynArray_CapacityForSize(3, 0, 3) == 4, "");
-static_assert(DynArray_CapacityForSize(4, 0, 3) == 4, "");
-static_assert(DynArray_CapacityForSize(5, 0, 3) == 8, "");
-static_assert(DynArray_CapacityForSize(7, 0, 3) == 8, "");
-static_assert(DynArray_CapacityForSize(1, 0, 4) == 2, "");
-static_assert(DynArray_CapacityForSize(2, 0, 4) == 2, "");
-static_assert(DynArray_CapacityForSize(3, 0, 4) == 4, "");
-static_assert(DynArray_CapacityForSize(4, 0, 4) == 4, "");
-static_assert(DynArray_CapacityForSize(5, 0, 4) == 8, "");
-static_assert(DynArray_CapacityForSize(7, 0, 4) == 8, "");
-static_assert(DynArray_CapacityForSize(8, 0, 4) == 8, "");
-static_assert(DynArray_CapacityForSize(9, 0, 4) == 16, "");
-static_assert(DynArray_CapacityForSize(15, 0, 4) == 16, "");
-
-
-TEST_CASE("SetCapacity", "[DynArray]") {
-    struct Element {
-        char v;
-    };
-
-    SECTION("No allocation for capacity 0") {
-        Element* elements = nullptr;
-        REQUIRE(DynArray_SetCapacity((void**)&elements, 0, sizeof(Element)));
-        REQUIRE(elements == nullptr);
-    }
-
-    SECTION("Alloc, realloc, dealloc") {
-        Element* elements = nullptr;
-
-        REQUIRE(DynArray_SetCapacity((void**)&elements, 1, sizeof(Element)));
-        REQUIRE(elements != nullptr);
-        memset(elements, 0, sizeof(Element) * 1);
-
-        REQUIRE(DynArray_SetCapacity((void**)&elements, 100, sizeof(Element)));
-        REQUIRE(elements != nullptr);
-        memset(elements, 0, sizeof(Element) * 100);
-
-        REQUIRE(DynArray_SetCapacity((void**)&elements, 0, sizeof(Element)));
-        REQUIRE(elements == nullptr);
-
-        REQUIRE(DynArray_SetCapacity((void**)&elements, 1, sizeof(Element)));
-        DynArray_Dealloc((void**)&elements);
-        REQUIRE(elements == nullptr);
-    }
+TEST_CASE("Create and destroy", "[DynArray]") {
+    DynArrayPtr a = DynArray_Create(10);
+    REQUIRE(a != nullptr);
+    DynArray_Destroy(a);
 }
 
 
-TEST_CASE("EraseElem", "[DynArray]") {
-    int* elements = nullptr;
-    REQUIRE(DynArray_SetCapacity((void**)&elements, 3, sizeof(int)));
+TEST_CASE("Back insert and erase", "[DynArray]") {
+    DynArrayPtr a = DynArray_Create(sizeof(int));
+    REQUIRE(a != nullptr);
 
-    size_t size = 3;
-    for (int i = 0; i < size; ++i) {
-        elements[i] = i;
+    for (int i = 0; i < 10; ++i) {
+        REQUIRE(DynArray_Size(a) == i);
+        auto p = DynArray_Insert(a, DynArray_End(a));
+        *static_cast<int*>(p) = i + 42;
+        REQUIRE(*static_cast<int*>(DynArray_Back(a)) == i + 42);
+        REQUIRE(*static_cast<int*>(DynArray_Front(a)) == 42);
     }
-    DynArray_EraseElem(elements, elements + size, &size, sizeof(int));
-    REQUIRE(size == 2);
-    REQUIRE(elements[0] == 1);
-    REQUIRE(elements[1] == 2);
-    REQUIRE(elements[2] == 2); // Not touched
 
-    size = 3;
-    for (int i = 0; i < size; ++i) {
-        elements[i] = i;
+    for (int i = 0; i < 10; ++i) {
+        auto p = DynArray_At(a, i);
+        REQUIRE(*static_cast<int*>(p) == i + 42);
     }
-    DynArray_EraseElem(elements + 1, elements + size, &size, sizeof(int));
-    REQUIRE(size == 2);
-    REQUIRE(elements[0] == 0);
-    REQUIRE(elements[1] == 2);
-    REQUIRE(elements[2] == 2); // Not touched
 
-    size = 3;
-    for (int i = 0; i < size; ++i) {
-        elements[i] = i;
+    for (int i = 0; i < 10; ++i) {
+        REQUIRE(DynArray_Size(a) == 10 - i);
+        auto p = DynArray_Erase(a, DynArray_Back(a));
+        REQUIRE(p == DynArray_End(a));
     }
-    DynArray_EraseElem(elements + 2, elements + size, &size, sizeof(int));
-    REQUIRE(size == 2);
-    REQUIRE(elements[0] == 0);
-    REQUIRE(elements[1] == 1);
-    REQUIRE(elements[2] == 2); // Not touched
+    REQUIRE(DynArray_Size(a) == 0);
 
-    size = 3;
-    for (int i = 0; i < size; ++i) {
-        elements[i] = i;
-    }
-    DynArray_EraseElem(elements + 3, elements + size, &size, sizeof(int));
-    REQUIRE(size == 2);
-    REQUIRE(elements[0] == 0);
-    REQUIRE(elements[1] == 1);
-    REQUIRE(elements[2] == 2);
-
-    DynArray_Dealloc((void**)&elements);
+    DynArray_Destroy(a);
 }
 
 
-TEST_CASE("InsertElem", "[DynArray]") {
-    int* elements = nullptr;
-    REQUIRE(DynArray_SetCapacity((void**)&elements, 3, sizeof(int)));
+TEST_CASE("Front insert and erase", "[DynArray]") {
+    DynArrayPtr a = DynArray_Create(sizeof(int));
+    REQUIRE(a != nullptr);
 
-    size_t size = 2;
-    for (int i = 0; i < 3; ++i) {
-        elements[i] = i;
+    for (int i = 0; i < 10; ++i) {
+        REQUIRE(DynArray_Size(a) == i);
+        auto p = DynArray_Insert(a, DynArray_Begin(a));
+        *static_cast<int*>(p) = i + 42;
+        REQUIRE(*static_cast<int*>(DynArray_Front(a)) == i + 42);
+        REQUIRE(*static_cast<int*>(DynArray_Back(a)) == 42);
     }
-    DynArray_InsertElem(elements, elements + size, &size, sizeof(int));
-    REQUIRE(size == 3);
-    REQUIRE(elements[0] == 0); // Not touched
-    REQUIRE(elements[1] == 0);
-    REQUIRE(elements[2] == 1);
 
-    size = 2;
-    for (int i = 0; i < 3; ++i) {
-        elements[i] = i;
+    for (int i = 0; i < 10; ++i) {
+        auto p = DynArray_At(a, i);
+        REQUIRE(*static_cast<int*>(p) == (10 - i - 1) + 42);
     }
-    DynArray_InsertElem(elements + 1, elements + size, &size, sizeof(int));
-    REQUIRE(size == 3);
-    REQUIRE(elements[0] == 0);
-    REQUIRE(elements[1] == 1); // Not touched
-    REQUIRE(elements[2] == 1);
 
-    size = 2;
-    for (int i = 0; i < 3; ++i) {
-        elements[i] = i;
+    for (int i = 0; i < 10; ++i) {
+        REQUIRE(DynArray_Size(a) == 10 - i);
+        auto p = DynArray_Erase(a, DynArray_Front(a));
+        REQUIRE(p == DynArray_Begin(a));
     }
-    DynArray_InsertElem(elements + 2, elements + size, &size, sizeof(int));
-    REQUIRE(size == 3);
-    REQUIRE(elements[0] == 0);
-    REQUIRE(elements[1] == 1);
-    REQUIRE(elements[2] == 2); // Not touched
+    REQUIRE(DynArray_Size(a) == 0);
 
-    DynArray_Dealloc((void**)&elements);
+    DynArray_Destroy(a);
 }
 
 
@@ -205,31 +101,36 @@ extern "C" int CompareInt(const void* elem, const void* key) {
 
 
 TEST_CASE("BSearch", "[DynArray]") {
-    int* elements = nullptr;
-    int key = 42;
-    REQUIRE(DynArray_BSearchExact(elements, &key, 0, sizeof(int), CompareInt) == nullptr);
-    REQUIRE(DynArray_BSearchInsertionPoint(elements, &key, 0, sizeof(int), CompareInt) == elements);
+    DynArrayPtr a = DynArray_Create(sizeof(int));
+    REQUIRE(a != nullptr);
 
-    size_t capacity = 7;
-    size_t size = capacity;
-    DynArray_SetCapacity((void**)&elements, capacity, sizeof(int));
+    int key = 42;
+    REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
+    REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_Begin(a));
+
+    size_t size = 7;
     for (int i = 0; i < size; ++i) {
-        elements[i] = i;
+        auto p = DynArray_Insert(a, DynArray_End(a));
+        *static_cast<int*>(p) = i;
     }
 
     key = -1;
-    REQUIRE(DynArray_BSearchExact(elements, &key, size, sizeof(int), CompareInt) == nullptr);
-    REQUIRE(DynArray_BSearchInsertionPoint(elements, &key, size, sizeof(int), CompareInt) == elements);
-    SECTION("Search finds existing values") {
-        int k = GENERATE(0, 1, 2, 3, 4, 5, 6);
-        REQUIRE(DynArray_BSearchExact(elements, &k, size, sizeof(int), CompareInt) == (int*)elements + k);
-        REQUIRE(DynArray_BSearchInsertionPoint(elements, &k, size, sizeof(int), CompareInt) == (int*)elements + k);
-    }
-    key = 7;
-    REQUIRE(DynArray_BSearchExact(elements, &key, size, sizeof(int), CompareInt) == nullptr);
-    REQUIRE(DynArray_BSearchInsertionPoint(elements, &key, size, sizeof(int), CompareInt) == (int*)elements + 7);
-    key = 8;
-    REQUIRE(DynArray_BSearchInsertionPoint(elements, &key, size, sizeof(int), CompareInt) == (int*)elements + 7);
+    REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
+    REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_Begin(a));
 
-    DynArray_Dealloc((void**)&elements);
+    key = 7;
+    REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
+    REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_End(a));
+
+    key = 8;
+    REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
+    REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_End(a));
+
+    SECTION("Find existing value") {
+        int k = GENERATE(0, 1, 2, 3, 4, 5, 6);
+        REQUIRE(DynArray_BSearchExact(a, &k, CompareInt) == DynArray_At(a, k));
+        REQUIRE(DynArray_BSearchInsertionPoint(a, &k, CompareInt) == DynArray_At(a, k));
+    }
+
+    DynArray_Destroy(a);
 }

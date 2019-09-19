@@ -37,9 +37,7 @@
 
 // Error domains are stored in a global sorted dynamic array, allowing binary
 // search.
-static char** domains; // Sorted in naive (ascii) lexicographical order
-static size_t domainsSize; // Number of registered domains
-static size_t domainsCapacity; // Allocated length of 'domains'
+static DynArrayPtr domains;
 static RecursiveMutex DECLARE_STATIC_MUTEX(domainsLock);
 static MutexInitializer DECLARE_MUTEX_INITIALIZER(domainsLockInit);
 
@@ -121,8 +119,10 @@ static const char* Domain_Find(const char* domain)
 
     LockMutex(&domainsLock);
 
-    char** found = DynArray_BSearchExact(domains, &domain,
-        domainsSize, sizeof(char*), Domain_Compare);
+    char** found = NULL;
+    if (domains) {
+        found = DynArray_BSearchExact(domains, &domain, Domain_Compare);
+    }
 
     UnlockMutex(&domainsLock);
 
@@ -130,32 +130,9 @@ static const char* Domain_Find(const char* domain)
 }
 
 
-// Mutex must be held by caller
-static RERR_ErrorPtr Domain_EnsureCapacity()
-{
-    size_t newSize = domainsSize + 1;
-    if (newSize <= domainsCapacity) {
-        return RERR_NO_ERROR;
-    }
-
-    size_t newCap = DynArray_CapacityForSize(newSize, 32, 9);
-    bool ok = DynArray_SetCapacity((void**)&domains, newCap, sizeof(char*));
-    if (!ok) {
-        return RERR_OUT_OF_MEMORY;
-    }
-    domainsCapacity = newCap;
-    return RERR_NO_ERROR;
-}
-
-
 // Mutex must be held by caller, and domain must be pre-checked
 static RERR_ErrorPtr Domain_Insert(const char* domain)
 {
-    RERR_ErrorPtr err = Domain_EnsureCapacity();
-    if (err) {
-        return err;
-    }
-
     size_t len = strlen(domain);
     char* dCopy = malloc(len + 1);
     if (!dCopy) {
@@ -163,10 +140,22 @@ static RERR_ErrorPtr Domain_Insert(const char* domain)
     }
     strcpy_s(dCopy, len + 1, domain);
 
-    char** ins = DynArray_BSearchInsertionPoint(domains, &domain,
-        domainsSize, sizeof(char*), Domain_Compare);
-    DynArray_InsertElem(ins, domains + domainsSize, &domainsSize, sizeof(char*));
-    *ins = dCopy;
+    if (!domains) {
+        domains = DynArray_Create(sizeof(char*));
+        if (!domains) {
+            free(dCopy);
+            return RERR_OUT_OF_MEMORY;
+        }
+    }
+
+    char** p = DynArray_BSearchInsertionPoint(domains, &domain, Domain_Compare);
+    p = DynArray_Insert(domains, p);
+    if (!p) {
+        free(dCopy);
+        return RERR_OUT_OF_MEMORY;
+    }
+
+    *p = dCopy;
 
     return RERR_NO_ERROR;
 }
@@ -177,13 +166,16 @@ void RERR_Domain_UnregisterAll(void)
     EnsureInitMutex(&domainsLock, &domainsLockInit);
     LockMutex(&domainsLock);
 
-    for (size_t i = 0; i < domainsSize; ++i) {
-        free((char*)domains[i]);
+    if (!domains) {
+        return;
     }
-    domainsSize = 0;
 
-    DynArray_Dealloc((void**)&domains);
-    domainsCapacity = 0;
+    char** begin = DynArray_Begin(domains);
+    char** end = DynArray_End(domains);
+    for (char** it = begin; it != end; it = DynArray_Advance(domains, it)) {
+        free(*it);
+    }
+    DynArray_Clear(domains);
 
     UnlockMutex(&domainsLock);
 }

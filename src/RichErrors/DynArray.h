@@ -27,167 +27,36 @@
 
 #pragma once
 
-// Common internal functions for dynamic arrays.
-//
-// These are functions _upon which_ a dynamic array implementation can be
-// created; not a generic dynamic array implementation on their own.
-
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct DynArray* DynArrayPtr;
 
-#ifdef __cplusplus
-constexpr
-#endif
-static inline size_t DynArray_CapacityForSize(size_t size, size_t fixedThresh, size_t linThreshBits)
-{
-    if (size == 0) {
-        return 0;
-    }
-
-    if (size <= fixedThresh) {
-        return fixedThresh;
-    }
-
-    size_t linThresh = (size_t)1 << linThreshBits;
-    if (size >= linThresh) {
-        size_t multiplier = ((size - 1) >> linThreshBits) + 1;
-        return multiplier << linThreshBits;
-    }
-
-    size_t ret = 1 << 1;
-    --size;
-    while (size >>= 1) {
-        ret <<= 1;
-    }
-    return ret;
-}
+typedef int (*DynArrayCompareFunc)(const void* lhsElem, const void* rhsKey);
 
 
-// Precondition: pBegin != NULL
-// Precondition: *pBegin must be NULL or previously allocated by this function
-static inline bool DynArray_SetCapacity(void** pBegin, size_t newCap, size_t elemSize)
-{
-    if (newCap == 0) {
-        free(*pBegin);
-        *pBegin = 0;
-        return true;
-    }
+DynArrayPtr DynArray_Create(size_t elemSize);
+void DynArray_Destroy(DynArrayPtr arr);
+void DynArray_ReserveCapacity(DynArrayPtr arr, size_t capacity);
+void DynArray_Clear(DynArrayPtr arr);
+void* DynArray_Erase(DynArrayPtr arr, void* pos);
+void* DynArray_Insert(DynArrayPtr arr, void* pos);
+size_t DynArray_Size(DynArrayPtr arr);
+void* DynArray_At(DynArrayPtr arr, size_t index);
+void* DynArray_BSearchInsertionPoint(DynArrayPtr arr, const void* key,
+    DynArrayCompareFunc compare);
+void* DynArray_BSearchExact(DynArrayPtr arr, const void* key,
+    DynArrayCompareFunc compare);
 
-    char* b = (char*)(*pBegin);
-    if (!b) {
-        *pBegin = malloc(newCap * elemSize);
-        return *pBegin != NULL;
-    }
-
-    void* newBegin = realloc(b, newCap * elemSize);
-    if (!newBegin) {
-        return false;
-    }
-
-    *pBegin = newBegin;
-    return true;
-}
-
-
-// Precondition: pBegin != NULL
-// Precondition: *pBegin must be NULL or previously allocated
-static inline void DynArray_Dealloc(void** pBegin)
-{
-    DynArray_SetCapacity(pBegin, 0, 0);
-}
-
-
-// Precondition: it <= end
-static inline void DynArray_EraseElem(void* it, void* end, size_t* arrSize, size_t elemSize)
-{
-    --*arrSize;
-
-    if (it == end) {
-        return;
-    }
-
-    char* e = (char*)end;
-    char* i = (char*)it;
-    char* n = i + elemSize;
-
-    memmove(i, n, e - n);
-}
-
-
-// Precondition: it <= end
-static inline void DynArray_InsertElem(void* it, void* end, size_t* arrSize, size_t elemSize)
-{
-    ++*arrSize;
-
-    if (it == end) {
-        return;
-    }
-
-    char* e = (char*)end;
-    char* i = (char*)it;
-    char* n = i + elemSize;
-
-    memmove(n, i, e - i);
-}
-
-
-/// Compare function pointer.
-/**
- * A pointer to a function which compares an array element and a key (which
- * need not be of the same type).
- */
-typedef int (*DynArray_CompareFunc)(const void* lhsElem, const void* rhsKey);
-
-
-static inline void* DynArray_BSearch(void* begin, const void* key,
-    size_t arrSize, size_t elemSize, DynArray_CompareFunc compare, bool exact)
-{
-    char* b = (char*)begin;
-    char* e = b + arrSize * elemSize;
-    char* left = b;
-    char* right = e;
-    for (;;) {
-        if (left == right) {
-            return exact ? NULL : left;
-        }
-
-        size_t count = (right - left) / elemSize;
-        char* middle = left + count / 2 * elemSize;
-        int cmp = compare(middle, key);
-        if (cmp == 0) {
-            return middle;
-        }
-        if (cmp > 0) { // key < middle
-            right = middle;
-        }
-        else { // middle < key
-            if (left == middle) {
-                return exact ? NULL : right;
-            }
-            left = middle;
-        }
-    }
-}
-
-
-static inline void* DynArray_BSearchInsertionPoint(void* begin, const void* key,
-    size_t arrSize, size_t elemSize, DynArray_CompareFunc compare)
-{
-    return DynArray_BSearch(begin, key, arrSize, elemSize, compare, false);
-}
-
-
-static inline void* DynArray_BSearchExact(void* begin, const void* key,
-    size_t arrSize, size_t elemSize, DynArray_CompareFunc compare)
-{
-    return DynArray_BSearch(begin, key, arrSize, elemSize, compare, true);
-}
+void* DynArray_Begin(DynArrayPtr arr);
+void* DynArray_End(DynArrayPtr arr);
+void* DynArray_Front(DynArrayPtr arr);
+void* DynArray_Back(DynArrayPtr arr);
+void* DynArray_Advance(DynArrayPtr arr, void* it);
 
 
 #ifdef __cplusplus

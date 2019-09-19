@@ -58,9 +58,7 @@ struct RERR_ErrorMap {
 
     RecursiveMutex mutex;
     int32_t nextCode;
-    struct MappedError* mappings; // Always sorted (MappedError_Compare)
-    size_t mapCapacity; // = 0 iff mappings == NULL
-    size_t mapSize; // <= mapCapacity
+    DynArrayPtr mappings; // Always sorted (MappedError_Compare)
 };
 
 
@@ -90,52 +88,7 @@ static struct MappedError* ErrorMap_Find(RERR_ErrorMapPtr map, ThreadID thread, 
     key.code = code;
     key.error = NULL;
 
-    return DynArray_BSearchExact(map->mappings, &key, map->mapSize,
-        sizeof(struct MappedError), MappedError_Compare);
-}
-
-
-static inline size_t ErrorMap_CapacityForSize(size_t size)
-{
-    return DynArray_CapacityForSize(size, 16, 6);
-}
-
-
-// Mutex must be held.
-static RERR_ErrorPtr ErrorMap_EnsureCapacity(RERR_ErrorMapPtr map)
-{
-    size_t newSize = map->mapSize + 1;
-
-    if (map->mapCapacity >= newSize) {
-        return RERR_NO_ERROR;
-    }
-
-    size_t newCapacity = ErrorMap_CapacityForSize(newSize);
-    bool ok = DynArray_SetCapacity(&map->mappings, newCapacity,
-        sizeof(struct MappedError));
-    if (!ok) {
-        return RERR_Error_CreateOutOfMemory();
-    }
-    map->mapCapacity = newCapacity;
-    return RERR_NO_ERROR;
-}
-
-
-// Mutex must be held.
-static void ErrorMap_ShrinkCapacity(RERR_ErrorMapPtr map)
-{
-    size_t newCapacity = ErrorMap_CapacityForSize(map->mapSize);
-    if (map->mapCapacity <= newCapacity + 32) { // Hysteresis of 32
-        return;
-    }
-
-    bool ok = DynArray_SetCapacity(&map->mappings, newCapacity,
-        sizeof(struct MappedError));
-    if (!ok) {
-        // Failed to shrink, but haven't broken anything.
-        return;
-    }
-    map->mapCapacity = newCapacity;
+    return DynArray_BSearchExact(map->mappings, &key, MappedError_Compare);
 }
 
 
@@ -143,35 +96,21 @@ static void ErrorMap_ShrinkCapacity(RERR_ErrorMapPtr map)
 static RERR_ErrorPtr ErrorMap_Insert(RERR_ErrorMapPtr map,
     ThreadID thread, int32_t code, RERR_ErrorPtr error)
 {
-    RERR_ErrorPtr err = ErrorMap_EnsureCapacity(map);
-    if (err != RERR_NO_ERROR) {
-        return err;
-    }
-
     struct MappedError key;
     key.thread = thread;
     key.code = code;
     key.error = NULL;
 
-    struct MappedError* ins = DynArray_BSearchInsertionPoint(map->mappings,
-        &key, map->mapSize, sizeof(struct MappedError), MappedError_Compare);
-    DynArray_InsertElem(ins, map->mappings + map->mapSize, &map->mapSize,
-        sizeof(struct MappedError));
-    ins->thread = thread;
-    ins->code = code;
-    ins->error = error;
+    struct MappedError* p = DynArray_BSearchInsertionPoint(map->mappings,
+        &key, MappedError_Compare);
+    p = DynArray_Insert(map->mappings, p);
+    if (!p) {
+        return RERR_Error_CreateOutOfMemory();
+    }
+    p->thread = thread;
+    p->code = code;
+    p->error = error;
     return RERR_NO_ERROR;
-}
-
-
-// Mutex must be held; item must be in mapping; otherwise behavior undefined.
-// It is assumed that the item has already been destroyed.
-static void ErrorMap_Erase(RERR_ErrorMapPtr map, struct MappedError* item)
-{
-    DynArray_EraseElem(map->mappings, map->mappings + map->mapSize,
-        &map->mapSize, sizeof(struct MappedError));
-
-    ErrorMap_ShrinkCapacity(map);
 }
 
 
@@ -251,8 +190,14 @@ RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
         return err;
     }
 
+    DynArrayPtr mappings = DynArray_Create(sizeof(struct MappedError));
+    if (!mappings) {
+        return RERR_Error_CreateOutOfMemory();
+    }
+
     *map = calloc(1, sizeof(struct RERR_ErrorMap));
     if (!*map) {
+        DynArray_Destroy(mappings);
         return RERR_Error_CreateOutOfMemory();
     }
 
@@ -265,6 +210,8 @@ RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
     InitMutex(&(*map)->mutex);
     (*map)->nextCode = (*map)->minCode;
 
+    (*map)->mappings = mappings;
+
     return RERR_NO_ERROR;
 }
 
@@ -275,13 +222,13 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map)
         return;
     }
 
-    struct MappedError* begin = map->mappings;
-    struct MappedError* end = begin + map->mapSize;
-    for (struct MappedError* i = begin; i < end; ++i) {
-        RERR_Error_Destroy(i->error);
+    struct MappedError* begin = DynArray_Begin(map->mappings);
+    struct MappedError* end = DynArray_End(map->mappings);
+    for (struct MappedError* it = begin; it != end; it = DynArray_Advance(map->mappings, it)) {
+        RERR_Error_Destroy(it->error);
     }
 
-    DynArray_Dealloc(&map->mappings);
+    DynArray_Destroy(map->mappings);
 
     free(map);
 }
@@ -383,7 +330,7 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
         struct MappedError* found = ErrorMap_Find(map, GetThisThreadId(), mappedCode);
         if (found) {
             ret = found->error;
-            ErrorMap_Erase(map, found);
+            DynArray_Erase(map->mappings, found);
         }
         else {
             ret = RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
@@ -406,20 +353,16 @@ void RERR_ErrorMap_ClearThreadLocal(RERR_ErrorMapPtr map)
 
     LockMutex(&map->mutex);
     {
-        struct MappedError* begin = map->mappings;
-        struct MappedError* end = begin + map->mapSize;
-        struct MappedError* j = begin;
-        for (struct MappedError* i = begin; i < end; ++i) {
-            if (i->thread == thisThread) {
-                RERR_Error_Destroy(i->error);
+        struct MappedError* begin = DynArray_Begin(map->mappings);
+        for (struct MappedError* it = begin; it != DynArray_End(map->mappings); ) {
+            if (it->thread == thisThread) {
+                RERR_Error_Destroy(it->error);
+                it = DynArray_Erase(map->mappings, it);
             }
-            else if (j < i) {
-                memcpy(j, i, sizeof(struct MappedError));
+            else {
+                it = DynArray_Advance(map->mappings, it);
             }
         }
-        map->mapSize = j - begin;
-
-        ErrorMap_ShrinkCapacity(map);
     }
     UnlockMutex(&map->mutex);
 }

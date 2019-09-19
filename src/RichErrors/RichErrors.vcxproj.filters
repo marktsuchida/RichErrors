@@ -21,6 +21,9 @@
     <ClCompile Include="Err2Code.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DynArray.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\RichErrors\RichErrors.h">
