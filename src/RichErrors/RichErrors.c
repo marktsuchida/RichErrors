@@ -25,6 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#define _CRT_SECURE_NO_WARNINGS
 #include "RichErrors/RichErrors.h"
 
 #include "DynArray.h"
@@ -71,13 +72,13 @@ static RERR_ErrorPtr Domain_Check(const char* domain)
             RERR_ECODE_DOMAIN_NAME_EMPTY, "Empty error domain name");
     }
 
-    size_t len = strnlen_s(domain, MAX_DOMAIN_LENGTH + 1);
+    size_t len = strlen(domain);
     if (len > MAX_DOMAIN_LENGTH) {
         char fmt[] = "Error domain name exceeding %d characters: ";
         char msg[sizeof(fmt) + MAX_DOMAIN_LENGTH + 32];
         snprintf(msg, sizeof(msg), fmt, MAX_DOMAIN_LENGTH);
-        strncat_s(msg, sizeof(msg), domain, MAX_DOMAIN_LENGTH);
-        strcat_s(msg, sizeof(msg), "...");
+        strncat(msg, domain, MAX_DOMAIN_LENGTH);
+        strcat(msg, "...");
 
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
             RERR_ECODE_DOMAIN_NAME_TOO_LONG, msg);
@@ -138,7 +139,7 @@ static RERR_ErrorPtr Domain_Insert(const char* domain)
     if (!dCopy) {
         return RERR_OUT_OF_MEMORY;
     }
-    strcpy_s(dCopy, len + 1, domain);
+    strcpy(dCopy, domain);
 
     if (!domains) {
         domains = DynArray_Create(sizeof(char*));
@@ -197,8 +198,8 @@ RERR_ErrorPtr RERR_Domain_Register(const char* domain)
     if (found) {
         char msg0[] = "Cannot register already registered domain: ";
         char msg[sizeof(msg0) + MAX_DOMAIN_LENGTH + 32];
-        strcpy_s(msg, sizeof(msg), msg0);
-        strcat_s(msg, sizeof(msg), domain);
+        strcpy(msg, msg0);
+        strcat(msg, domain);
         ret = RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
             RERR_ECODE_DOMAIN_ALREADY_EXISTS, msg);
         goto cleanup;
@@ -231,7 +232,7 @@ RERR_ErrorPtr RERR_Error_Create(const char* message)
             free(ret);
             return RERR_OUT_OF_MEMORY;
         }
-        strcpy_s(msgCopy, len + 1, message);
+        strcpy(msgCopy, message);
         ret->message = msgCopy;
     }
 
@@ -257,8 +258,8 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domain, int32_t code,
     if (!d) {
         char msg0[] = "Error domain not registered: ";
         char msg[sizeof(msg0) + MAX_DOMAIN_LENGTH + 32];
-        strcpy_s(msg, sizeof(msg), msg0);
-        strcat_s(msg, sizeof(msg), domain);
+        strcpy(msg, msg0);
+        strcat(msg, domain);
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
             RERR_ECODE_DOMAIN_NOT_REGISTERED, msg);
     }
