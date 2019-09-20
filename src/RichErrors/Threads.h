@@ -148,7 +148,7 @@ static inline void UnlockMutex(RecursiveMutex* mutex)
 // Thread id
 //
 
-static inline ThreadID GetThisThreadId()
+static inline ThreadID GetThisThreadId(void)
 {
 #if USE_WIN32THREADS
     return GetCurrentThreadId();
