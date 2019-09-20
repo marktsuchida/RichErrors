@@ -51,6 +51,8 @@ void* DynArray_BSearchInsertionPoint(DynArrayPtr arr, const void* key,
     DynArrayCompareFunc compare);
 void* DynArray_BSearchExact(DynArrayPtr arr, const void* key,
     DynArrayCompareFunc compare);
+void* DynArray_FindFirstEqual(DynArrayPtr arr, const void* key,
+    DynArrayCompareFunc compare);
 
 void* DynArray_Begin(DynArrayPtr arr);
 void* DynArray_End(DynArrayPtr arr);

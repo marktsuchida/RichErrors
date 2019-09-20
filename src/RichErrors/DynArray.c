@@ -173,6 +173,29 @@ static inline void* BSearch(DynArrayPtr arr, const void* key,
 }
 
 
+static inline void* LinSearch(DynArrayPtr arr, const void* key,
+    DynArrayCompareFunc compare, bool exact)
+{
+    char* begin = Begin(arr);
+    char* end = End(arr);
+    for (char* it = begin; it != end; it = Advance(arr, it)) {
+        int cmp = compare(it, key);
+        if (cmp == 0) {
+            return it;
+        }
+        if (!exact && cmp < 0) { // First element > key
+            return it;
+        }
+    }
+    if (exact) {
+        return NULL;
+    }
+    else {
+        return end;
+    }
+}
+
+
 DynArrayPtr DynArray_Create(size_t elemSize)
 {
     if (elemSize == 0) {
@@ -291,6 +314,13 @@ void* DynArray_BSearchExact(DynArrayPtr arr, const void* key,
     // when arr->size is below some threshold (to be determined empirically).
 
     return BSearch(arr, key, compare, true);
+}
+
+
+void* DynArray_FindFirstEqual(DynArrayPtr arr, const void* key,
+    DynArrayCompareFunc compare)
+{
+    return LinSearch(arr, key, compare, true);
 }
 
 

@@ -107,6 +107,7 @@ TEST_CASE("BSearch", "[DynArray]") {
     int key = 42;
     REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
     REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_Begin(a));
+    REQUIRE(DynArray_FindFirstEqual(a, &key, CompareInt) == nullptr);
 
     size_t size = 7;
     for (int i = 0; i < size; ++i) {
@@ -117,19 +118,23 @@ TEST_CASE("BSearch", "[DynArray]") {
     key = -1;
     REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
     REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_Begin(a));
+    REQUIRE(DynArray_FindFirstEqual(a, &key, CompareInt) == nullptr);
 
     key = 7;
     REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
     REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_End(a));
+    REQUIRE(DynArray_FindFirstEqual(a, &key, CompareInt) == nullptr);
 
     key = 8;
     REQUIRE(DynArray_BSearchExact(a, &key, CompareInt) == nullptr);
     REQUIRE(DynArray_BSearchInsertionPoint(a, &key, CompareInt) == DynArray_End(a));
+    REQUIRE(DynArray_FindFirstEqual(a, &key, CompareInt) == nullptr);
 
     SECTION("Find existing value") {
         int k = GENERATE(0, 1, 2, 3, 4, 5, 6);
         REQUIRE(DynArray_BSearchExact(a, &k, CompareInt) == DynArray_At(a, k));
         REQUIRE(DynArray_BSearchInsertionPoint(a, &k, CompareInt) == DynArray_At(a, k));
+        REQUIRE(DynArray_FindFirstEqual(a, &k, CompareInt) == DynArray_At(a, k));
     }
 
     DynArray_Destroy(a);
