@@ -64,8 +64,8 @@ TEST_CASE("Out-of-memory error should behave normally") {
 
 TEST_CASE("Reject duplicate domain registration") {
     const char* d = TESTSTR("domain");
-    RERR_ErrorPtr err_first = RERR_Domain_Register(d, NULL, RERR_CodeFormat_I32);
-    RERR_ErrorPtr err_second = RERR_Domain_Register(d, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_first = RERR_Domain_Register(d, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_second = RERR_Domain_Register(d, RERR_CodeFormat_I32);
     RERR_Domain_UnregisterAll();
 
     REQUIRE(err_first == RERR_NO_ERROR);
@@ -75,7 +75,7 @@ TEST_CASE("Reject duplicate domain registration") {
 
 
 TEST_CASE("Reject invalid domain registration") {
-    RERR_ErrorPtr err_null = RERR_Domain_Register(NULL, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_null = RERR_Domain_Register(NULL, RERR_CodeFormat_I32);
     REQUIRE(err_null != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_null));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_null), RERR_DOMAIN_RICHERRORS) == 0);
@@ -83,7 +83,7 @@ TEST_CASE("Reject invalid domain registration") {
     REQUIRE(RERR_Error_GetMessage(err_null) != NULL);
     RERR_Error_Destroy(err_null);
 
-    RERR_ErrorPtr err_empty = RERR_Domain_Register("", NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_empty = RERR_Domain_Register("", RERR_CodeFormat_I32);
     REQUIRE(err_empty != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_empty));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_empty), RERR_DOMAIN_RICHERRORS) == 0);
@@ -95,7 +95,7 @@ TEST_CASE("Reject invalid domain registration") {
     char longname[65];
     memset(longname, 'a', sizeof(longname));
     longname[sizeof(longname) - 1] = '\0';
-    RERR_ErrorPtr err_too_long = RERR_Domain_Register(longname, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_too_long = RERR_Domain_Register(longname, RERR_CodeFormat_I32);
     REQUIRE(err_too_long != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_too_long));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_too_long), RERR_DOMAIN_RICHERRORS) == 0);
@@ -104,10 +104,10 @@ TEST_CASE("Reject invalid domain registration") {
     RERR_Error_Destroy(err_too_long);
 
     longname[sizeof(longname) - 2] = '\0';
-    RERR_ErrorPtr err_not_too_long = RERR_Domain_Register(longname, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_not_too_long = RERR_Domain_Register(longname, RERR_CodeFormat_I32);
     REQUIRE(err_not_too_long == RERR_NO_ERROR);
 
-    RERR_ErrorPtr err_exists = RERR_Domain_Register(longname, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_exists = RERR_Domain_Register(longname, RERR_CodeFormat_I32);
     REQUIRE(err_exists != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_exists));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_exists), RERR_DOMAIN_RICHERRORS) == 0);
@@ -115,7 +115,7 @@ TEST_CASE("Reject invalid domain registration") {
     REQUIRE(RERR_Error_GetMessage(err_exists) != NULL);
     RERR_Error_Destroy(err_exists);
 
-    RERR_ErrorPtr err_invalid = RERR_Domain_Register("\b", NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_invalid = RERR_Domain_Register("\b", RERR_CodeFormat_I32);
     REQUIRE(err_invalid != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_invalid));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_invalid), RERR_DOMAIN_RICHERRORS) == 0);
@@ -124,7 +124,7 @@ TEST_CASE("Reject invalid domain registration") {
     RERR_Error_Destroy(err_invalid);
 
     // The system domain always exists
-    RERR_ErrorPtr err_system = RERR_Domain_Register(RERR_DOMAIN_RICHERRORS, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_system = RERR_Domain_Register(RERR_DOMAIN_RICHERRORS, RERR_CodeFormat_I32);
     REQUIRE(err_system != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_system));
     REQUIRE(strcmp(RERR_Error_GetDomain(err_system), RERR_DOMAIN_RICHERRORS) == 0);
@@ -169,7 +169,7 @@ TEST_CASE("Create without code") {
 TEST_CASE("Create with code") {
     const char* domain = TESTSTR("domain");
     const char* msg = TESTSTR("msg");
-    RERR_ErrorPtr e = RERR_Domain_Register(domain, NULL, RERR_CodeFormat_I32);
+    RERR_ErrorPtr e = RERR_Domain_Register(domain, RERR_CodeFormat_I32);
     REQUIRE(e == RERR_NO_ERROR);
 
     RERR_ErrorPtr err = RERR_Error_CreateWithCode(domain, 42, msg);

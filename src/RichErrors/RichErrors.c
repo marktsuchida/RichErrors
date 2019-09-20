@@ -38,21 +38,16 @@
 
 struct RERR_ErrorDomain {
     const char* name; // Unique key
-    const char* description;
     RERR_CodeFormat codeFormat;
 };
 typedef struct RERR_ErrorDomain* RERR_ErrorDomainPtr;
 
 static struct RERR_ErrorDomain RichErrorsCriticalDomain = {
-    RERR_DOMAIN_CRITICAL,
-    "Critical errors impeding normal error handling",
-    RERR_CodeFormat_I32,
+    RERR_DOMAIN_CRITICAL, RERR_CodeFormat_I32,
 };
 
 static struct RERR_ErrorDomain RichErrorsDomain = {
-    RERR_DOMAIN_RICHERRORS,
-    "Errors arising from incorrect use of the RichErrors library",
-    RERR_CodeFormat_I32,
+    RERR_DOMAIN_RICHERRORS, RERR_CodeFormat_I32,
 };
 
 
@@ -179,10 +174,9 @@ static RERR_ErrorDomainPtr Domain_Find(const char* domainName)
 
 
 static RERR_ErrorDomainPtr Domain_Create(const char* name,
-    const char* description, RERR_CodeFormat codeFormat)
+    RERR_CodeFormat codeFormat)
 {
     char* nameCopy = NULL;
-    char* descCopy = NULL;
     RERR_ErrorDomainPtr ret = NULL;
 
     nameCopy = malloc(strlen(name) + 1);
@@ -191,24 +185,16 @@ static RERR_ErrorDomainPtr Domain_Create(const char* name,
     }
     strcpy(nameCopy, name);
 
-    descCopy = malloc(strlen(description) + 1);
-    if (!descCopy) {
-        goto error;
-    }
-    strcpy(descCopy, description);
-
     ret = calloc(1, sizeof(struct RERR_ErrorDomain));
     if (!ret) {
         goto error;
     }
     ret->name = nameCopy;
-    ret->description = descCopy;
     ret->codeFormat = codeFormat;
     return ret;
 
 error:
     free(ret);
-    free(descCopy);
     free(nameCopy);
     return NULL;
 }
@@ -221,7 +207,6 @@ static void Domain_Destroy(RERR_ErrorDomainPtr domain)
     }
 
     FreeConst(domain->name);
-    FreeConst(domain->description);
     free(domain);
 }
 
@@ -272,7 +257,7 @@ void RERR_Domain_UnregisterAll(void)
 
 
 RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
-    const char* description, RERR_CodeFormat codeFormat)
+    RERR_CodeFormat codeFormat)
 {
     if (!domainName) {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
@@ -283,17 +268,12 @@ RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
         return err;
     }
 
-    if (!description) {
-        description = "";
-    }
-
     err = CodeFormat_Check(codeFormat);
     if (err) {
         return err;
     }
 
-    RERR_ErrorDomainPtr domain = Domain_Create(domainName,
-        description, codeFormat);
+    RERR_ErrorDomainPtr domain = Domain_Create(domainName, codeFormat);
     if (!domain) {
         return RERR_OUT_OF_MEMORY;
     }

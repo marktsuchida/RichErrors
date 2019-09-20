@@ -44,7 +44,7 @@ TEST_CASE("C++ Example") {
     REQUIRE(RERR::Error::OutOfMemory().GetCode() == RERR_ECODE_OUT_OF_MEMORY);
 
     const char* domain = TESTSTR("domain");
-    RERR::Error e = RERR::RegisterDomain(domain, "", RERR_CodeFormat_I32);
+    RERR::Error e = RERR::RegisterDomain(domain, RERR_CodeFormat_I32);
     REQUIRE(e.IsSuccess());
 
     RERR::Error err(domain, 42, TESTSTR("msg"));

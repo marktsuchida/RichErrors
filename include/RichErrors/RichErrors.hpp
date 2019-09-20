@@ -276,9 +276,8 @@ namespace RERR {
 
     /// Register an error code domain.
     inline Error RegisterDomain(std::string const& domain,
-        std::string const& description, RERR_CodeFormat codeFormat) noexcept {
-        return Error(RERR_Domain_Register(domain.c_str(), description.c_str(),
-            codeFormat));
+        RERR_CodeFormat codeFormat) noexcept {
+        return Error(RERR_Domain_Register(domain.c_str(), codeFormat));
     }
 
     /// An exception that wraps Error.

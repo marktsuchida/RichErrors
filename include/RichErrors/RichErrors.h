@@ -193,7 +193,7 @@ void RERR_Domain_UnregisterAll(void);
  * "DOMAIN error code 123" (where DOMAIN is the domain name) should make sense.
  */
 RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
-    const char* description, RERR_CodeFormat codeFormat);
+    RERR_CodeFormat codeFormat);
 
 /// Create an error without an error code.
 /**
