@@ -38,12 +38,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// Visual C++ does not support 'restrict'
-#ifdef _MSC_VER
-#define RERR_RESTRICT __restrict
-#else
-#define RERR_RESTRICT restrict
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -192,9 +186,9 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity);
  * \return ::SmallMapErrorNullArg if any of \p map, \p key, or \p value is null.
  * \return ::SmallMapNoError otherwise.
  */
-SmallMapError SmallMap_SetString(SmallMapPtr map, const char* RERR_RESTRICT key, const char* RERR_RESTRICT value);
+SmallMapError SmallMap_SetString(SmallMapPtr map, const char* key, const char* value);
 
-SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* RERR_RESTRICT key, const char* RERR_RESTRICT value);
+SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* key, const char* value);
 
 /// Add or replace a boolean value in a SmallMap.
 /**
@@ -295,7 +289,7 @@ size_t SmallMap_GetStringSize(SmallMapPtr map, const char* key);
  * \return ::SmallMapNoError otherwise, in which case `*dest` contains the
  * string value.
  */
-SmallMapError SmallMap_GetString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize);
+SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
 
 /// Retrieve a string value from a SmallMap, truncating if necessary.
 /**
@@ -317,9 +311,9 @@ SmallMapError SmallMap_GetString(SmallMapPtr map, const char* RERR_RESTRICT key,
  * \return ::SmallMapNoError otherwise, in which case `*dest` contains the
  * string value.
  */
-SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize);
+SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
 
-SmallMapError SmallMap_PopString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize);
+SmallMapError SmallMap_PopString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
 
 /// Retrieve a boolean value from a SmallMap.
 /**
@@ -372,9 +366,4 @@ SmallMapError SmallMap_PopF64(SmallMapPtr map, const char* key, double* value);
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
-
-
-#ifndef RERR_SMALLMAP_IMPLEMENTATION
-#undef RERR_RESTRICT
 #endif

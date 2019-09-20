@@ -26,12 +26,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #define _CRT_SECURE_NO_WARNINGS
-#define RERR_SMALLMAP_IMPLEMENTATION
 #include "SmallMap.h"
 
 #include "DynArray.h"
 
 #include <string.h>
+
+#ifdef _MSC_VER
+#define restrict __restrict
+#endif
 
 /*
  * The point of this map implementation is to be simple and to be efficient for
@@ -105,7 +108,7 @@ static inline void ClearItem(SmallMapIterator it)
 // Precondition: src != NULL
 // Precondition: dst != NULL
 // Precondition: src != dst
-static bool DeepCopyItem(struct SmallMapItem* RERR_RESTRICT dst, struct SmallMapItem* RERR_RESTRICT src)
+static bool DeepCopyItem(struct SmallMapItem* restrict dst, struct SmallMapItem* restrict src)
 {
     char* keyCopy = NULL;
     char* strCopy = NULL;
@@ -341,7 +344,7 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
 }
 
 
-static SmallMapError SetString(SmallMapPtr map, const char* RERR_RESTRICT key, const char* RERR_RESTRICT value, bool unique)
+static SmallMapError SetString(SmallMapPtr map, const char* key, const char* value, bool unique)
 {
     if (!map || !key || !value) {
         return SmallMapErrorNullArg;
@@ -373,13 +376,13 @@ exit:
 }
 
 
-SmallMapError SmallMap_SetString(SmallMapPtr map, const char* RERR_RESTRICT key, const char* RERR_RESTRICT value)
+SmallMapError SmallMap_SetString(SmallMapPtr map, const char* key, const char* value)
 {
     return SetString(map, key, value, false);
 }
 
 
-SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* RERR_RESTRICT key, const char* RERR_RESTRICT value)
+SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* key, const char* value)
 {
     return SetString(map, key, value, true);
 }
@@ -575,7 +578,7 @@ size_t SmallMap_GetStringSize(SmallMapPtr map, const char* key)
 }
 
 
-static SmallMapError GetString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize, bool remove, bool allowPartial)
+static SmallMapError GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize, bool remove, bool allowPartial)
 {
     if (!map || !key || !dest) {
         return SmallMapErrorNullArg;
@@ -610,18 +613,18 @@ static SmallMapError GetString(SmallMapPtr map, const char* RERR_RESTRICT key, c
 }
 
 
-SmallMapError SmallMap_GetString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize)
+SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
 {
     return GetString(map, key, dest, destSize, false, false);
 }
 
 
-SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize)
+SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
 {
     return GetString(map, key, dest, destSize, false, true);
 }
 
-SmallMapError SmallMap_PopString(SmallMapPtr map, const char* RERR_RESTRICT key, char* RERR_RESTRICT dest, size_t destSize)
+SmallMapError SmallMap_PopString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
 {
     return GetString(map, key, dest, destSize, true, false);
 }
