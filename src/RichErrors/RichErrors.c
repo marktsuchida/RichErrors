@@ -176,7 +176,11 @@ void RERR_Domain_UnregisterAll(void)
     for (char** it = begin; it != end; it = DynArray_Advance(domains, it)) {
         free(*it);
     }
-    DynArray_Clear(domains);
+
+    // Actually we only need to clear, but for now we deallocate so that memory
+    // leak detection in unit tests will not see the leftover static array.
+    DynArray_Destroy(domains);
+    domains = NULL;
 
     UnlockMutex(&domainsLock);
 }
