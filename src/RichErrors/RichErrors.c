@@ -61,12 +61,9 @@ struct RERR_Error {
 #define RERR_OUT_OF_MEMORY ((RERR_ErrorPtr) -1)
 
 
+// Precondition: domain != NULL
 static RERR_ErrorPtr Domain_Check(const char* domain)
 {
-    if (!domain) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT, "Null error domain");
-    }
     if (domain[0] == '\0') {
         return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
             RERR_ECODE_DOMAIN_NAME_EMPTY, "Empty error domain name");
@@ -188,6 +185,10 @@ void RERR_Domain_UnregisterAll(void)
 
 RERR_ErrorPtr RERR_Domain_Register(const char* domain)
 {
+    if (!domain) {
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_NULL_ARGUMENT, "Null error domain");
+    }
     RERR_ErrorPtr err = Domain_Check(domain);
     if (err) {
         return err;
@@ -249,8 +250,12 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domain, int32_t code,
     const char* message)
 {
     // Allow NULL (but not empty string) for domain, as long as code is zero.
-    if (!domain && !code) {
-        return RERR_Error_Create(message);
+    if (!domain) {
+        if (code == 0) {
+            return RERR_Error_Create(message);
+        }
+        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
+            RERR_ECODE_NULL_ARGUMENT, "Null error domain");
     }
 
     RERR_ErrorPtr err = Domain_Check(domain);
