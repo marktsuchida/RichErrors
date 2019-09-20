@@ -36,9 +36,29 @@
 #include <string.h>
 
 
-// Error domains are stored in a global sorted dynamic array, allowing binary
-// search.
-static DynArrayPtr domains;
+struct RERR_ErrorDomain {
+    const char* name; // Unique key
+    const char* description;
+    RERR_ErrorCodeFormat codeFormat;
+};
+typedef struct RERR_ErrorDomain* RERR_ErrorDomainPtr;
+
+static struct RERR_ErrorDomain RichErrorsCriticalDomain = {
+    RERR_DOMAIN_CRITICAL,
+    "Critical errors impeding normal error handling",
+    RERR_ErrorCodeFormat_I32,
+};
+
+static struct RERR_ErrorDomain RichErrorsDomain = {
+    RERR_DOMAIN_RICHERRORS,
+    "Errors arising from incorrect use of the RichErrors library",
+    RERR_ErrorCodeFormat_I32,
+};
+
+
+// Globally registered domains. We use an array of pointers, so that domain
+// pointers always remain valid.
+static DynArrayPtr domains; // Elements are RERR_ErrorDomainPtr, sorted by key
 static RecursiveMutex DECLARE_STATIC_MUTEX(domainsLock);
 static MutexInitializer DECLARE_MUTEX_INITIALIZER(domainsLockInit);
 
@@ -47,7 +67,7 @@ static MutexInitializer DECLARE_MUTEX_INITIALIZER(domainsLockInit);
 
 
 struct RERR_Error {
-    const char* domain; // Always points to the registered copy
+    const struct RERR_ErrorDomain* domain; // Non-owning ref
     int32_t code; // Zero if no domain
     const char* message; // String owned by this RERR_Error object
     struct RERR_Error* cause; // Original error, owned by this RERR_Error
@@ -59,6 +79,12 @@ struct RERR_Error {
 // allocating anything. All functions that inspect struct RERR_Error must check
 // for this value first.
 #define RERR_OUT_OF_MEMORY ((RERR_ErrorPtr) -1)
+
+
+static inline void FreeConst(const void* m)
+{
+    free((void*)m);
+}
 
 
 // Precondition: domain != NULL
@@ -96,66 +122,85 @@ static RERR_ErrorPtr Domain_Check(const char* domain)
 }
 
 
-static int Domain_Compare(const char* const* lhs, const char* const* rhs)
+static int Domain_Compare(const void* lhs, const char* rhs)
 {
-    return strcmp(*lhs, *rhs);
+    RERR_ErrorDomainPtr elem = *(const RERR_ErrorDomainPtr*)lhs;
+    return strcmp(elem->name, rhs);
 }
 
 
 // Argument must be pre-checked by caller
-static const char* Domain_Find(const char* domain)
+static RERR_ErrorDomainPtr Domain_Find(const char* domain)
 {
     // The system domains always exist, but is not sotred in the array.
-    if (strcmp(domain, RERR_DOMAIN_RICHERRORS) == 0) {
-        return RERR_DOMAIN_RICHERRORS;
-    }
     if (strcmp(domain, RERR_DOMAIN_CRITICAL) == 0) {
-        return RERR_DOMAIN_CRITICAL;
+        return &RichErrorsCriticalDomain;
+    }
+    if (strcmp(domain, RERR_DOMAIN_RICHERRORS) == 0) {
+        return &RichErrorsDomain;
     }
 
     EnsureInitMutex(&domainsLock, &domainsLockInit);
 
     LockMutex(&domainsLock);
 
-    char** found = NULL;
+    RERR_ErrorDomainPtr* found = NULL;
     if (domains) {
-        found = DynArray_BSearchExact(domains, &domain, Domain_Compare);
+        found = DynArray_BSearchExact(domains, domain, Domain_Compare);
     }
+    RERR_ErrorDomainPtr ret = found ? *found : NULL;
 
     UnlockMutex(&domainsLock);
 
-    return found ? *found : NULL;
+    return ret;
 }
 
 
 // Mutex must be held by caller, and domain must be pre-checked
-static RERR_ErrorPtr Domain_Insert(const char* domain)
+static RERR_ErrorPtr Domain_Insert(const char* domainName)
 {
-    size_t len = strlen(domain);
-    char* dCopy = malloc(len + 1);
-    if (!dCopy) {
-        return RERR_OUT_OF_MEMORY;
+    char* nameCopy = NULL;
+    RERR_ErrorDomainPtr domain = NULL;
+    RERR_ErrorPtr ret = RERR_NO_ERROR;
+
+    size_t len = strlen(domainName);
+    nameCopy = malloc(len + 1);
+    if (!nameCopy) {
+        ret = RERR_OUT_OF_MEMORY;
+        goto error;
     }
-    strcpy(dCopy, domain);
+    strcpy(nameCopy, domainName);
+
+    domain = calloc(1, sizeof(struct RERR_ErrorDomain));
+    if (!domain) {
+        ret = RERR_OUT_OF_MEMORY;
+        goto error;
+    }
+    domain->name = nameCopy;
+    domain->description = NULL; // TODO
+    domain->codeFormat = RERR_ErrorCodeFormat_I32; // TODO
 
     if (!domains) {
-        domains = DynArray_Create(sizeof(char*));
+        domains = DynArray_Create(sizeof(RERR_ErrorDomainPtr));
         if (!domains) {
-            free(dCopy);
-            return RERR_OUT_OF_MEMORY;
+            ret = RERR_OUT_OF_MEMORY;
+            goto error;
         }
     }
 
-    char** p = DynArray_BSearchInsertionPoint(domains, &domain, Domain_Compare);
-    p = DynArray_Insert(domains, p);
-    if (!p) {
-        free(dCopy);
-        return RERR_OUT_OF_MEMORY;
+    RERR_ErrorDomainPtr* it = DynArray_BSearchInsertionPoint(domains, domain, Domain_Compare);
+    it = DynArray_Insert(domains, it);
+    if (!it) {
+        ret = RERR_OUT_OF_MEMORY;
+        goto error;
     }
-
-    *p = dCopy;
-
+    *it = domain;
     return RERR_NO_ERROR;
+
+error:
+    free(domain);
+    free(nameCopy);
+    return ret;
 }
 
 
@@ -168,14 +213,16 @@ void RERR_Domain_UnregisterAll(void)
         return;
     }
 
-    char** begin = DynArray_Begin(domains);
-    char** end = DynArray_End(domains);
-    for (char** it = begin; it != end; it = DynArray_Advance(domains, it)) {
+    RERR_ErrorDomainPtr* begin = DynArray_Begin(domains);
+    RERR_ErrorDomainPtr* end = DynArray_End(domains);
+    for (RERR_ErrorDomainPtr* it = begin; it != end; it = DynArray_Advance(domains, it)) {
+        FreeConst((*it)->name);
+        FreeConst((*it)->description);
         free(*it);
     }
 
-    // Actually we only need to clear, but for now we deallocate so that memory
-    // leak detection in unit tests will not see the leftover static array.
+    // Actually we only need to clear, but we deallocate so that memory leak
+    // detection in unit tests will not see the leftover static array.
     DynArray_Destroy(domains);
     domains = NULL;
 
@@ -199,7 +246,7 @@ RERR_ErrorPtr RERR_Domain_Register(const char* domain)
     RERR_ErrorPtr ret = RERR_NO_ERROR;
     LockMutex(&domainsLock);
 
-    const char* found = Domain_Find(domain);
+    const struct RERR_ErrorDomain* found = Domain_Find(domain);
     if (found) {
         char msg0[] = "Cannot register already registered domain: ";
         char msg[sizeof(msg0) + MAX_DOMAIN_LENGTH + 32];
@@ -263,7 +310,7 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domain, int32_t code,
         return err;
     }
 
-    const char* d = Domain_Find(domain);
+    const struct RERR_ErrorDomain* d = Domain_Find(domain);
     if (!d) {
         char msg0[] = "Error domain not registered: ";
         char msg[sizeof(msg0) + MAX_DOMAIN_LENGTH + 32];
@@ -362,7 +409,7 @@ const char* RERR_Error_GetDomain(RERR_ErrorPtr error)
     if (!error->domain) {
         return "";
     }
-    return error->domain;
+    return error->domain->name;
 }
 
 

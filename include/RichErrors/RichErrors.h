@@ -131,6 +131,7 @@ enum {
 enum {
     // Maintainer: do not change once released!
 
+    // General errors
     RERR_ECODE_NULL_ARGUMENT = 101, ///< Argument NULL when not allowed
 
     // Domain errors
@@ -146,7 +147,37 @@ enum {
     RERR_ECODE_MAP_FAILURE = 303, ///< Could not assign code
 };
 
+/// Error code formatting mode.
+typedef int32_t RERR_ErrorCodeFormat;
+
+/// Constants for type ::RERR_ErrorCodeFormat.
+/**
+ * Usually a single value should be chosen. However, the bitwise or of two
+ * values are allowed if both have the same number of bits and one is decimal,
+ * the other hexadecimal.
+ *
+ * For example, `RERR_ErrorCodeFormat_I16 | RERR_ErrorCodeFormat_Hex16` will
+ * result in a formatted error code looking (for example) like `-3 (0xfffd)`.
+ *
+ * In general, the format widely used in documentation for the relevant system
+ * should be chosen. This is most often 32-bit signed decimal, but some systems
+ * prefer hexadecimal notation (for example Microsoft's `HRESULT` codes), and
+ * others use 16-bit integers for error codes.
+ */
+enum {
+    RERR_ErrorCodeFormat_I32 = 1, ///< 32-bit signed integer, decimal
+    RERR_ErrorCodeFormat_U32 = 2, ///< 32-bit unsigned integer, decimal
+    RERR_ErrorCodeFormat_Hex32 = 4, ///< 32-bit unsigned integer, hexadecimal
+    RERR_ErrorCodeFormat_I16 = 8, ///< 16-bit signed integer, decimal
+    RERR_ErrorCodeFormat_U16 = 16, ///< 16-bit unsigned integer, decimal
+    RERR_ErrorCodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
+};
+
 /// Unregister all previously registered error domains (for testing).
+/**
+ * This function should never be called except in unit tests, because it will
+ * cause domains stored in error objects to dangle.
+ */
 void RERR_Domain_UnregisterAll(void);
 
 /// Register an error code domain.
