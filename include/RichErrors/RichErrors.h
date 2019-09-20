@@ -145,18 +145,21 @@ enum {
     RERR_ECODE_MAP_INVALID_CONFIG = 301, ///< Invalid configuration
     RERR_ECODE_MAP_INVALID_CODE = 302, ///< Unregistered code
     RERR_ECODE_MAP_FAILURE = 303, ///< Could not assign code
+
+    // Code formats
+    RERR_ECODE_CODEFORMAT_INVALID = 401, ///< Invalid error code format
 };
 
 /// Error code formatting mode.
-typedef int32_t RERR_ErrorCodeFormat;
+typedef int32_t RERR_CodeFormat;
 
-/// Constants for type ::RERR_ErrorCodeFormat.
+/// Constants for type ::RERR_CodeFormat.
 /**
  * Usually a single value should be chosen. However, the bitwise or of two
  * values are allowed if both have the same number of bits and one is decimal,
  * the other hexadecimal.
  *
- * For example, `RERR_ErrorCodeFormat_I16 | RERR_ErrorCodeFormat_Hex16` will
+ * For example, `RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16` will
  * result in a formatted error code looking (for example) like `-3 (0xfffd)`.
  *
  * In general, the format widely used in documentation for the relevant system
@@ -165,12 +168,12 @@ typedef int32_t RERR_ErrorCodeFormat;
  * others use 16-bit integers for error codes.
  */
 enum {
-    RERR_ErrorCodeFormat_I32 = 1, ///< 32-bit signed integer, decimal
-    RERR_ErrorCodeFormat_U32 = 2, ///< 32-bit unsigned integer, decimal
-    RERR_ErrorCodeFormat_Hex32 = 4, ///< 32-bit unsigned integer, hexadecimal
-    RERR_ErrorCodeFormat_I16 = 8, ///< 16-bit signed integer, decimal
-    RERR_ErrorCodeFormat_U16 = 16, ///< 16-bit unsigned integer, decimal
-    RERR_ErrorCodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
+    RERR_CodeFormat_I32 = 1, ///< 32-bit signed integer, decimal
+    RERR_CodeFormat_U32 = 2, ///< 32-bit unsigned integer, decimal
+    RERR_CodeFormat_Hex32 = 4, ///< 32-bit unsigned integer, hexadecimal
+    RERR_CodeFormat_I16 = 8, ///< 16-bit signed integer, decimal
+    RERR_CodeFormat_U16 = 16, ///< 16-bit unsigned integer, decimal
+    RERR_CodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
 };
 
 /// Unregister all previously registered error domains (for testing).
@@ -189,7 +192,8 @@ void RERR_Domain_UnregisterAll(void);
  * library, or operating system that generates error codes, and the phrase
  * "DOMAIN error code 123" (where DOMAIN is the domain name) should make sense.
  */
-RERR_ErrorPtr RERR_Domain_Register(const char* domain);
+RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
+    const char* description, RERR_CodeFormat codeFormat);
 
 /// Create an error without an error code.
 /**
