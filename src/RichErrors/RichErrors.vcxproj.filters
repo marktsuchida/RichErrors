@@ -24,6 +24,9 @@
     <ClCompile Include="DynArray.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SmallMap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\RichErrors\RichErrors.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DynArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SmallMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

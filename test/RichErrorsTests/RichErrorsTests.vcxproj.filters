@@ -33,6 +33,9 @@
     <ClCompile Include="DynArrayTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SmallMapTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestDefs.h">

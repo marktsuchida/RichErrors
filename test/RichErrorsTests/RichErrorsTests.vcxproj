@@ -138,6 +138,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RichErrorsCppTests.cpp" />
     <ClCompile Include="RichErrorsTests.cpp" />
+    <ClCompile Include="SmallMapTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestDefs.h" />
