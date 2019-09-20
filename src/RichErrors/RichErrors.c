@@ -112,8 +112,8 @@ static const char* Domain_Find(const char* domain)
     if (strcmp(domain, RERR_DOMAIN_RICHERRORS) == 0) {
         return RERR_DOMAIN_RICHERRORS;
     }
-    if (strcmp(domain, RERR_DOMAIN_OUT_OF_MEMORY) == 0) {
-        return RERR_DOMAIN_OUT_OF_MEMORY;
+    if (strcmp(domain, RERR_DOMAIN_CRITICAL) == 0) {
+        return RERR_DOMAIN_CRITICAL;
     }
 
     EnsureInitMutex(&domainsLock, &domainsLockInit);
@@ -352,7 +352,7 @@ const char* RERR_Error_GetDomain(RERR_ErrorPtr error)
         return "";
     }
     if (error == RERR_OUT_OF_MEMORY) {
-        return RERR_DOMAIN_OUT_OF_MEMORY;
+        return RERR_DOMAIN_CRITICAL;
     }
     if (!error->domain) {
         return "";

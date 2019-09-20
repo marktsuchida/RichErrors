@@ -54,7 +54,7 @@ namespace RERR {
 
     /// Return the error code domain for out-of-memory errors.
     inline std::string const& OutOfMemoryDomain() {
-        static std::string const s = RERR_DOMAIN_OUT_OF_MEMORY;
+        static std::string const s = RERR_DOMAIN_CRITICAL;
         return s;
     }
 

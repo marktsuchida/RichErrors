@@ -104,10 +104,15 @@ typedef struct RERR_Error* RERR_ErrorPtr;
 /// Value of type ::RERR_ErrorPtr representing success (lack of error).
 #define RERR_NO_ERROR ((RERR_ErrorPtr) NULL)
 
-/// Error domain for out-of-memory error.
-#define RERR_DOMAIN_OUT_OF_MEMORY "Out of memory"
+/// Error domain for critical errors.
+/**
+ * Critical errors are errors that are severe enough to limit how we can
+ * perform error handling. At this time, only out-of-memory errors belong to
+ * this category.
+ */
+#define RERR_DOMAIN_CRITICAL "RichErrorsCritical"
 
-/// Error code belonging to the #RERR_DOMAIN_OUT_OF_MEMORY domain.
+/// Error code belonging to the #RERR_DOMAIN_CRITICAL domain.
 enum {
     // Maintainer: do not change once released!
 
