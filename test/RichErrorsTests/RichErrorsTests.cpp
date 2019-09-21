@@ -242,7 +242,7 @@ TEST_CASE("Code formatting") {
     CHECK(strcmp(buf, "(no code)") == 0);
 
     RERR_Error_FormatCode(RERR_Error_CreateOutOfMemory(), buf, sizeof(buf));
-    CHECK(strcmp(buf, "1") == 0);
+    CHECK(strcmp(buf, "-1") == 0);
 
     FormatCode(RERR_CodeFormat_I32, -1, buf, sizeof(buf));
     CHECK(strcmp(buf, "-1") == 0);

@@ -121,7 +121,7 @@ enum {
      * Ran out of memory, either during the original operation or during error
      * handling.
      */
-    RERR_ECODE_OUT_OF_MEMORY = 1,
+    RERR_ECODE_OUT_OF_MEMORY = -1,
 };
 
 /// Error domain for errors arising in RichErrors functions.

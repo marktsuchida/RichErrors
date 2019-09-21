@@ -42,7 +42,7 @@ TEST_CASE("C++ Example") {
     REQUIRE(RERR::Error::OutOfMemory().IsOutOfMemory());
     REQUIRE(RERR::Error::OutOfMemory().GetDomain() == RERR::OutOfMemoryDomain());
     REQUIRE(RERR::Error::OutOfMemory().GetCode() == RERR_ECODE_OUT_OF_MEMORY);
-    REQUIRE(RERR::Error::OutOfMemory().FormatCode() == "1");
+    REQUIRE(RERR::Error::OutOfMemory().FormatCode() == "-1");
 
     const char* domain = TESTSTR("domain");
     RERR::Error e = RERR::RegisterDomain(domain, RERR_CodeFormat_I32);
