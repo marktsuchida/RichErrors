@@ -61,10 +61,6 @@
  *   (preserving the current string-interning behavior). Pre-registration could
  *   still be optionally enforced.
  *
- * - There should be a way to specify, per domain, how to format error codes
- *   (signed decimal, unsigned decimal, or hexadecimal). This would be useful
- *   for domains such as "Windows HRESULT".
- *
  * - There is no possibility of localized error messages. This is by design
  *   because this library was created for use by non-localized software.
  */
