@@ -210,6 +210,17 @@ namespace RERR {
             return RERR_Error_GetCode(ptr);
         }
 
+        /// Return the error code, formatted as string.
+        /**
+         * If this error does not have a code, a message to that effect is
+         * returned.
+         */
+        std::string FormatCode() const noexcept {
+            char buf[RERR_FORMATTED_CODE_MAX_SIZE];
+            RERR_Error_FormatCode(ptr, buf, sizeof(buf));
+            return buf;
+        }
+
         /// Return the error message.
         /**
          * This function returns a copy of the message.

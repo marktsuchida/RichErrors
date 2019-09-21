@@ -176,6 +176,12 @@ enum {
     RERR_CodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
 };
 
+/// Maximum length of formatted error code.
+#define RERR_FORMATTED_CODE_MAX_LEN 63
+
+/// Maximum size of buffer to hold formatted error code.
+#define RERR_FORMATTED_CODE_MAX_SIZE (RERR_FORMATTED_CODE_MAX_LEN + 1)
+
 /// Unregister all previously registered error domains (for testing).
 /**
  * This function should never be called except in unit tests, because it will
@@ -320,6 +326,16 @@ const char* RERR_Error_GetDomain(RERR_ErrorPtr error);
  * If the given error does not have an error code, zero is returned.
  */
 int32_t RERR_Error_GetCode(RERR_ErrorPtr error);
+
+/// Format the error code of the given error.
+/**
+ * The destination buffer should be at least #RERR_MAX_FORMATTED_CODE_SIZE
+ * bytes to guarantee that no truncation occurs.
+ *
+ * If the given error does not have an error code, a short message to that
+ * effect will be copied to `dest`.
+ */
+void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize);
 
 /// Return the error message of the given error.
 /**

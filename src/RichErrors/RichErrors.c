@@ -31,6 +31,7 @@
 #include "DynArray.h"
 #include "Threads.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -460,6 +461,109 @@ int32_t RERR_Error_GetCode(RERR_ErrorPtr error)
         return RERR_ECODE_OUT_OF_MEMORY;
     }
     return error->code;
+}
+
+
+void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize)
+{
+    if (!dest || destSize == 0) {
+        return;
+    }
+
+    if (error == RERR_NO_ERROR) {
+        strncpy(dest, "(no code)", destSize);
+        dest[destSize - 1] = '\0';
+        return;
+    }
+
+    const struct RERR_ErrorDomain* domain;
+    int32_t code;
+    if (error == RERR_OUT_OF_MEMORY) {
+        domain = &RichErrorsCriticalDomain;
+        code = RERR_ECODE_OUT_OF_MEMORY;
+    }
+    else {
+        domain = error->domain;
+        code = error->code;
+    }
+
+    if (domain == NULL) {
+        strncpy(dest, "(no code)", destSize);
+        dest[destSize - 1] = '\0';
+        return;
+    }
+
+    RERR_CodeFormat format = domain->codeFormat;
+
+    // The format has been checked upon domain registration, so we assume it
+    // has a valid combination of flags. See CodeFormat_Check().
+
+    char dec[16]; // Max: strlen("-2147483648") == 11
+    char hex[16]; // Max: strlen("0xffffffff") == 10
+    dec[0] = '\0';
+    hex[0] = '\0';
+
+    if (format & RERR_CodeFormat_I32) {
+        snprintf(dec, sizeof(dec), "%" PRId32, code);
+    }
+    if (format & RERR_CodeFormat_U32) {
+        snprintf(dec, sizeof(dec), "%" PRIu32, code);
+    }
+    if (format & RERR_CodeFormat_Hex32) {
+        snprintf(hex, sizeof(hex), "0x%08" PRIx32, code);
+    }
+    if (format & RERR_CodeFormat_I16) {
+        snprintf(dec, sizeof(dec), "%" PRId16, (int16_t)code);
+    }
+    if (format & RERR_CodeFormat_U16) {
+        snprintf(dec, sizeof(dec), "%" PRIu16, (int16_t)code);
+    }
+    if (format & RERR_CodeFormat_Hex16) {
+        snprintf(hex, sizeof(hex), "0x%04" PRIx16, (int16_t)code);
+    }
+
+    size_t decLen = strlen(dec);
+    size_t hexLen = strlen(hex);
+    const char* primary;
+    const char* secondary = NULL;
+    size_t primaryLen;
+    size_t secondaryLen = 0;
+    if (decLen > 0) {
+        primary = dec;
+        primaryLen = decLen;
+        if (hexLen > 0) {
+            secondary = hex;
+            secondaryLen = hexLen;
+        }
+    }
+    else {
+        primary = hex;
+        primaryLen = hexLen;
+    }
+
+    // Ensure we never end up with a truncated code; prefer "???" over that.
+    if (destSize < primaryLen + 1) { // Cannot fit code
+        strncpy(dest, "???", destSize);
+        dest[destSize - 1] = '\0';
+        return;
+    }
+
+    strcpy(dest, primary);
+
+    if (!secondary) {
+        return;
+    }
+
+    const char lparen[] = " (";
+    const char rparen[] = ")";
+    if (destSize < primaryLen + strlen(lparen) + secondaryLen + strlen(rparen) + 1) {
+        // Cannot fit secondary, leave it out entirely
+        return;
+    }
+
+    strcat(dest, lparen);
+    strcat(dest, secondary);
+    strcat(dest, rparen);
 }
 
 

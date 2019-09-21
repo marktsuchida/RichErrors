@@ -220,3 +220,85 @@ TEST_CASE("Wrap without code") {
 
     RERR_Error_Destroy(wrap);
 }
+
+
+static void FormatCode(RERR_CodeFormat format, int32_t code, char* dest, size_t destSize) {
+    REQUIRE(RERR_Domain_Register("test", format) == RERR_NO_ERROR);
+
+    RERR_ErrorPtr err = RERR_Error_CreateWithCode("test", code, TESTSTR("msg"));
+    REQUIRE(err != RERR_NO_ERROR);
+
+    RERR_Error_FormatCode(err, dest, destSize);
+
+    RERR_Error_Destroy(err);
+    RERR_Domain_UnregisterAll();
+}
+
+
+TEST_CASE("Code formatting") {
+    char buf[RERR_FORMATTED_CODE_MAX_SIZE];
+
+    RERR_Error_FormatCode(RERR_NO_ERROR, buf, sizeof(buf));
+    CHECK(strcmp(buf, "(no code)") == 0);
+
+    RERR_Error_FormatCode(RERR_Error_CreateOutOfMemory(), buf, sizeof(buf));
+    CHECK(strcmp(buf, "1") == 0);
+
+    FormatCode(RERR_CodeFormat_I32, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "-1") == 0);
+    FormatCode(RERR_CodeFormat_I32, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0") == 0);
+
+    FormatCode(RERR_CodeFormat_U32, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "4294967295") == 0);
+    FormatCode(RERR_CodeFormat_U32, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0") == 0);
+
+    FormatCode(RERR_CodeFormat_Hex32, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0xffffffff") == 0);
+    FormatCode(RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0x00000000") == 0);
+
+    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "-1 (0xffffffff)") == 0);
+    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0 (0x00000000)") == 0);
+
+    FormatCode(RERR_CodeFormat_U32 | RERR_CodeFormat_Hex32, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "4294967295 (0xffffffff)") == 0);
+    FormatCode(RERR_CodeFormat_U32 | RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0 (0x00000000)") == 0);
+
+    FormatCode(RERR_CodeFormat_I16, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "-1") == 0);
+    FormatCode(RERR_CodeFormat_I16, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0") == 0);
+
+    FormatCode(RERR_CodeFormat_U16, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "65535") == 0);
+    FormatCode(RERR_CodeFormat_U16, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0") == 0);
+
+    FormatCode(RERR_CodeFormat_Hex16, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0xffff") == 0);
+    FormatCode(RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0x0000") == 0);
+
+    FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "-1 (0xffff)") == 0);
+    FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0 (0x0000)") == 0);
+
+    FormatCode(RERR_CodeFormat_U16 | RERR_CodeFormat_Hex16, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "65535 (0xffff)") == 0);
+    FormatCode(RERR_CodeFormat_U16 | RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0 (0x0000)") == 0);
+
+    // No truncation (too short for primary)
+    FormatCode(RERR_CodeFormat_I32, 1234, buf, strlen("1234") + 1 - 1);
+    CHECK(strcmp(buf, "???") == 0);
+
+    // Leave out secondary if it won't fit
+    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf, strlen("-1 (0x") + 1);
+    CHECK(strcmp(buf, "-1") == 0);
+}
