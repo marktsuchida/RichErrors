@@ -126,13 +126,11 @@ static RERR_ErrorPtr Domain_Check(const char* domainName)
     }
 
     for (int i = 0; i < len; ++i) {
-        // Allow ASCII graphic or space only. Disallow (reserve) forward and
-        // backward slashes and colon for possible future extensions.
-        if (domainName[i] < ' ' || domainName[i] > '~' || domainName[i] == '/' ||
-            domainName[i] == '\\' || domainName[i] == ':') {
+        // Allow ASCII graphic or space only.
+        if (domainName[i] < ' ' || domainName[i] > '~') {
             return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
                 RERR_ECODE_DOMAIN_NAME_INVALID,
-                "Error domain containing unallowed characters");
+                "Error domain containing disallowed characters");
         }
     }
 

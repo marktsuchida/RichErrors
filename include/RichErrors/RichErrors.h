@@ -188,7 +188,7 @@ void RERR_Domain_UnregisterAll(void);
 /// Register an error code domain.
 /**
  * The domain must be a non-empty string of at most 63 ASCII graphic characters
- * (space is allowed). It must not contain the characters `/`, `\`, or `:`.
+ * (space is also allowed).
  *
  * Typically the domain name should be the name of the subsystem, third-party
  * library, or operating system that generates error codes, and the phrase
