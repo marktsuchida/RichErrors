@@ -215,7 +215,7 @@ RERR_ErrorPtr RERR_Error_Create(const char* message);
 
 /// Create an error with an error code.
 /**
- * The domain must be an error code domain previously registered via
+ * The domain name must be an error code domain previously registered via
  * RERR_Domain_Register(). The code should be an error code identifying the
  * type of the error, uniquely within the domain. See RERR_Error_Create()
  * regarding the message.
@@ -223,15 +223,15 @@ RERR_ErrorPtr RERR_Error_Create(const char* message);
  * The returned error object is owned by the caller, who is responsible for
  * deallocation.
  *
- * If domain is `NULL` and code is zero, this function is equivalent to
- * RERR_Error_Create(). If domain is `NULL` but code is nonzero (likely a
+ * If domainName is `NULL` and code is zero, this function is equivalent to
+ * RERR_Error_Create(). If domainName is `NULL` but code is nonzero (likely a
  * programming error, as error codes without specific domain are not allowed),
  * this function fails with an error.
  *
  * This function may return an out-of-memory error (not containing the given
  * message, domain, and code) if memory allocation fails.
  */
-RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domain, int32_t code,
+RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
     const char* message);
 
 /// Destroy an error object.
@@ -259,8 +259,8 @@ void RERR_Error_Copy(RERR_ErrorPtr source, RERR_ErrorPtr* destination);
 
 /// Create a lightweight out-of-memory error.
 /**
- * This function is equivalent to creating an error with domain
- * #RERR_DOMAIN_RICHERRORS and code ::RERR_ECODE_OUT_OF_MEMORY, except that it
+ * This function is equivalent to creating an error with domain name
+ * #RERR_DOMAIN_CRITICAL and code ::RERR_ECODE_OUT_OF_MEMORY, except that it
  * requires no dynamic memory allocation. Note that it is safe to call any of
  * the error creation functions when memory is low, because they all handle
  * allocation failures and return the same value as RERR_Create_OutOfMemory().
@@ -288,7 +288,7 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
 /// Create a nested error with error code, taking ownership of the cause.
 /**
  * The cause can later be retrieved by calling RERR_Error_GetCause() on the new
- * error. The message, domain, and code are handled as in
+ * error. The message, domain name, and code are handled as in
  * RERR_Error_CreateWithCode().
  *
  * Ownership of the error object passed in as cause is transferred to the new
@@ -302,8 +302,8 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
  * message, domain, code, or cause) if internal memory allocation fails. Even
  * in that case, the cause error is deallocated.
  */
-RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause, const char* domain,
-    int32_t code, const char* message);
+RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
+    const char* domainName, int32_t code, const char* message);
 
 /// Return whether the given error has an error domain and code.
 bool RERR_Error_HasCode(RERR_ErrorPtr error);
