@@ -311,6 +311,14 @@ SmallMapPtr SmallMap_UnfrozenCopy(SmallMapPtr map)
 }
 
 
+SmallMapPtr SmallMap_FrozenCopy(SmallMapPtr map)
+{
+    SmallMapPtr ret = SmallMap_Copy(map);
+    SmallMap_Freeze(ret);
+    return ret;
+}
+
+
 void SmallMap_Freeze(SmallMapPtr map)
 {
     if (!map) {

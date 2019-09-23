@@ -138,6 +138,18 @@ SmallMapPtr SmallMap_Copy(SmallMapPtr source);
  */
 SmallMapPtr SmallMap_UnfrozenCopy(SmallMapPtr source);
 
+/// Make an immutable copy of a SmallMap.
+/**
+ * The copy is frozen even if the source is unfrozen.
+ *
+ * This is a convenience function equivalent to calling SmallMap_Copy()
+ * followed by SmallMap_Freeze().
+ *
+ * \return Null if allocation failed or if \p source is null.
+ * \return Opaque pointer to the copy otherwise.
+ */
+SmallMapPtr SmallMap_FrozenCopy(SmallMapPtr source);
+
 /// Forbid further modification of a SmallMap.
 /**
  * If \p map is null, nothing is done. If \p map is already frozen, nothing is
@@ -367,6 +379,12 @@ SmallMapError SmallMap_GetF64(SmallMapPtr map, const char* key, double* value);
 
 SmallMapError SmallMap_PopF64(SmallMapPtr map, const char* key, double* value);
 
+/*
+ * TODO
+ *
+ * - Iterate keys
+ * - C++ interface
+ */
 
 #ifdef __cplusplus
 } // extern "C"
