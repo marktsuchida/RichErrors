@@ -590,7 +590,7 @@ size_t SmallMap_GetStringSize(SmallMapPtr map, const char* key)
 }
 
 
-static SmallMapError GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize, bool remove, bool allowPartial)
+static SmallMapError GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize, bool allowPartial)
 {
     if (!map || !key || !dest) {
         return SmallMapErrorNullArg;
@@ -616,28 +616,23 @@ static SmallMapError GetString(SmallMapPtr map, const char* key, char* dest, siz
     strncpy(dest, found->value.value.string, destSize);
     dest[destSize - 1] = '\0'; // Terminate if truncated
 
-    if (remove) {
-        ClearItem(found);
-        DynArray_Erase(map->items, found);
-    }
-
     return ret;
 }
 
 
 SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
 {
-    return GetString(map, key, dest, destSize, false, false);
+    return GetString(map, key, dest, destSize, false);
 }
 
 
 SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
 {
-    return GetString(map, key, dest, destSize, false, true);
+    return GetString(map, key, dest, destSize, true);
 }
 
 
-static SmallMapError GetBool(SmallMapPtr map, const char* key, bool* value, bool remove)
+SmallMapError SmallMap_GetBool(SmallMapPtr map, const char* key, bool* value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -653,22 +648,11 @@ static SmallMapError GetBool(SmallMapPtr map, const char* key, bool* value, bool
 
     *value = found->value.value.boolean;
 
-    if (remove) {
-        ClearItem(found);
-        DynArray_Erase(map->items, found);
-    }
-
     return SmallMapNoError;
 }
 
 
-SmallMapError SmallMap_GetBool(SmallMapPtr map, const char* key, bool* value)
-{
-    return GetBool(map, key, value, false);
-}
-
-
-static SmallMapError GetI64(SmallMapPtr map, const char* key, int64_t* value, bool remove)
+SmallMapError SmallMap_GetI64(SmallMapPtr map, const char* key, int64_t* value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -684,22 +668,11 @@ static SmallMapError GetI64(SmallMapPtr map, const char* key, int64_t* value, bo
 
     *value = found->value.value.i64;
 
-    if (remove) {
-        ClearItem(found);
-        DynArray_Erase(map->items, found);
-    }
-
     return SmallMapNoError;
 }
 
 
-SmallMapError SmallMap_GetI64(SmallMapPtr map, const char* key, int64_t* value)
-{
-    return GetI64(map, key, value, false);
-}
-
-
-static SmallMapError GetU64(SmallMapPtr map, const char* key, uint64_t* value, bool remove)
+SmallMapError SmallMap_GetU64(SmallMapPtr map, const char* key, uint64_t* value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -715,22 +688,11 @@ static SmallMapError GetU64(SmallMapPtr map, const char* key, uint64_t* value, b
 
     *value = found->value.value.u64;
 
-    if (remove) {
-        ClearItem(found);
-        DynArray_Erase(map->items, found);
-    }
-
     return SmallMapNoError;
 }
 
 
-SmallMapError SmallMap_GetU64(SmallMapPtr map, const char* key, uint64_t* value)
-{
-    return GetU64(map, key, value, false);
-}
-
-
-static SmallMapError GetF64(SmallMapPtr map, const char* key, double* value, bool remove)
+SmallMapError SmallMap_GetF64(SmallMapPtr map, const char* key, double* value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -746,16 +708,5 @@ static SmallMapError GetF64(SmallMapPtr map, const char* key, double* value, boo
 
     *value = found->value.value.f64;
 
-    if (remove) {
-        ClearItem(found);
-        DynArray_Erase(map->items, found);
-    }
-
     return SmallMapNoError;
-}
-
-
-SmallMapError SmallMap_GetF64(SmallMapPtr map, const char* key, double* value)
-{
-    return GetF64(map, key, value, false);
 }
