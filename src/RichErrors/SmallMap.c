@@ -325,6 +325,7 @@ void SmallMap_Freeze(SmallMapPtr map)
         return;
     }
     map->frozen = true;
+    // TODO Shrink if there is excess capacity
 }
 
 
@@ -357,7 +358,7 @@ bool SmallMap_IsEmpty(SmallMapPtr map)
 
 void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
 {
-    if (!map) {
+    if (!map || map->frozen) {
         return;
     }
 
@@ -369,6 +370,9 @@ static SmallMapError SetString(SmallMapPtr map, const char* key, const char* val
 {
     if (!map || !key || !value) {
         return SmallMapErrorNullArg;
+    }
+    if (map->frozen) {
+        return SmallMapErrorMapFrozen;
     }
 
     SmallMapError ret = SmallMapNoError;
@@ -414,6 +418,9 @@ static SmallMapError SetBool(SmallMapPtr map, const char* key, bool value, bool 
     if (!map || !key) {
         return SmallMapErrorNullArg;
     }
+    if (map->frozen) {
+        return SmallMapErrorMapFrozen;
+    }
 
     SmallMapIterator it;
     SmallMapError ret = SetKey(map, key, unique, &it);
@@ -443,6 +450,9 @@ static SmallMapError SetI64(SmallMapPtr map, const char* key, int64_t value, boo
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
+    }
+    if (map->frozen) {
+        return SmallMapErrorMapFrozen;
     }
 
     SmallMapIterator it;
@@ -474,6 +484,9 @@ static SmallMapError SetU64(SmallMapPtr map, const char* key, uint64_t value, bo
     if (!map || !key) {
         return SmallMapErrorNullArg;
     }
+    if (map->frozen) {
+        return SmallMapErrorMapFrozen;
+    }
 
     SmallMapIterator it;
     SmallMapError ret = SetKey(map, key, unique, &it);
@@ -504,6 +517,9 @@ static SmallMapError SetF64(SmallMapPtr map, const char* key, double value, bool
     if (!map || !key) {
         return SmallMapErrorNullArg;
     }
+    if (map->frozen) {
+        return SmallMapErrorMapFrozen;
+    }
 
     SmallMapIterator it;
     SmallMapError ret = SetKey(map, key, unique, &it);
@@ -531,7 +547,7 @@ SmallMapError SmallMap_SetUniqueF64(SmallMapPtr map, const char* key, double val
 
 bool SmallMap_Remove(SmallMapPtr map, const char* key)
 {
-    if (!map || !key) {
+    if (!map || map->frozen || !key) {
         return false;
     }
 
@@ -549,7 +565,7 @@ bool SmallMap_Remove(SmallMapPtr map, const char* key)
 
 void SmallMap_Clear(SmallMapPtr map)
 {
-    if (!map) {
+    if (!map || map->frozen) {
         return;
     }
 

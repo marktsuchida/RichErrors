@@ -92,6 +92,7 @@ enum {
     SmallMapNoError = 0,
     SmallMapErrorOutOfMemory,
     SmallMapErrorNullArg,
+    SmallMapErrorMapFrozen,
     SmallMapErrorKeyNotFound,
     SmallMapErrorKeyExists,
     SmallMapErrorWrongType,
@@ -187,7 +188,7 @@ bool SmallMap_IsEmpty(SmallMapPtr map);
 
 /// Pre-allocate space for the given number of items.
 /**
- * If \p map is null, nothing is done.
+ * If \p map is null or frozen, nothing is done.
  *
  * If \p capacity is smaller than the current size of \p map, the current size
  * is used as the capacity hint. Thus this function can be called with a \p
@@ -206,6 +207,7 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity);
  * Both the key and the value are copied.
  *
  * \return ::SmallMapErrorOutOfMemory if allocation failed.
+ * \return ::SmallMapErrorMapFrozen if \p map is frozen.
  * \return ::SmallMapErrorNullArg if any of \p map, \p key, or \p value is null.
  * \return ::SmallMapNoError otherwise.
  */
@@ -218,6 +220,7 @@ SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* key, const c
  * The key is copied.
  *
  * \return ::SmallMapErrorOutOfMemory if allocation failed.
+ * \return ::SmallMapErrorMapFrozen if \p map is frozen.
  * \return ::SmallMapErrorNullArg if either \p map or \p key is null.
  * \return ::SmallMapNoError otherwise.
  */
@@ -230,6 +233,7 @@ SmallMapError SmallMap_SetUniqueBool(SmallMapPtr map, const char* key, bool valu
  * The key is copied.
  *
  * \return ::SmallMapErrorOutOfMemory if allocation failed.
+ * \return ::SmallMapErrorMapFrozen if \p map is frozen.
  * \return ::SmallMapErrorNullArg if either \p map or \p key is null.
  * \return ::SmallMapNoError otherwise.
  */
@@ -242,6 +246,7 @@ SmallMapError SmallMap_SetUniqueI64(SmallMapPtr map, const char* key, int64_t va
  * The key is copied.
  *
  * \return ::SmallMapErrorOutOfMemory if allocation failed.
+ * \return ::SmallMapErrorMapFrozen if \p map is frozen.
  * \return ::SmallMapErrorNullArg if either \p map or \p key is null.
  * \return ::SmallMapNoError otherwise.
  */
@@ -254,6 +259,7 @@ SmallMapError SmallMap_SetUniqueU64(SmallMapPtr map, const char* key, uint64_t v
  * The key is copied.
  *
  * \return ::SmallMapErrorOutOfMemory if allocation failed.
+ * \return ::SmallMapErrorMapFrozen if \p map is frozen.
  * \return ::SmallMapErrorNullArg if either \p map or \p key is null.
  * \return ::SmallMapNoError otherwise.
  */
@@ -264,7 +270,7 @@ SmallMapError SmallMap_SetUniqueF64(SmallMapPtr map, const char* key, double val
 /// Remove a key from a SmallMap.
 /**
  * Nothing is done if either \p map or \p key is null, or if \p key is not
- * found in \p map.
+ * found in \p map, or if \p map is frozen.
  *
  * \return `true` if removal took place; otherwise `false`.
  */
@@ -272,7 +278,7 @@ bool SmallMap_Remove(SmallMapPtr map, const char* key);
 
 /// Remove all items from a SmallMap.
 /**
- * Nothing is done if \p map is null.
+ * Nothing is done if \p map is null or frozen.
  */
 void SmallMap_Clear(SmallMapPtr map);
 
