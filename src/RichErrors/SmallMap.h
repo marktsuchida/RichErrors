@@ -178,6 +178,13 @@ bool SmallMap_IsFrozen(SmallMapPtr map);
  */
 size_t SmallMap_GetSize(SmallMapPtr map);
 
+/// Return whether a SmallMap is empty.
+/**
+ * \return `true` if \p map is empty or null.
+ * \return `false` otherwise.
+ */
+bool SmallMap_IsEmpty(SmallMapPtr map);
+
 /// Pre-allocate space for the given number of items.
 /**
  * If \p map is null, nothing is done.

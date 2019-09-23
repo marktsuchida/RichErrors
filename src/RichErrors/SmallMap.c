@@ -346,6 +346,15 @@ size_t SmallMap_GetSize(SmallMapPtr map)
 }
 
 
+bool SmallMap_IsEmpty(SmallMapPtr map)
+{
+    if (!map) {
+        return true;
+    }
+    return DynArray_Size(map->items) == 0;
+}
+
+
 void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
 {
     if (!map) {
