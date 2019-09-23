@@ -120,11 +120,11 @@ void RERR_InfoMap_Destroy(RERR_InfoMapPtr map);
  * The copy is semantically a deep copy, meaning that no keys or values share
  * storage.
  *
- * If \p source is frozen, the returned map is also frozen and may share
+ * If \p source is immutable, the returned map is also immutable and may share
  * storage with the source.
  *
  * The return value is guaranteed to be non-null if \p source is not null and
- * is frozen.
+ * is immutable.
  *
  * \return Null if allocation failed or if \p source is null.
  * \return Opaque pointer to the copy otherwise.
@@ -133,7 +133,7 @@ RERR_InfoMapPtr RERR_InfoMap_Copy(RERR_InfoMapPtr source);
 
 /// Make a mutable copy of an info map.
 /**
- * The copy is unfrozen even if the source is frozen.
+ * The copy is mutable even if the source is immutable.
  *
  * \return Null if allocation failed or if \p source is null.
  * \return Opaque pointer to the copy otherwise.
@@ -142,7 +142,7 @@ RERR_InfoMapPtr RERR_InfoMap_MutableCopy(RERR_InfoMapPtr source);
 
 /// Make an immutable copy of an info map.
 /**
- * The copy is frozen even if the source is unfrozen.
+ * The copy is immutable even if the source is mutable.
  *
  * This is a convenience function equivalent to calling RERR_InfoMap_Copy()
  * followed by RERR_InfoMap_MakeImmutable().
@@ -154,25 +154,21 @@ RERR_InfoMapPtr RERR_InfoMap_ImmutableCopy(RERR_InfoMapPtr source);
 
 /// Forbid further modification of an info map.
 /**
- * If \p map is null, nothing is done. If \p map is already frozen, nothing is
- * done.
+ * If \p map is null, nothing is done. If \p map is already immutable, nothing
+ * is done.
  *
  * \sa RERR_InfoMap_IsImmutable()
  */
 void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map);
 
-/// Return whether an info map is frozen.
+/// Return whether an info map is mutable.
 /**
- * Note that this function returns `true` if \p map is null. This is because
- * null cannot be mutated.
- *
- * \return `true` if \p map is frozen or null.
- * \return `false` if \p map is not frozen.
+ * \return `true` if \p map is mutable.
+ * \return `false` if \p map is immutable or null.
  *
  * \sa RERR_InfoMap_MakeImmutable()
  */
-bool RERR_InfoMap_IsImmutable(RERR_InfoMapPtr map);
-// TODO Replace with RERR_InfoMap_IsMutable()
+bool RERR_InfoMap_IsMutable(RERR_InfoMapPtr map);
 
 /// Return the number of items in an info map.
 /**
@@ -190,7 +186,7 @@ bool RERR_InfoMap_IsEmpty(RERR_InfoMapPtr map);
 
 /// Pre-allocate space for the given number of items.
 /**
- * If \p map is null or frozen, nothing is done.
+ * If \p map is null or immutable, nothing is done.
  *
  * If \p capacity is smaller than the current size of \p map, the current size
  * is used as the capacity hint. Thus this function can be called with a \p
@@ -209,7 +205,7 @@ void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity);
  * Both the key and the value are copied.
  *
  * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is frozen.
+ * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
  * \return ::RERR_InfoMapErrorNullArg if any of \p map, \p key, or \p value is null.
  * \return ::RERR_InfoMapNoError otherwise.
  */
@@ -220,7 +216,7 @@ RERR_InfoMapError RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, c
  * The key is copied.
  *
  * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is frozen.
+ * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
  * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
  * \return ::RERR_InfoMapNoError otherwise.
  */
@@ -231,7 +227,7 @@ RERR_InfoMapError RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, boo
  * The key is copied.
  *
  * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is frozen.
+ * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
  * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
  * \return ::RERR_InfoMapNoError otherwise.
  */
@@ -242,7 +238,7 @@ RERR_InfoMapError RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int6
  * The key is copied.
  *
  * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is frozen.
+ * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
  * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
  * \return ::RERR_InfoMapNoError otherwise.
  */
@@ -253,7 +249,7 @@ RERR_InfoMapError RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint
  * The key is copied.
  *
  * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is frozen.
+ * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
  * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
  * \return ::RERR_InfoMapNoError otherwise.
  */
@@ -262,7 +258,7 @@ RERR_InfoMapError RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, doub
 /// Remove a key from an info map.
 /**
  * Nothing is done if either \p map or \p key is null, or if \p key is not
- * found in \p map, or if \p map is frozen.
+ * found in \p map, or if \p map is immutable.
  *
  * \return `true` if removal took place; otherwise `false`.
  */
@@ -270,7 +266,7 @@ bool RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key);
 
 /// Remove all items from an info map.
 /**
- * Nothing is done if \p map is null or frozen.
+ * Nothing is done if \p map is null or immutable.
  */
 void RERR_InfoMap_Clear(RERR_InfoMapPtr map);
 
@@ -293,8 +289,8 @@ RERR_InfoMapError RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key, RER
 /// Retrieve a string value from an info map.
 /**
  * `*value` is set to an internal copy of the string value, which is valid
- * until the map is destroyed (if the map is frozen) or until the key is
- * removed or overwritten (if the map is unfrozen).
+ * until the map is destroyed (if the map is immutable) or until the key is
+ * removed or overwritten (if the map is mutable).
  *
  * \return ::RERR_InfoMapErrorNullArg if \p map or \p key or \p value is null.
  * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.

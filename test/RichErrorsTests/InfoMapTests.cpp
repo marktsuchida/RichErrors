@@ -40,7 +40,7 @@ TEST_CASE("Null behavior", "[RERR_InfoMap]") {
     REQUIRE(RERR_InfoMap_MutableCopy(nullptr) == nullptr);
     REQUIRE(RERR_InfoMap_ImmutableCopy(nullptr) == nullptr);
     RERR_InfoMap_MakeImmutable(nullptr);
-    REQUIRE(RERR_InfoMap_IsImmutable(nullptr));
+    REQUIRE(!RERR_InfoMap_IsMutable(nullptr));
     REQUIRE(RERR_InfoMap_GetSize(nullptr) == 0);
     RERR_InfoMap_ReserveCapacity(nullptr, 0);
     RERR_InfoMap_ReserveCapacity(nullptr, 42);
@@ -60,24 +60,24 @@ TEST_CASE("Lifecycle", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_Create();
     REQUIRE(m != nullptr);
     REQUIRE(RERR_InfoMap_GetSize(m) == 0);
-    REQUIRE(!RERR_InfoMap_IsImmutable(m));
+    REQUIRE(RERR_InfoMap_IsMutable(m));
     RERR_InfoMap_MakeImmutable(m);
-    REQUIRE(RERR_InfoMap_IsImmutable(m));
+    REQUIRE(!RERR_InfoMap_IsMutable(m));
 
     RERR_InfoMapPtr c = RERR_InfoMap_Copy(m);
     REQUIRE(c != nullptr);
     REQUIRE(c == m); // Shared immutable copy
-    REQUIRE(RERR_InfoMap_IsImmutable(c));
+    REQUIRE(!RERR_InfoMap_IsMutable(c));
 
     RERR_InfoMapPtr mc = RERR_InfoMap_MutableCopy(m);
     REQUIRE(mc != nullptr);
     REQUIRE(mc != m);
-    REQUIRE(!RERR_InfoMap_IsImmutable(mc));
+    REQUIRE(RERR_InfoMap_IsMutable(mc));
 
     RERR_InfoMapPtr mc2 = RERR_InfoMap_Copy(mc);
     REQUIRE(mc2 != nullptr);
     REQUIRE(mc2 != mc);
-    REQUIRE(!RERR_InfoMap_IsImmutable(mc2));
+    REQUIRE(RERR_InfoMap_IsMutable(mc2));
 
     RERR_InfoMap_Destroy(mc2);
     RERR_InfoMap_Destroy(mc);

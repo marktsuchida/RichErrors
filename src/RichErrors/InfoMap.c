@@ -324,12 +324,12 @@ void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map)
 }
 
 
-bool RERR_InfoMap_IsImmutable(RERR_InfoMapPtr map)
+bool RERR_InfoMap_IsMutable(RERR_InfoMapPtr map)
 {
     if (!map) {
-        return true;
+        return false;
     }
-    return map->frozen;
+    return !map->frozen;
 }
 
 
