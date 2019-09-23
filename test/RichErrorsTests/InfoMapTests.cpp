@@ -44,9 +44,9 @@ TEST_CASE("Null behavior", "[RERR_InfoMap]") {
     REQUIRE(RERR_InfoMap_GetSize(nullptr) == 0);
     RERR_InfoMap_ReserveCapacity(nullptr, 0);
     RERR_InfoMap_ReserveCapacity(nullptr, 42);
-    REQUIRE(RERR_InfoMap_Remove(nullptr, "key") == false);
-    REQUIRE(RERR_InfoMap_Remove(nullptr, nullptr) == false);
-    REQUIRE(RERR_InfoMap_Remove(m, nullptr) == false);
+    RERR_InfoMap_Remove(nullptr, "key");
+    RERR_InfoMap_Remove(nullptr, nullptr);
+    RERR_InfoMap_Remove(m, nullptr);
     RERR_InfoMap_Clear(nullptr);
     REQUIRE(RERR_InfoMap_HasKey(nullptr, "key") == false);
     REQUIRE(RERR_InfoMap_HasKey(nullptr, nullptr) == false);
@@ -92,48 +92,39 @@ TEST_CASE("Strings", "[RERR_InfoMap]") {
 
     const char* key;
     const char* value;
-    RERR_InfoMapError e;
 
     key = TESTSTR("key");
     value = TESTSTR("value");
-    e = RERR_InfoMap_SetString(m, key, value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    RERR_InfoMap_SetString(m, key, value);
 
     RERR_InfoMap_Clear(m);
     REQUIRE(RERR_InfoMap_GetSize(m) == 0);
 
     key = TESTSTR("key");
     value = TESTSTR("value");
-    e = RERR_InfoMap_SetString(m, key, value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    RERR_InfoMap_SetString(m, key, value);
 
     key = TESTSTR("key");
     value = TESTSTR("value");
-    e = RERR_InfoMap_SetString(m, key, value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    RERR_InfoMap_SetString(m, key, value);
 
     key = TESTSTR("key");
     value = TESTSTR("value");
-    e = RERR_InfoMap_SetString(m, key, value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    RERR_InfoMap_SetString(m, key, value);
 
     key = TESTSTR("key");
     value = TESTSTR("value");
-    e = RERR_InfoMap_SetString(m, key, value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    RERR_InfoMap_SetString(m, key, value);
 
     REQUIRE(RERR_InfoMap_GetSize(m) == 4);
 
     REQUIRE(RERR_InfoMap_HasKey(m, key));
     REQUIRE(!RERR_InfoMap_HasKey(m, "foo"));
 
-    RERR_InfoValueType t;
-    REQUIRE(RERR_InfoMap_GetType(m, key, &t) == RERR_InfoMapNoError);
-    REQUIRE(t == RERR_InfoValueTypeString);
+    REQUIRE(RERR_InfoMap_GetType(m, key) == RERR_InfoValueTypeString);
 
     const char* s;
-    e = RERR_InfoMap_GetString(m, key, &s);
-    REQUIRE(e == RERR_InfoMapNoError);
+    REQUIRE(RERR_InfoMap_GetString(m, key, &s));
     REQUIRE(strcmp(s, value) == 0);
 
     RERR_InfoMap_Destroy(m);
@@ -144,48 +135,30 @@ TEST_CASE("Numeic", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_Create();
     REQUIRE(m != nullptr);
 
-    RERR_InfoMapError e;
+    RERR_InfoMap_SetBool(m, "bool", true);
+    RERR_InfoMap_SetI64(m, "i64", -42);
+    RERR_InfoMap_SetU64(m, "u64", 42);
+    RERR_InfoMap_SetF64(m, "f64", 42.5);
 
-    e = RERR_InfoMap_SetBool(m, "bool", true);
-    REQUIRE(e == RERR_InfoMapNoError);
-
-    e = RERR_InfoMap_SetI64(m, "i64", -42);
-    REQUIRE(e == RERR_InfoMapNoError);
-
-    e = RERR_InfoMap_SetU64(m, "u64", 42);
-    REQUIRE(e == RERR_InfoMapNoError);
-
-    e = RERR_InfoMap_SetF64(m, "f64", 42.5);
-    REQUIRE(e == RERR_InfoMapNoError);
-
-    RERR_InfoValueType t;
-    REQUIRE(RERR_InfoMap_GetType(m, "bool", &t) == RERR_InfoMapNoError);
-    REQUIRE(t == RERR_InfoValueTypeBool);
-    REQUIRE(RERR_InfoMap_GetType(m, "i64", &t) == RERR_InfoMapNoError);
-    REQUIRE(t == RERR_InfoValueTypeI64);
-    REQUIRE(RERR_InfoMap_GetType(m, "u64", &t) == RERR_InfoMapNoError);
-    REQUIRE(t == RERR_InfoValueTypeU64);
-    REQUIRE(RERR_InfoMap_GetType(m, "f64", &t) == RERR_InfoMapNoError);
-    REQUIRE(t == RERR_InfoValueTypeF64);
+    REQUIRE(RERR_InfoMap_GetType(m, "bool") == RERR_InfoValueTypeBool);
+    REQUIRE(RERR_InfoMap_GetType(m, "i64") == RERR_InfoValueTypeI64);
+    REQUIRE(RERR_InfoMap_GetType(m, "u64") == RERR_InfoValueTypeU64);
+    REQUIRE(RERR_InfoMap_GetType(m, "f64") == RERR_InfoValueTypeF64);
 
     bool boolValue;
-    e = RERR_InfoMap_GetBool(m, "bool", &boolValue);
-    REQUIRE(e == RERR_InfoMapNoError);
+    REQUIRE(RERR_InfoMap_GetBool(m, "bool", &boolValue));
     REQUIRE(boolValue == true);
 
     int64_t i64Value;
-    e = RERR_InfoMap_GetI64(m, "i64", &i64Value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    REQUIRE(RERR_InfoMap_GetI64(m, "i64", &i64Value));
     REQUIRE(i64Value == -42);
 
     uint64_t u64Value;
-    e = RERR_InfoMap_GetU64(m, "u64", &u64Value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    REQUIRE(RERR_InfoMap_GetU64(m, "u64", &u64Value));
     REQUIRE(u64Value == 42);
 
     double f64Value;
-    e = RERR_InfoMap_GetF64(m, "f64", &f64Value);
-    REQUIRE(e == RERR_InfoMapNoError);
+    REQUIRE(RERR_InfoMap_GetF64(m, "f64", &f64Value));
     REQUIRE(f64Value == 42.5);
 
     RERR_InfoMap_Destroy(m);

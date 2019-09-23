@@ -30,6 +30,7 @@
 
 #include "DynArray.h"
 
+#include <math.h> // for NAN
 #include <string.h>
 
 #ifdef _MSC_VER
@@ -206,8 +207,8 @@ static inline RERR_InfoMapIterator Find(RERR_InfoMapPtr map, const char* key)
 // Precondition: key != NULL
 // Postcondition: *it == NULL || (*it)->key contains copy of key
 // Postcondition: (*it)->value is invalid
-// Returns RERR_InfoMapErrorOutOfMemory if allocation of capacity or key copy failed
-static RERR_InfoMapError SetKey(RERR_InfoMapPtr map, const char* key, RERR_InfoMapIterator* it)
+// Returns true if successful; false on allocation failure
+static bool SetKey(RERR_InfoMapPtr map, const char* key, RERR_InfoMapIterator* it)
 {
     *it = RERR_DynArray_BSearchInsertionPoint(map->items, key, ItemKeyCompare);
 
@@ -219,22 +220,24 @@ static RERR_InfoMapError SetKey(RERR_InfoMapPtr map, const char* key, RERR_InfoM
         (*it)->key = NULL;
         ClearItem(*it);
         (*it)->key = saveKey;
-        return RERR_InfoMapNoError;
+        return true;
     }
 
-    RERR_InfoMapError ret = RERR_InfoMapNoError;
+    bool ret = true;
 
     size_t keyLen = strlen(key);
     char* keyCopy = malloc(keyLen + 1);
     if (!keyCopy) {
-        ret = RERR_InfoMapErrorOutOfMemory;
+        ret = false;
+        // TODO OOM mode
         goto exit;
     }
     strncpy(keyCopy, key, keyLen + 1);
 
     *it = RERR_DynArray_Insert(map->items, *it);
     if (!*it) {
-        ret = RERR_InfoMapErrorOutOfMemory;
+        ret = false;
+        // TODO OOM mode
         goto exit;
     }
 
@@ -361,28 +364,26 @@ void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity)
 }
 
 
-RERR_InfoMapError RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value)
+void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value)
 {
-    if (!map || !key || !value) {
-        return RERR_InfoMapErrorNullArg;
+    if (!map) {
+        return;
     }
-    if (map->frozen) {
-        return RERR_InfoMapErrorMapImmutable;
+    if (!key || !value || map->frozen) {
+        // TODO Programming error
+        return;
     }
-
-    RERR_InfoMapError ret = RERR_InfoMapNoError;
 
     size_t strLen = strlen(value);
     char* strCopy = malloc(strLen + 1);
     if (!strCopy) {
-        ret = RERR_InfoMapErrorOutOfMemory;
         goto exit;
     }
     strncpy(strCopy, value, strLen + 1);
 
     RERR_InfoMapIterator it;
-    ret = SetKey(map, key, &it);
-    if (ret) {
+    bool ok = SetKey(map, key, &it);
+    if (!ok) {
         goto exit;
     }
 
@@ -392,115 +393,120 @@ RERR_InfoMapError RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, c
 
 exit:
     free(strCopy);
-    return ret;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value)
+void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value)
 {
-    if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+    if (!map) {
+        return;
     }
-    if (map->frozen) {
-        return RERR_InfoMapErrorMapImmutable;
+    if (!key || map->frozen) {
+        // TODO Programming error
+        return;
     }
 
     RERR_InfoMapIterator it;
-    RERR_InfoMapError ret = SetKey(map, key, &it);
-    if (ret) {
-        return ret;
+    bool ok = SetKey(map, key, &it);
+    if (!ok) {
+        return;
     }
 
     it->value.type = RERR_InfoValueTypeBool;
     it->value.value.boolean = value;
-    return RERR_InfoMapNoError;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value)
+void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value)
 {
-    if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+    if (!map) {
+        return;
     }
-    if (map->frozen) {
-        return RERR_InfoMapErrorMapImmutable;
+    if (!key || map->frozen) {
+        // TODO Programming error
+        return;
     }
 
     RERR_InfoMapIterator it;
-    RERR_InfoMapError ret = SetKey(map, key, &it);
-    if (ret) {
-        return ret;
+    bool ok = SetKey(map, key, &it);
+    if (!ok) {
+        return;
     }
 
     it->value.type = RERR_InfoValueTypeI64;
     it->value.value.i64 = value;
-    return RERR_InfoMapNoError;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value)
+void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value)
 {
-    if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+    if (!map) {
+        return;
     }
-    if (map->frozen) {
-        return RERR_InfoMapErrorMapImmutable;
+    if (!key || map->frozen) {
+        // TODO Programming error
+        return;
     }
 
     RERR_InfoMapIterator it;
-    RERR_InfoMapError ret = SetKey(map, key, &it);
-    if (ret) {
-        return ret;
+    bool ok = SetKey(map, key, &it);
+    if (!ok) {
+        return;
     }
 
     it->value.type = RERR_InfoValueTypeU64;
     it->value.value.u64 = value;
-    return RERR_InfoMapNoError;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value)
+void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value)
 {
-    if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+    if (!map) {
+        return;
     }
-    if (map->frozen) {
-        return RERR_InfoMapErrorMapImmutable;
+    if (!key || map->frozen) {
+        // TODO Programming error
+        return;
     }
 
     RERR_InfoMapIterator it;
-    RERR_InfoMapError ret = SetKey(map, key, &it);
-    if (ret) {
-        return ret;
+    bool ok = SetKey(map, key, &it);
+    if (!ok) {
+        return;
     }
 
     it->value.type = RERR_InfoValueTypeF64;
     it->value.value.f64 = value;
-    return RERR_InfoMapNoError;
 }
 
 
-bool RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key)
+void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key)
 {
-    if (!map || map->frozen || !key) {
-        return false;
+    if (!map) {
+        return;
+    }
+    if (map->frozen || !key) {
+        // TODO Programming error
+        return;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return false;
+        return;
     }
 
     ClearItem(found);
     RERR_DynArray_Erase(map->items, found);
-
-    return true;
 }
 
 
 void RERR_InfoMap_Clear(RERR_InfoMapPtr map)
 {
-    if (!map || map->frozen) {
+    if (!map) {
+        return;
+    }
+    if (map->frozen) {
+        // TODO Programming error
         return;
     }
 
@@ -519,117 +525,121 @@ bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key)
 }
 
 
-RERR_InfoMapError RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key, RERR_InfoValueType* type)
+RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key)
 {
-    if (!map || !key || !type) {
-        return RERR_InfoMapErrorNullArg;
+    if (!map || !key) {
+        return RERR_InfoValueTypeInvalid;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return RERR_InfoMapErrorKeyNotFound;
+        return RERR_InfoValueTypeInvalid;
     }
 
-    *type = found->value.type;
-    return RERR_InfoMapNoError;
+    return found->value.type;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value)
+bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value)
 {
-    if (!map || !key || !value) {
-        return RERR_InfoMapErrorNullArg;
+    if (!value) {
+        return false;
+    }
+    *value = NULL;
+
+    if (!map || !key) {
+        return false;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
-    if (!found) {
-        return RERR_InfoMapErrorKeyNotFound;
-    }
-    if (found->value.type != RERR_InfoValueTypeString) {
-        return RERR_InfoMapErrorWrongType;
+    if (!found || found->value.type != RERR_InfoValueTypeString) {
+        return false;
     }
 
     *value = found->value.value.string;
-
-    return RERR_InfoMapNoError;
+    return true;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value)
+bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value)
 {
+    if (!value) {
+        return false;
+    }
+    *value = false; // Not promised in API, but be deterministic
+
     if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+        return false;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
-    if (!found) {
-        return RERR_InfoMapErrorKeyNotFound;
-    }
-    if (found->value.type != RERR_InfoValueTypeBool) {
-        return RERR_InfoMapErrorWrongType;
+    if (!found || found->value.type != RERR_InfoValueTypeBool) {
+        return false;
     }
 
     *value = found->value.value.boolean;
-
-    return RERR_InfoMapNoError;
+    return true;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value)
+bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value)
 {
+    if (!value) {
+        return false;
+    }
+    *value = 0; // Not promised in API, but be deterministic
+
     if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+        return false;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
-    if (!found) {
-        return RERR_InfoMapErrorKeyNotFound;
-    }
-    if (found->value.type != RERR_InfoValueTypeI64) {
-        return RERR_InfoMapErrorWrongType;
+    if (!found || found->value.type != RERR_InfoValueTypeI64) {
+        return false;
     }
 
     *value = found->value.value.i64;
-
-    return RERR_InfoMapNoError;
+    return true;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value)
+bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value)
 {
+    if (!value) {
+        return false;
+    }
+    *value = 0; // Not promised in API, but be deterministic
+
     if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+        return false;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
-    if (!found) {
-        return RERR_InfoMapErrorKeyNotFound;
-    }
-    if (found->value.type != RERR_InfoValueTypeU64) {
-        return RERR_InfoMapErrorWrongType;
+    if (!found || found->value.type != RERR_InfoValueTypeU64) {
+        return false;
     }
 
     *value = found->value.value.u64;
-
-    return RERR_InfoMapNoError;
+    return true;
 }
 
 
-RERR_InfoMapError RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value)
+bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value)
 {
+    if (!value) {
+        return false;
+    }
+    *value = NAN; // Not promised in API, but be deterministic
+
     if (!map || !key) {
-        return RERR_InfoMapErrorNullArg;
+        return false;
     }
 
     RERR_InfoMapIterator found = Find(map, key);
-    if (!found) {
-        return RERR_InfoMapErrorKeyNotFound;
-    }
-    if (found->value.type != RERR_InfoValueTypeF64) {
-        return RERR_InfoMapErrorWrongType;
+    if (!found || found->value.type != RERR_InfoValueTypeF64) {
+        return false;
     }
 
     *value = found->value.value.f64;
-
-    return RERR_InfoMapNoError;
+    return true;
 }

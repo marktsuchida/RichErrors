@@ -57,7 +57,20 @@ extern "C" {
  * items may be added is not recommended.
  *
  * The map is initially mutable, but can be turned immutable by calling
- * RERR_InfoMap_MakeImmutable().
+ * RERR_InfoMap_MakeImmutable(). Typical usage is to make the map immutable as
+ * soon as the necessary values are added.
+ *
+ * In general, the map API is desinged to minimize the need for error checking
+ * when constructing: the mutating functions do not return error status.
+ * Runtime errors (out of memory) and programming errors (such as passing a
+ * null key to a mutating method) are handled silently in a way that does not
+ * disrupt the code constructing the map. This design choice was made because
+ * error handling code has the tendency to be poorly tested, and reporting an
+ * error back to code that is already handling another error is unlikely to end
+ * well unless the code is very carefully written (which in turn would take
+ * disproportionate effort).
+ *
+ * TODO Out-of-memory state
  */
 typedef struct RERR_InfoMap* RERR_InfoMapPtr;
 
@@ -73,29 +86,12 @@ typedef int32_t RERR_InfoValueType;
 
 /// Values of ::RERR_InfoValueType.
 enum {
-    // Zero reserved for invalid type
-    RERR_InfoValueTypeString = 1,
-    RERR_InfoValueTypeBool,
-    RERR_InfoValueTypeI64,
-    RERR_InfoValueTypeU64,
-    RERR_InfoValueTypeF64,
-};
-
-/// Error code type for info map functions.
-typedef int32_t RERR_InfoMapError;
-// TODO Eliminate error codes that would require error checks in client code.
-
-/// Error codes returned by info map functions.
-/**
- * The possible error codes and their meaning are documented for each function.
- */
-enum {
-    RERR_InfoMapNoError = 0,
-    RERR_InfoMapErrorOutOfMemory,
-    RERR_InfoMapErrorNullArg,
-    RERR_InfoMapErrorMapImmutable,
-    RERR_InfoMapErrorKeyNotFound,
-    RERR_InfoMapErrorWrongType,
+    RERR_InfoValueTypeInvalid = 0, ///< Indicates absence of value
+    RERR_InfoValueTypeString, ///< String value
+    RERR_InfoValueTypeBool, ///< Boolean value
+    RERR_InfoValueTypeI64, ///< Signed integer value
+    RERR_InfoValueTypeU64, ///< Unsigned integer value
+    RERR_InfoValueTypeF64, ///< Floating-point value
 };
 
 /// Create an info map.
@@ -202,71 +198,103 @@ void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity);
 
 /// Add or replace a string value in an info map.
 /**
- * Both the key and the value are copied.
+ * Both the key and the value are copied into the map.
  *
- * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
- * \return ::RERR_InfoMapErrorNullArg if any of \p map, \p key, or \p value is null.
- * \return ::RERR_InfoMapNoError otherwise.
+ * If \p map is null, nothing is done.
+ *
+ * If \p key or \p value is null, or if \p map is immutable, behavior is
+ * undefined.
+ *
+ * If memory cannot be allocated to store the key and value, the map will
+ * switch to out-of-memory mode.
+ *
+ * \param map the info map, which should not be null
+ * \param[in] key the key string, which must not be null
+ * \param[in] value the value string, which must not be null
  */
-RERR_InfoMapError RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value);
+void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value);
 
 /// Add or replace a boolean value in an info map.
 /**
  * The key is copied.
  *
- * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
- * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
- * \return ::RERR_InfoMapNoError otherwise.
+ * If \p map is null, nothing is done.
+ *
+ * If \p key is null, or if \p map is immutable, behavior is undefined.
+ *
+ * If memory cannot be allocated to store the key and value, the map will
+ * switch to out-of-memory mode.
+ *
+ * \param map the info map, which should not be null
+ * \param[in] key the key string, which must not be null
+ * \param[in] value the boolean value
  */
-RERR_InfoMapError RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value);
+void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value);
 
 /// Add or replace a signed integer value in an info map.
 /**
  * The key is copied.
  *
- * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
- * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
- * \return ::RERR_InfoMapNoError otherwise.
+ * If \p map is null, nothing is done.
+ *
+ * If \p key is null, or if \p map is immutable, behavior is undefined.
+ *
+ * If memory cannot be allocated to store the key and value, the map will
+ * switch to out-of-memory mode.
+ *
+ * \param map the info map, which should not be null
+ * \param[in] key the key string, which must not be null
+ * \param[in] value the signed integer value
  */
-RERR_InfoMapError RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value);
+void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value);
 
 /// Add or replace an unsigned integer value in an info map.
 /**
  * The key is copied.
  *
- * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
- * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
- * \return ::RERR_InfoMapNoError otherwise.
+ * If \p map is null, nothing is done.
+ *
+ * If \p key is null, or if \p map is immutable, behavior is undefined.
+ *
+ * If memory cannot be allocated to store the key and value, the map will
+ * switch to out-of-memory mode.
+ *
+ * \param map the info map, which should not be null
+ * \param[in] key the key string, which must not be null
+ * \param[in] value the unsigned integer value
  */
-RERR_InfoMapError RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value);
+void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value);
 
 /// Add or replace a floating point value in an info map.
 /**
  * The key is copied.
  *
- * \return ::RERR_InfoMapErrorOutOfMemory if allocation failed.
- * \return ::RERR_InfoMapErrorMapImmutable if \p map is immutable.
- * \return ::RERR_InfoMapErrorNullArg if either \p map or \p key is null.
- * \return ::RERR_InfoMapNoError otherwise.
+ * If \p map is null, nothing is done.
+ *
+ * If \p key is null, or if \p map is immutable, behavior is undefined.
+ *
+ * If memory cannot be allocated to store the key and value, the map will
+ * switch to out-of-memory mode.
+ *
+ * \param map the info map, which should not be null
+ * \param[in] key the key string, which must not be null
+ * \param[in] value the floating-point value
  */
-RERR_InfoMapError RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value);
+void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value);
 
 /// Remove a key from an info map.
 /**
- * Nothing is done if either \p map or \p key is null, or if \p key is not
- * found in \p map, or if \p map is immutable.
+ * Nothing is done if \p map is null or if \p map does not contain \p key.
  *
- * \return `true` if removal took place; otherwise `false`.
+ * If \p map is immutable or \p key is null, behavior is undefined.
  */
-bool RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key);
+void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key);
 
 /// Remove all items from an info map.
 /**
- * Nothing is done if \p map is null or immutable.
+ * Nothing is done if \p map is null.
+ *
+ * If \p map is immutable, behavior is undefined.
  */
 void RERR_InfoMap_Clear(RERR_InfoMapPtr map);
 
@@ -280,65 +308,91 @@ bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key);
 
 /// Get the value type for the given key.
 /**
- * \return ::RERR_InfoMapErrorNullArg if \p map, \p key, or \p type is null.
- * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::RERR_InfoMapNoError otherwise, in which case `*type` is valid.
+ * \return ::RERR_InfoValueTypeInvalid if \p map or \p key is null or if \p map
+ * does not contain \p key.
+ * \return the type of the value stored under key otherwise
  */
-RERR_InfoMapError RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key, RERR_InfoValueType* type);
+RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key);
 
 /// Retrieve a string value from an info map.
 /**
- * `*value` is set to an internal copy of the string value, which is valid
- * until the map is destroyed (if the map is immutable) or until the key is
- * removed or overwritten (if the map is mutable).
+ * If \p map or \p key is null, or if \p map does not contain a string value
+ * for \p key, then `*value` is set to NULL and `false` is returned.
  *
- * \return ::RERR_InfoMapErrorNullArg if \p map or \p key or \p value is null.
- * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::RERR_InfoMapErrorWrongType if the value stored under \p key is not a
- * string.
- * \return ::RERR_InfoMapNoError otherwise, in which case `*value` is valid.
+ * If \p value is null, nothing is done and `false` is returned.
+ *
+ * Otherwise `*value` is set to an internal copy of the string value, and
+ * `true` is returned. The string returned in `*value` is valid until the map
+ * is destroyed (if the map is immutable) or until the key is removed or
+ * overwritten (if the map is mutable).
+ *
+ * \param map the info map
+ * \param[in] key the key
+ * \param[out] value location for pointer to the string value
+ * \return `true` if a string could be retrieved and has been set to `*value`
+ * \return `false` otherwise
  */
-RERR_InfoMapError RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value);
+bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value);
 
 /// Retrieve a boolean value from an info map.
 /**
- * \return ::RERR_InfoMapErrorNullArg if \p map or \p key is null.
- * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::RERR_InfoMapErrorWrongType if the value stored under \p key is not a
- * boolean.
- * \return ::RERR_InfoMapNoError otherwise, in which case `*value` is valid.
+ * If \p map or \p key is null, or if \p map does not contain a boolean value
+ * for \p key, `false` is returned and `*value` is undefined.
+ *
+ * If \p value is null, nothing is done and `false` is returned.
+ *
+ * Otherwise `*value` is set to the boolean value for \p key.
+ *
+ * \param map the info map
+ * \param[in] key the key
+ * \param[out] value location for the boolean value
  */
-RERR_InfoMapError RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value);
+bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value);
 
 /// Retrieve a signed integer value from an info map.
 /**
- * \return ::RERR_InfoMapErrorNullArg if \p map or \p key is null.
- * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::RERR_InfoMapErrorWrongType if the value stored under \p key is not a
- * signed integer.
- * \return ::RERR_InfoMapNoError otherwise, in which case `*value` is valid.
+ * If \p map or \p key is null, or if \p map does not contain a signed integer
+ * value for \p key, `false` is returned and `*value` is undefined.
+ *
+ * If \p value is null, nothing is done and `false` is returned.
+ *
+ * Otherwise `*value` is set to the signed integer value for \p key.
+ *
+ * \param map the info map
+ * \param[in] key the key
+ * \param[out] value location for the signed integer value
  */
-RERR_InfoMapError RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value);
+bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value);
 
 /// Retrieve an unsigned integer value from an info map.
 /**
- * \return ::RERR_InfoMapErrorNullArg if \p map or \p key is null.
- * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::RERR_InfoMapErrorWrongType if the value stored under \p key is not an
- * unsigned integer.
- * \return ::RERR_InfoMapNoError otherwise, in which case `*value` is valid.
+ * If \p map or \p key is null, or if \p map does not contain a unsigned
+ * integer value for \p key, `false` is returned and `*value` is undefined.
+ *
+ * If \p value is null, nothing is done and `false` is returned.
+ *
+ * Otherwise `*value` is set to the unsigned integer value for \p key.
+ *
+ * \param map the info map
+ * \param[in] key the key
+ * \param[out] value location for the unsigned integer value
  */
-RERR_InfoMapError RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value);
+bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value);
 
 /// Retrieve a floating point value from an info map.
 /**
- * \return ::RERR_InfoMapErrorNullArg if \p map or \p key is null.
- * \return ::RERR_InfoMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::RERR_InfoMapErrorWrongType if the value stored under \p key is not a
- * floating point.
- * \return ::RERR_InfoMapNoError otherwise, in which case `*value` is valid.
+ * If \p map or \p key is null, or if \p map does not contain a floating-point
+ * value for \p key, `false` is returned and `*value` is undefined.
+ *
+ * If \p value is null, nothing is done and `false` is returned.
+ *
+ * Otherwise `*value` is set to the floating-point value for \p key.
+ *
+ * \param map the info map
+ * \param[in] key the key
+ * \param[out] value location for the floating-point value
  */
-RERR_InfoMapError RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value);
+bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value);
 
 /*
  * TODO
