@@ -122,9 +122,6 @@ TEST_CASE("Strings", "[SmallMap]") {
     e = SmallMap_SetString(m, key, value);
     REQUIRE(e == SmallMapNoError);
 
-    e = SmallMap_SetUniqueString(m, key, value);
-    REQUIRE(e == SmallMapErrorKeyExists);
-
     REQUIRE(SmallMap_GetSize(m) == 4);
 
     REQUIRE(SmallMap_HasKey(m, key));
@@ -151,23 +148,15 @@ TEST_CASE("Numeic", "[SmallMap]") {
 
     e = SmallMap_SetBool(m, "bool", true);
     REQUIRE(e == SmallMapNoError);
-    e = SmallMap_SetUniqueBool(m, "bool", false);
-    REQUIRE(e == SmallMapErrorKeyExists);
 
     e = SmallMap_SetI64(m, "i64", -42);
     REQUIRE(e == SmallMapNoError);
-    e = SmallMap_SetUniqueI64(m, "i64", -43);
-    REQUIRE(e == SmallMapErrorKeyExists);
 
     e = SmallMap_SetU64(m, "u64", 42);
     REQUIRE(e == SmallMapNoError);
-    e = SmallMap_SetUniqueU64(m, "u64", 43);
-    REQUIRE(e == SmallMapErrorKeyExists);
 
     e = SmallMap_SetF64(m, "f64", 42.5);
     REQUIRE(e == SmallMapNoError);
-    e = SmallMap_SetUniqueF64(m, "f64", 43.5);
-    REQUIRE(e == SmallMapErrorKeyExists);
 
     SmallMapValueType t;
     REQUIRE(SmallMap_GetType(m, "bool", &t) == SmallMapNoError);

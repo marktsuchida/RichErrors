@@ -94,7 +94,6 @@ enum {
     SmallMapErrorNullArg,
     SmallMapErrorMapFrozen,
     SmallMapErrorKeyNotFound,
-    SmallMapErrorKeyExists,
     SmallMapErrorWrongType,
 };
 
@@ -212,8 +211,6 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity);
  */
 SmallMapError SmallMap_SetString(SmallMapPtr map, const char* key, const char* value);
 
-SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* key, const char* value);
-
 /// Add or replace a boolean value in a SmallMap.
 /**
  * The key is copied.
@@ -224,8 +221,6 @@ SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* key, const c
  * \return ::SmallMapNoError otherwise.
  */
 SmallMapError SmallMap_SetBool(SmallMapPtr map, const char* key, bool value);
-
-SmallMapError SmallMap_SetUniqueBool(SmallMapPtr map, const char* key, bool value);
 
 /// Add or replace a signed integer value in a SmallMap.
 /**
@@ -238,8 +233,6 @@ SmallMapError SmallMap_SetUniqueBool(SmallMapPtr map, const char* key, bool valu
  */
 SmallMapError SmallMap_SetI64(SmallMapPtr map, const char* key, int64_t value);
 
-SmallMapError SmallMap_SetUniqueI64(SmallMapPtr map, const char* key, int64_t value);
-
 /// Add or replace an unsigned integer value in a SmallMap.
 /**
  * The key is copied.
@@ -251,8 +244,6 @@ SmallMapError SmallMap_SetUniqueI64(SmallMapPtr map, const char* key, int64_t va
  */
 SmallMapError SmallMap_SetU64(SmallMapPtr map, const char* key, uint64_t value);
 
-SmallMapError SmallMap_SetUniqueU64(SmallMapPtr map, const char* key, uint64_t value);
-
 /// Add or replace a floating point value in a SmallMap.
 /**
  * The key is copied.
@@ -263,8 +254,6 @@ SmallMapError SmallMap_SetUniqueU64(SmallMapPtr map, const char* key, uint64_t v
  * \return ::SmallMapNoError otherwise.
  */
 SmallMapError SmallMap_SetF64(SmallMapPtr map, const char* key, double value);
-
-SmallMapError SmallMap_SetUniqueF64(SmallMapPtr map, const char* key, double value);
 
 /// Remove a key from a SmallMap.
 /**

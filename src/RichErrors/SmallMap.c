@@ -207,17 +207,12 @@ static inline SmallMapIterator Find(SmallMapPtr map, const char* key)
 // Postcondition: *it == NULL || (*it)->key contains copy of key
 // Postcondition: (*it)->value is invalid
 // Returns SmallMapErrorOutOfMemory if allocation of capacity or key copy failed
-// Returns SmallMapErrorKeyExists if unique && key exists
-static SmallMapError SetKey(SmallMapPtr map, const char* key, bool unique, SmallMapIterator* it)
+static SmallMapError SetKey(SmallMapPtr map, const char* key, SmallMapIterator* it)
 {
     *it = DynArray_BSearchInsertionPoint(map->items, key, ItemKeyCompare);
 
     // Found exact, so need to overwrite
     if (*it != DynArray_End(map->items) && strcmp((*it)->key, key) == 0) {
-        if (unique) {
-            return SmallMapErrorKeyExists;
-        }
-
         // Overwriting value in place.
         // Evacuate key while we clear the item.
         const char* saveKey = (*it)->key;
@@ -366,7 +361,7 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
 }
 
 
-static SmallMapError SetString(SmallMapPtr map, const char* key, const char* value, bool unique)
+SmallMapError SmallMap_SetString(SmallMapPtr map, const char* key, const char* value)
 {
     if (!map || !key || !value) {
         return SmallMapErrorNullArg;
@@ -386,7 +381,7 @@ static SmallMapError SetString(SmallMapPtr map, const char* key, const char* val
     strncpy(strCopy, value, strLen + 1);
 
     SmallMapIterator it;
-    ret = SetKey(map, key, unique, &it);
+    ret = SetKey(map, key, &it);
     if (ret) {
         goto exit;
     }
@@ -401,19 +396,7 @@ exit:
 }
 
 
-SmallMapError SmallMap_SetString(SmallMapPtr map, const char* key, const char* value)
-{
-    return SetString(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_SetUniqueString(SmallMapPtr map, const char* key, const char* value)
-{
-    return SetString(map, key, value, true);
-}
-
-
-static SmallMapError SetBool(SmallMapPtr map, const char* key, bool value, bool unique)
+SmallMapError SmallMap_SetBool(SmallMapPtr map, const char* key, bool value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -423,7 +406,7 @@ static SmallMapError SetBool(SmallMapPtr map, const char* key, bool value, bool 
     }
 
     SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, unique, &it);
+    SmallMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
@@ -434,19 +417,7 @@ static SmallMapError SetBool(SmallMapPtr map, const char* key, bool value, bool 
 }
 
 
-SmallMapError SmallMap_SetBool(SmallMapPtr map, const char* key, bool value)
-{
-    return SetBool(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_SetUniqueBool(SmallMapPtr map, const char* key, bool value)
-{
-    return SetBool(map, key, value, true);
-}
-
-
-static SmallMapError SetI64(SmallMapPtr map, const char* key, int64_t value, bool unique)
+SmallMapError SmallMap_SetI64(SmallMapPtr map, const char* key, int64_t value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -456,7 +427,7 @@ static SmallMapError SetI64(SmallMapPtr map, const char* key, int64_t value, boo
     }
 
     SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, unique, &it);
+    SmallMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
@@ -467,19 +438,7 @@ static SmallMapError SetI64(SmallMapPtr map, const char* key, int64_t value, boo
 }
 
 
-SmallMapError SmallMap_SetI64(SmallMapPtr map, const char* key, int64_t value)
-{
-    return SetI64(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_SetUniqueI64(SmallMapPtr map, const char* key, int64_t value)
-{
-    return SetI64(map, key, value, true);
-}
-
-
-static SmallMapError SetU64(SmallMapPtr map, const char* key, uint64_t value, bool unique)
+SmallMapError SmallMap_SetU64(SmallMapPtr map, const char* key, uint64_t value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -489,7 +448,7 @@ static SmallMapError SetU64(SmallMapPtr map, const char* key, uint64_t value, bo
     }
 
     SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, unique, &it);
+    SmallMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
@@ -500,19 +459,7 @@ static SmallMapError SetU64(SmallMapPtr map, const char* key, uint64_t value, bo
 }
 
 
-SmallMapError SmallMap_SetU64(SmallMapPtr map, const char* key, uint64_t value)
-{
-    return SetU64(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_SetUniqueU64(SmallMapPtr map, const char* key, uint64_t value)
-{
-    return SetU64(map, key, value, true);
-}
-
-
-static SmallMapError SetF64(SmallMapPtr map, const char* key, double value, bool unique)
+SmallMapError SmallMap_SetF64(SmallMapPtr map, const char* key, double value)
 {
     if (!map || !key) {
         return SmallMapErrorNullArg;
@@ -522,7 +469,7 @@ static SmallMapError SetF64(SmallMapPtr map, const char* key, double value, bool
     }
 
     SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, unique, &it);
+    SmallMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
@@ -530,18 +477,6 @@ static SmallMapError SetF64(SmallMapPtr map, const char* key, double value, bool
     it->value.type = SmallMapValueTypeF64;
     it->value.value.f64 = value;
     return SmallMapNoError;
-}
-
-
-SmallMapError SmallMap_SetF64(SmallMapPtr map, const char* key, double value)
-{
-    return SetF64(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_SetUniqueF64(SmallMapPtr map, const char* key, double value)
-{
-    return SetF64(map, key, value, true);
 }
 
 
