@@ -151,7 +151,7 @@
     <ClCompile Include="DynArray.c" />
     <ClCompile Include="Err2Code.c" />
     <ClCompile Include="RichErrors.c" />
-    <ClCompile Include="SmallMap.c" />
+    <ClCompile Include="InfoMap.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\RichErrors\Err2Code.h" />
@@ -159,7 +159,7 @@
     <ClInclude Include="..\..\include\RichErrors\RichErrors.h" />
     <ClInclude Include="..\..\include\RichErrors\RichErrors.hpp" />
     <ClInclude Include="DynArray.h" />
-    <ClInclude Include="SmallMap.h" />
+    <ClInclude Include="InfoMap.h" />
     <ClInclude Include="Threads.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

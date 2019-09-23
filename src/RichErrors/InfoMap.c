@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #define _CRT_SECURE_NO_WARNINGS
-#include "SmallMap.h"
+#include "InfoMap.h"
 
 #include "DynArray.h"
 
@@ -48,7 +48,7 @@
  * search, although it is not clear if that is an advantage or disadvantage for
  * tiny maps. For now I am using a sorted implementation, primarily because of
  * the convenience of always having sorted keys when debugging (both of this
- * implementation and of code using SmallMap).
+ * implementation and of code using this implementation).
  *
  * An alternative possibility would be to use separate arrays for the keys and
  * values (and possibly for the value type and actual value). In this case it
@@ -60,7 +60,7 @@
 
 
 struct Value {
-    SmallMapValueType type;
+    RERR_InfoValueType type;
     union {
         const char* string; // Uniquely owned
         bool boolean;
@@ -71,13 +71,13 @@ struct Value {
 };
 
 
-struct SmallMapItem {
+struct RERR_InfoMapItem {
     const char* key; // Uniquely owned
     struct Value value;
 };
 
 
-struct SmallMap {
+struct RERR_InfoMap {
     RERR_DynArrayPtr items; // Sorted by key strcmp
     bool frozen;
     size_t refCount; // Always 1 unless frozen
@@ -91,12 +91,12 @@ static inline void FreeConst(const void* m)
 
 
 // Precondition: it != NULL
-static inline void ClearItem(SmallMapIterator it)
+static inline void ClearItem(RERR_InfoMapIterator it)
 {
     FreeConst(it->key);
 
     switch (it->value.type) {
-        case SmallMapValueTypeString:
+        case RERR_InfoValueTypeString:
             FreeConst(it->value.value.string);
             break;
         default:
@@ -108,7 +108,7 @@ static inline void ClearItem(SmallMapIterator it)
 // Precondition: src != NULL
 // Precondition: dst != NULL
 // Precondition: src != dst
-static bool DeepCopyItem(struct SmallMapItem* restrict dst, struct SmallMapItem* restrict src)
+static bool DeepCopyItem(struct RERR_InfoMapItem* restrict dst, struct RERR_InfoMapItem* restrict src)
 {
     char* keyCopy = NULL;
     char* strCopy = NULL;
@@ -122,8 +122,8 @@ static bool DeepCopyItem(struct SmallMapItem* restrict dst, struct SmallMapItem*
     dst->key = keyCopy;
 
     switch (src->value.type) {
-        case SmallMapValueTypeString:
-            dst->value.type = SmallMapValueTypeString;
+        case RERR_InfoValueTypeString:
+            dst->value.type = RERR_InfoValueTypeString;
             size_t len = strlen(src->value.value.string);
             strCopy = malloc(len + 1);
             if (!strCopy) {
@@ -148,11 +148,11 @@ error:
 
 
 // Precondition: map != NULL
-static void Clear(SmallMapPtr map)
+static void Clear(RERR_InfoMapPtr map)
 {
-    SmallMapIterator begin = RERR_DynArray_Begin(map->items);
-    SmallMapIterator end = RERR_DynArray_End(map->items);
-    for (SmallMapIterator it = begin; it != end; ++it) {
+    RERR_InfoMapIterator begin = RERR_DynArray_Begin(map->items);
+    RERR_InfoMapIterator end = RERR_DynArray_End(map->items);
+    for (RERR_InfoMapIterator it = begin; it != end; ++it) {
         ClearItem(it);
     }
     RERR_DynArray_Clear(map->items);
@@ -160,17 +160,17 @@ static void Clear(SmallMapPtr map)
 
 
 // Precondition: map != NULL
-static SmallMapPtr MutableCopy(SmallMapPtr source)
+static RERR_InfoMapPtr MutableCopy(RERR_InfoMapPtr source)
 {
-    SmallMapPtr ret = SmallMap_Create();
+    RERR_InfoMapPtr ret = RERR_InfoMap_Create();
     if (!ret) {
         goto error;
     }
 
-    SmallMapIterator begin = RERR_DynArray_Begin(source->items);
-    SmallMapIterator end = RERR_DynArray_End(source->items);
-    for (SmallMapIterator it = begin; it != end; ++it) {
-        SmallMapIterator ins = RERR_DynArray_Insert(ret->items, RERR_DynArray_End(ret->items));
+    RERR_InfoMapIterator begin = RERR_DynArray_Begin(source->items);
+    RERR_InfoMapIterator end = RERR_DynArray_End(source->items);
+    for (RERR_InfoMapIterator it = begin; it != end; ++it) {
+        RERR_InfoMapIterator ins = RERR_DynArray_Insert(ret->items, RERR_DynArray_End(ret->items));
         if (!ins) {
             goto error;
         }
@@ -184,18 +184,18 @@ static SmallMapPtr MutableCopy(SmallMapPtr source)
     return ret;
 
 error:
-    SmallMap_Destroy(ret);
+    RERR_InfoMap_Destroy(ret);
     return NULL;
 }
 
 
-static int ItemKeyCompare(const struct SmallMapItem* item, const char* key)
+static int ItemKeyCompare(const struct RERR_InfoMapItem* item, const char* key)
 {
     return strcmp(item->key, key);
 }
 
 
-static inline SmallMapIterator Find(SmallMapPtr map, const char* key)
+static inline RERR_InfoMapIterator Find(RERR_InfoMapPtr map, const char* key)
 {
     return RERR_DynArray_BSearch(map->items, key, ItemKeyCompare);
 }
@@ -206,8 +206,8 @@ static inline SmallMapIterator Find(SmallMapPtr map, const char* key)
 // Precondition: key != NULL
 // Postcondition: *it == NULL || (*it)->key contains copy of key
 // Postcondition: (*it)->value is invalid
-// Returns SmallMapErrorOutOfMemory if allocation of capacity or key copy failed
-static SmallMapError SetKey(SmallMapPtr map, const char* key, SmallMapIterator* it)
+// Returns RERR_InfoMapErrorOutOfMemory if allocation of capacity or key copy failed
+static RERR_InfoMapError SetKey(RERR_InfoMapPtr map, const char* key, RERR_InfoMapIterator* it)
 {
     *it = RERR_DynArray_BSearchInsertionPoint(map->items, key, ItemKeyCompare);
 
@@ -219,22 +219,22 @@ static SmallMapError SetKey(SmallMapPtr map, const char* key, SmallMapIterator* 
         (*it)->key = NULL;
         ClearItem(*it);
         (*it)->key = saveKey;
-        return SmallMapNoError;
+        return RERR_InfoMapNoError;
     }
 
-    SmallMapError ret = SmallMapNoError;
+    RERR_InfoMapError ret = RERR_InfoMapNoError;
 
     size_t keyLen = strlen(key);
     char* keyCopy = malloc(keyLen + 1);
     if (!keyCopy) {
-        ret = SmallMapErrorOutOfMemory;
+        ret = RERR_InfoMapErrorOutOfMemory;
         goto exit;
     }
     strncpy(keyCopy, key, keyLen + 1);
 
     *it = RERR_DynArray_Insert(map->items, *it);
     if (!*it) {
-        ret = SmallMapErrorOutOfMemory;
+        ret = RERR_InfoMapErrorOutOfMemory;
         goto exit;
     }
 
@@ -247,15 +247,15 @@ exit:
 }
 
 
-SmallMapPtr SmallMap_Create(void)
+RERR_InfoMapPtr RERR_InfoMap_Create(void)
 {
-    SmallMapPtr ret = calloc(1, sizeof(struct SmallMap));
+    RERR_InfoMapPtr ret = calloc(1, sizeof(struct RERR_InfoMap));
     if (!ret) {
         return NULL;
     }
     ret->refCount = 1;
 
-    ret->items = RERR_DynArray_Create(sizeof(struct SmallMapItem));
+    ret->items = RERR_DynArray_Create(sizeof(struct RERR_InfoMapItem));
     if (!ret->items) {
         free(ret);
         return NULL;
@@ -265,7 +265,7 @@ SmallMapPtr SmallMap_Create(void)
 }
 
 
-void SmallMap_Destroy(SmallMapPtr map)
+void RERR_InfoMap_Destroy(RERR_InfoMapPtr map)
 {
     if (!map) {
         return;
@@ -282,7 +282,7 @@ void SmallMap_Destroy(SmallMapPtr map)
 }
 
 
-SmallMapPtr SmallMap_Copy(SmallMapPtr map)
+RERR_InfoMapPtr RERR_InfoMap_Copy(RERR_InfoMapPtr map)
 {
     if (!map) {
         return NULL;
@@ -297,7 +297,7 @@ SmallMapPtr SmallMap_Copy(SmallMapPtr map)
 }
 
 
-SmallMapPtr SmallMap_UnfrozenCopy(SmallMapPtr map)
+RERR_InfoMapPtr RERR_InfoMap_MutableCopy(RERR_InfoMapPtr map)
 {
     if (!map) {
         return NULL;
@@ -306,15 +306,15 @@ SmallMapPtr SmallMap_UnfrozenCopy(SmallMapPtr map)
 }
 
 
-SmallMapPtr SmallMap_FrozenCopy(SmallMapPtr map)
+RERR_InfoMapPtr RERR_InfoMap_ImmutableCopy(RERR_InfoMapPtr map)
 {
-    SmallMapPtr ret = SmallMap_Copy(map);
-    SmallMap_Freeze(ret);
+    RERR_InfoMapPtr ret = RERR_InfoMap_Copy(map);
+    RERR_InfoMap_MakeImmutable(ret);
     return ret;
 }
 
 
-void SmallMap_Freeze(SmallMapPtr map)
+void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map)
 {
     if (!map) {
         return;
@@ -324,7 +324,7 @@ void SmallMap_Freeze(SmallMapPtr map)
 }
 
 
-bool SmallMap_IsFrozen(SmallMapPtr map)
+bool RERR_InfoMap_IsImmutable(RERR_InfoMapPtr map)
 {
     if (!map) {
         return true;
@@ -333,7 +333,7 @@ bool SmallMap_IsFrozen(SmallMapPtr map)
 }
 
 
-size_t SmallMap_GetSize(SmallMapPtr map)
+size_t RERR_InfoMap_GetSize(RERR_InfoMapPtr map)
 {
     if (!map) {
         return 0;
@@ -342,7 +342,7 @@ size_t SmallMap_GetSize(SmallMapPtr map)
 }
 
 
-bool SmallMap_IsEmpty(SmallMapPtr map)
+bool RERR_InfoMap_IsEmpty(RERR_InfoMapPtr map)
 {
     if (!map) {
         return true;
@@ -351,7 +351,7 @@ bool SmallMap_IsEmpty(SmallMapPtr map)
 }
 
 
-void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
+void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity)
 {
     if (!map || map->frozen) {
         return;
@@ -361,32 +361,32 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
 }
 
 
-SmallMapError SmallMap_SetString(SmallMapPtr map, const char* key, const char* value)
+RERR_InfoMapError RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value)
 {
     if (!map || !key || !value) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
     if (map->frozen) {
-        return SmallMapErrorMapFrozen;
+        return RERR_InfoMapErrorMapImmutable;
     }
 
-    SmallMapError ret = SmallMapNoError;
+    RERR_InfoMapError ret = RERR_InfoMapNoError;
 
     size_t strLen = strlen(value);
     char* strCopy = malloc(strLen + 1);
     if (!strCopy) {
-        ret = SmallMapErrorOutOfMemory;
+        ret = RERR_InfoMapErrorOutOfMemory;
         goto exit;
     }
     strncpy(strCopy, value, strLen + 1);
 
-    SmallMapIterator it;
+    RERR_InfoMapIterator it;
     ret = SetKey(map, key, &it);
     if (ret) {
         goto exit;
     }
 
-    it->value.type = SmallMapValueTypeString;
+    it->value.type = RERR_InfoValueTypeString;
     it->value.value.string = strCopy;
     strCopy = NULL;
 
@@ -396,97 +396,97 @@ exit:
 }
 
 
-SmallMapError SmallMap_SetBool(SmallMapPtr map, const char* key, bool value)
+RERR_InfoMapError RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
     if (map->frozen) {
-        return SmallMapErrorMapFrozen;
+        return RERR_InfoMapErrorMapImmutable;
     }
 
-    SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, &it);
+    RERR_InfoMapIterator it;
+    RERR_InfoMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
 
-    it->value.type = SmallMapValueTypeBool;
+    it->value.type = RERR_InfoValueTypeBool;
     it->value.value.boolean = value;
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_SetI64(SmallMapPtr map, const char* key, int64_t value)
+RERR_InfoMapError RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
     if (map->frozen) {
-        return SmallMapErrorMapFrozen;
+        return RERR_InfoMapErrorMapImmutable;
     }
 
-    SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, &it);
+    RERR_InfoMapIterator it;
+    RERR_InfoMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
 
-    it->value.type = SmallMapValueTypeI64;
+    it->value.type = RERR_InfoValueTypeI64;
     it->value.value.i64 = value;
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_SetU64(SmallMapPtr map, const char* key, uint64_t value)
+RERR_InfoMapError RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
     if (map->frozen) {
-        return SmallMapErrorMapFrozen;
+        return RERR_InfoMapErrorMapImmutable;
     }
 
-    SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, &it);
+    RERR_InfoMapIterator it;
+    RERR_InfoMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
 
-    it->value.type = SmallMapValueTypeU64;
+    it->value.type = RERR_InfoValueTypeU64;
     it->value.value.u64 = value;
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_SetF64(SmallMapPtr map, const char* key, double value)
+RERR_InfoMapError RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
     if (map->frozen) {
-        return SmallMapErrorMapFrozen;
+        return RERR_InfoMapErrorMapImmutable;
     }
 
-    SmallMapIterator it;
-    SmallMapError ret = SetKey(map, key, &it);
+    RERR_InfoMapIterator it;
+    RERR_InfoMapError ret = SetKey(map, key, &it);
     if (ret) {
         return ret;
     }
 
-    it->value.type = SmallMapValueTypeF64;
+    it->value.type = RERR_InfoValueTypeF64;
     it->value.value.f64 = value;
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-bool SmallMap_Remove(SmallMapPtr map, const char* key)
+bool RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key)
 {
     if (!map || map->frozen || !key) {
         return false;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
         return false;
     }
@@ -498,7 +498,7 @@ bool SmallMap_Remove(SmallMapPtr map, const char* key)
 }
 
 
-void SmallMap_Clear(SmallMapPtr map)
+void RERR_InfoMap_Clear(RERR_InfoMapPtr map)
 {
     if (!map || map->frozen) {
         return;
@@ -508,143 +508,128 @@ void SmallMap_Clear(SmallMapPtr map)
 }
 
 
-bool SmallMap_HasKey(SmallMapPtr map, const char* key)
+bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key)
 {
     if (!map || !key) {
         return false;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     return found != NULL;
 }
 
 
-SmallMapError SmallMap_GetType(SmallMapPtr map, const char* key, SmallMapValueType* type)
+RERR_InfoMapError RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key, RERR_InfoValueType* type)
 {
     if (!map || !key || !type) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return SmallMapErrorKeyNotFound;
+        return RERR_InfoMapErrorKeyNotFound;
     }
 
     *type = found->value.type;
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-size_t SmallMap_GetStringSize(SmallMapPtr map, const char* key)
-{
-    if (!map || !key) {
-        return 0;
-    }
-
-    SmallMapIterator found = Find(map, key);
-    if (!found || found->value.type != SmallMapValueTypeString) {
-        return 0;
-    }
-
-    return strlen(found->value.value.string);
-}
-
-
-SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, const char** value)
+RERR_InfoMapError RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value)
 {
     if (!map || !key || !value) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return SmallMapErrorKeyNotFound;
+        return RERR_InfoMapErrorKeyNotFound;
     }
-    if (found->value.type != SmallMapValueTypeString) {
-        return SmallMapErrorWrongType;
+    if (found->value.type != RERR_InfoValueTypeString) {
+        return RERR_InfoMapErrorWrongType;
     }
 
     *value = found->value.value.string;
 
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_GetBool(SmallMapPtr map, const char* key, bool* value)
+RERR_InfoMapError RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return SmallMapErrorKeyNotFound;
+        return RERR_InfoMapErrorKeyNotFound;
     }
-    if (found->value.type != SmallMapValueTypeBool) {
-        return SmallMapErrorWrongType;
+    if (found->value.type != RERR_InfoValueTypeBool) {
+        return RERR_InfoMapErrorWrongType;
     }
 
     *value = found->value.value.boolean;
 
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_GetI64(SmallMapPtr map, const char* key, int64_t* value)
+RERR_InfoMapError RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return SmallMapErrorKeyNotFound;
+        return RERR_InfoMapErrorKeyNotFound;
     }
-    if (found->value.type != SmallMapValueTypeI64) {
-        return SmallMapErrorWrongType;
+    if (found->value.type != RERR_InfoValueTypeI64) {
+        return RERR_InfoMapErrorWrongType;
     }
 
     *value = found->value.value.i64;
 
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_GetU64(SmallMapPtr map, const char* key, uint64_t* value)
+RERR_InfoMapError RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return SmallMapErrorKeyNotFound;
+        return RERR_InfoMapErrorKeyNotFound;
     }
-    if (found->value.type != SmallMapValueTypeU64) {
-        return SmallMapErrorWrongType;
+    if (found->value.type != RERR_InfoValueTypeU64) {
+        return RERR_InfoMapErrorWrongType;
     }
 
     *value = found->value.value.u64;
 
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }
 
 
-SmallMapError SmallMap_GetF64(SmallMapPtr map, const char* key, double* value)
+RERR_InfoMapError RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value)
 {
     if (!map || !key) {
-        return SmallMapErrorNullArg;
+        return RERR_InfoMapErrorNullArg;
     }
 
-    SmallMapIterator found = Find(map, key);
+    RERR_InfoMapIterator found = Find(map, key);
     if (!found) {
-        return SmallMapErrorKeyNotFound;
+        return RERR_InfoMapErrorKeyNotFound;
     }
-    if (found->value.type != SmallMapValueTypeF64) {
-        return SmallMapErrorWrongType;
+    if (found->value.type != RERR_InfoValueTypeF64) {
+        return RERR_InfoMapErrorWrongType;
     }
 
     *value = found->value.value.f64;
 
-    return SmallMapNoError;
+    return RERR_InfoMapNoError;
 }

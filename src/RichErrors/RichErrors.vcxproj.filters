@@ -24,7 +24,7 @@
     <ClCompile Include="DynArray.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SmallMap.c">
+    <ClCompile Include="InfoMap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,7 +47,7 @@
     <ClInclude Include="DynArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SmallMap.h">
+    <ClInclude Include="InfoMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

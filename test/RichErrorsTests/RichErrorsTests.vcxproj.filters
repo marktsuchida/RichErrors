@@ -33,7 +33,7 @@
     <ClCompile Include="DynArrayTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SmallMapTests.cpp">
+    <ClCompile Include="InfoMapTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
