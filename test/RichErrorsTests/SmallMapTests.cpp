@@ -51,9 +51,6 @@ TEST_CASE("Null behavior", "[SmallMap]") {
     REQUIRE(SmallMap_HasKey(nullptr, "key") == false);
     REQUIRE(SmallMap_HasKey(nullptr, nullptr) == false);
     REQUIRE(SmallMap_HasKey(m, nullptr) == false);
-    REQUIRE(SmallMap_GetStringSize(nullptr, "key") == 0);
-    REQUIRE(SmallMap_GetStringSize(nullptr, nullptr) == 0);
-    REQUIRE(SmallMap_GetStringSize(m, nullptr) == 0);
 
     SmallMap_Destroy(m);
 }
@@ -137,20 +134,10 @@ TEST_CASE("Strings", "[SmallMap]") {
     REQUIRE(SmallMap_GetType(m, key, &t) == SmallMapNoError);
     REQUIRE(t == SmallMapValueTypeString);
 
-    REQUIRE(SmallMap_GetStringSize(m, key) == strlen(value));
-
-    char dest[80];
-    e = SmallMap_GetString(m, key, dest, 0);
-    REQUIRE(e == SmallMapErrorDestSizeTooSmall);
-    e = SmallMap_GetString(m, key, dest, strlen(value));
-    REQUIRE(e == SmallMapErrorDestSizeTooSmall);
-    e = SmallMap_GetString(m, key, dest, strlen(value) + 1);
+    const char* s;
+    e = SmallMap_GetString(m, key, &s);
     REQUIRE(e == SmallMapNoError);
-    REQUIRE(strcmp(dest, value) == 0);
-
-    e = SmallMap_GetTruncatedString(m, key, dest, 4);
-    REQUIRE(e == SmallMapErrorDestSizeTooSmall);
-    REQUIRE(strcmp(dest, "val") == 0);
+    REQUIRE(strcmp(s, value) == 0);
 
     SmallMap_Destroy(m);
 }

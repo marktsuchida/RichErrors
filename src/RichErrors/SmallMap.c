@@ -615,9 +615,9 @@ size_t SmallMap_GetStringSize(SmallMapPtr map, const char* key)
 }
 
 
-static SmallMapError GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize, bool allowPartial)
+SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, const char** value)
 {
-    if (!map || !key || !dest) {
+    if (!map || !key || !value) {
         return SmallMapErrorNullArg;
     }
 
@@ -629,31 +629,9 @@ static SmallMapError GetString(SmallMapPtr map, const char* key, char* dest, siz
         return SmallMapErrorWrongType;
     }
 
-    SmallMapError ret = SmallMapNoError;
+    *value = found->value.value.string;
 
-    size_t len = strlen(found->value.value.string);
-    if (destSize < len + 1) {
-        ret = SmallMapErrorDestSizeTooSmall;
-        if (!allowPartial) {
-            return ret;
-        }
-    }
-    strncpy(dest, found->value.value.string, destSize);
-    dest[destSize - 1] = '\0'; // Terminate if truncated
-
-    return ret;
-}
-
-
-SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
-{
-    return GetString(map, key, dest, destSize, false);
-}
-
-
-SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
-{
-    return GetString(map, key, dest, destSize, true);
+    return SmallMapNoError;
 }
 
 

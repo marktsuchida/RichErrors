@@ -96,7 +96,6 @@ enum {
     SmallMapErrorKeyNotFound,
     SmallMapErrorKeyExists,
     SmallMapErrorWrongType,
-    SmallMapErrorDestSizeTooSmall,
 };
 
 /// Create a SmallMap.
@@ -298,53 +297,23 @@ bool SmallMap_HasKey(SmallMapPtr map, const char* key);
  */
 SmallMapError SmallMap_GetType(SmallMapPtr map, const char* key, SmallMapValueType* type);
 
-/// Return the size required for a string value in a SmallMap.
-/**
- * \return Zero if \p map or \p key is null or if \p map does not contain \p
- * key or if the value stored under \p key is not a string.
- * \return Size, in bytes, required to hold the string value, including the
- * null terminator.
- */
-size_t SmallMap_GetStringSize(SmallMapPtr map, const char* key);
-
 /// Retrieve a string value from a SmallMap.
 /**
- * \return ::SmallMapErrorNullArg if \p map, \p key, or \p dest is null.
+ * `*value` is set to an internal copy of the string value, which is valid
+ * until the map is destroyed (if the map is frozen) or until the key is
+ * removed or overwritten (if the map is unfrozen).
+ *
+ * \return ::SmallMapErrorNullArg if \p map or \p key or \p value is null.
  * \return ::SmallMapErrorKeyNotFound if \p map does not contain \p key.
  * \return ::SmallMapErrorWrongType if the value stored under \p key is not a
  * string.
- * \return ::SmallMapErrorDestSizeTooSmall if \p destSize is insufficient to
- * copy the whole string value.
- * \return ::SmallMapNoError otherwise, in which case `*dest` contains the
- * string value.
+ * \return ::SmallMapNoError otherwise, in which case `*value` is valid.
  */
-SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
-
-/// Retrieve a string value from a SmallMap, truncating if necessary.
-/**
- * If the string value is too long to fit into \p destSize bytes, the first
- * `(destSize - 1)` bytes are copied into \p dest. Otherwise the behavior is
- * the same with SmallMap_GetString().
- *
- * \warning No consideration is made for non-ASCII encoding of the string. In
- * particular, UTF-8 strings may be truncated in the middle of a multi-byte
- * sequence.
- *
- * \return ::SmallMapErrorNullArg if \p map, \p key, or \p dest is null.
- * \return ::SmallMapErrorKeyNotFound if \p map does not contain \p key.
- * \return ::SmallMapErrorWrongType if the value stored under \p key is not a
- * string.
- * \return ::SmallMapErrorDestSizeTooSmall if \p destSize is insufficient to
- * copy the whole string value, in which case `*dest` contains the first
- * (destSize - 1) characters of the string value.
- * \return ::SmallMapNoError otherwise, in which case `*dest` contains the
- * string value.
- */
-SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
+SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, const char** value);
 
 /// Retrieve a boolean value from a SmallMap.
 /**
- * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
+ * \return ::SmallMapErrorNullArg if \p map or \p key is null.
  * \return ::SmallMapErrorKeyNotFound if \p map does not contain \p key.
  * \return ::SmallMapErrorWrongType if the value stored under \p key is not a
  * boolean.
@@ -354,7 +323,7 @@ SmallMapError SmallMap_GetBool(SmallMapPtr map, const char* key, bool* value);
 
 /// Retrieve a signed integer value from a SmallMap.
 /**
- * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
+ * \return ::SmallMapErrorNullArg if \p map or \p key is null.
  * \return ::SmallMapErrorKeyNotFound if \p map does not contain \p key.
  * \return ::SmallMapErrorWrongType if the value stored under \p key is not a
  * signed integer.
@@ -364,7 +333,7 @@ SmallMapError SmallMap_GetI64(SmallMapPtr map, const char* key, int64_t* value);
 
 /// Retrieve an unsigned integer value from a SmallMap.
 /**
- * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
+ * \return ::SmallMapErrorNullArg if \p map or \p key is null.
  * \return ::SmallMapErrorKeyNotFound if \p map does not contain \p key.
  * \return ::SmallMapErrorWrongType if the value stored under \p key is not an
  * unsigned integer.
@@ -374,7 +343,7 @@ SmallMapError SmallMap_GetU64(SmallMapPtr map, const char* key, uint64_t* value)
 
 /// Retrieve a floating point value from a SmallMap.
 /**
- * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
+ * \return ::SmallMapErrorNullArg if \p map or \p key is null.
  * \return ::SmallMapErrorKeyNotFound if \p map does not contain \p key.
  * \return ::SmallMapErrorWrongType if the value stored under \p key is not a
  * floating point.
