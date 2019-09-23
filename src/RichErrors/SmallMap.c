@@ -272,6 +272,10 @@ SmallMapPtr SmallMap_Create(void)
 
 void SmallMap_Destroy(SmallMapPtr map)
 {
+    if (!map) {
+        return;
+    }
+
     if (--map->refCount > 0) {
         return;
     }
@@ -319,7 +323,7 @@ void SmallMap_Freeze(SmallMapPtr map)
 bool SmallMap_IsFrozen(SmallMapPtr map)
 {
     if (!map) {
-        return false;
+        return true;
     }
     return map->frozen;
 }

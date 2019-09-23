@@ -31,6 +31,34 @@
 #include "../../src/RichErrors/SmallMap.h"
 
 
+TEST_CASE("Null behavior", "[SmallMap]") {
+    SmallMap_Destroy(nullptr);
+
+    SmallMapPtr m = SmallMap_Create();
+
+    REQUIRE(SmallMap_Copy(nullptr) == nullptr);
+    REQUIRE(SmallMap_UnfrozenCopy(nullptr) == nullptr);
+    REQUIRE(SmallMap_FrozenCopy(nullptr) == nullptr);
+    SmallMap_Freeze(nullptr);
+    REQUIRE(SmallMap_IsFrozen(nullptr));
+    REQUIRE(SmallMap_GetSize(nullptr) == 0);
+    SmallMap_ReserveCapacity(nullptr, 0);
+    SmallMap_ReserveCapacity(nullptr, 42);
+    REQUIRE(SmallMap_Remove(nullptr, "key") == false);
+    REQUIRE(SmallMap_Remove(nullptr, nullptr) == false);
+    REQUIRE(SmallMap_Remove(m, nullptr) == false);
+    SmallMap_Clear(nullptr);
+    REQUIRE(SmallMap_HasKey(nullptr, "key") == false);
+    REQUIRE(SmallMap_HasKey(nullptr, nullptr) == false);
+    REQUIRE(SmallMap_HasKey(m, nullptr) == false);
+    REQUIRE(SmallMap_GetStringSize(nullptr, "key") == 0);
+    REQUIRE(SmallMap_GetStringSize(nullptr, nullptr) == 0);
+    REQUIRE(SmallMap_GetStringSize(m, nullptr) == 0);
+
+    SmallMap_Destroy(m);
+}
+
+
 TEST_CASE("Lifecycle", "[SmallMap]") {
     SmallMapPtr m = SmallMap_Create();
     REQUIRE(m != nullptr);

@@ -140,7 +140,8 @@ SmallMapPtr SmallMap_UnfrozenCopy(SmallMapPtr source);
 
 /// Forbid further modification of a SmallMap.
 /**
- * If \p map is null, nothing is done.
+ * If \p map is null, nothing is done. If \p map is already frozen, nothing is
+ * done.
  *
  * \sa SmallMap_IsFrozen()
  */
@@ -148,8 +149,11 @@ void SmallMap_Freeze(SmallMapPtr map);
 
 /// Return whether a SmallMap is frozen.
 /**
- * \return `true` if \p map is frozen.
- * \return `false` if \p map is null or not frozen.
+ * Note that this function returns `true` if \p map is null. This is because
+ * null cannot be mutated.
+ *
+ * \return `true` if \p map is frozen or null.
+ * \return `false` if \p map is not frozen.
  *
  * \sa SmallMap_Freeze()
  */
