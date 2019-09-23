@@ -152,11 +152,6 @@ TEST_CASE("Strings", "[SmallMap]") {
     REQUIRE(e == SmallMapErrorDestSizeTooSmall);
     REQUIRE(strcmp(dest, "val") == 0);
 
-    e = SmallMap_PopString(m, key, dest, strlen(value) + 1);
-    REQUIRE(e == SmallMapNoError);
-    REQUIRE(strcmp(dest, value) == 0);
-    REQUIRE(SmallMap_GetSize(m) == 3);
-
     SmallMap_Destroy(m);
 }
 

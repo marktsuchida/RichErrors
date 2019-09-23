@@ -636,11 +636,6 @@ SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char
     return GetString(map, key, dest, destSize, false, true);
 }
 
-SmallMapError SmallMap_PopString(SmallMapPtr map, const char* key, char* dest, size_t destSize)
-{
-    return GetString(map, key, dest, destSize, true, false);
-}
-
 
 static SmallMapError GetBool(SmallMapPtr map, const char* key, bool* value, bool remove)
 {
@@ -670,12 +665,6 @@ static SmallMapError GetBool(SmallMapPtr map, const char* key, bool* value, bool
 SmallMapError SmallMap_GetBool(SmallMapPtr map, const char* key, bool* value)
 {
     return GetBool(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_PopBool(SmallMapPtr map, const char* key, bool* value)
-{
-    return GetBool(map, key, value, true);
 }
 
 
@@ -710,12 +699,6 @@ SmallMapError SmallMap_GetI64(SmallMapPtr map, const char* key, int64_t* value)
 }
 
 
-SmallMapError SmallMap_PopI64(SmallMapPtr map, const char* key, int64_t* value)
-{
-    return GetI64(map, key, value, true);
-}
-
-
 static SmallMapError GetU64(SmallMapPtr map, const char* key, uint64_t* value, bool remove)
 {
     if (!map || !key) {
@@ -747,12 +730,6 @@ SmallMapError SmallMap_GetU64(SmallMapPtr map, const char* key, uint64_t* value)
 }
 
 
-SmallMapError SmallMap_PopU64(SmallMapPtr map, const char* key, uint64_t* value)
-{
-    return GetU64(map, key, value, true);
-}
-
-
 static SmallMapError GetF64(SmallMapPtr map, const char* key, double* value, bool remove)
 {
     if (!map || !key) {
@@ -781,10 +758,4 @@ static SmallMapError GetF64(SmallMapPtr map, const char* key, double* value, boo
 SmallMapError SmallMap_GetF64(SmallMapPtr map, const char* key, double* value)
 {
     return GetF64(map, key, value, false);
-}
-
-
-SmallMapError SmallMap_PopF64(SmallMapPtr map, const char* key, double* value)
-{
-    return GetF64(map, key, value, true);
 }

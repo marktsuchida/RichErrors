@@ -329,8 +329,6 @@ SmallMapError SmallMap_GetString(SmallMapPtr map, const char* key, char* dest, s
  */
 SmallMapError SmallMap_GetTruncatedString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
 
-SmallMapError SmallMap_PopString(SmallMapPtr map, const char* key, char* dest, size_t destSize);
-
 /// Retrieve a boolean value from a SmallMap.
 /**
  * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
@@ -340,8 +338,6 @@ SmallMapError SmallMap_PopString(SmallMapPtr map, const char* key, char* dest, s
  * \return ::SmallMapNoError otherwise, in which case `*value` is valid.
  */
 SmallMapError SmallMap_GetBool(SmallMapPtr map, const char* key, bool* value);
-
-SmallMapError SmallMap_PopBool(SmallMapPtr map, const char* key, bool* value);
 
 /// Retrieve a signed integer value from a SmallMap.
 /**
@@ -353,8 +349,6 @@ SmallMapError SmallMap_PopBool(SmallMapPtr map, const char* key, bool* value);
  */
 SmallMapError SmallMap_GetI64(SmallMapPtr map, const char* key, int64_t* value);
 
-SmallMapError SmallMap_PopI64(SmallMapPtr map, const char* key, int64_t* value);
-
 /// Retrieve an unsigned integer value from a SmallMap.
 /**
  * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
@@ -365,8 +359,6 @@ SmallMapError SmallMap_PopI64(SmallMapPtr map, const char* key, int64_t* value);
  */
 SmallMapError SmallMap_GetU64(SmallMapPtr map, const char* key, uint64_t* value);
 
-SmallMapError SmallMap_PopU64(SmallMapPtr map, const char* key, uint64_t* value);
-
 /// Retrieve a floating point value from a SmallMap.
 /**
  * \return ::SmallMapErrorNullArg if \p map or \p kay is null.
@@ -376,8 +368,6 @@ SmallMapError SmallMap_PopU64(SmallMapPtr map, const char* key, uint64_t* value)
  * \return ::SmallMapNoError otherwise, in which case `*value` is valid.
  */
 SmallMapError SmallMap_GetF64(SmallMapPtr map, const char* key, double* value);
-
-SmallMapError SmallMap_PopF64(SmallMapPtr map, const char* key, double* value);
 
 /*
  * TODO
