@@ -347,7 +347,7 @@ bool RERR_InfoMap_IsEmpty(RERR_InfoMapPtr map)
     if (!map) {
         return true;
     }
-    return RERR_DynArray_GetSize(map->items) == 0;
+    return RERR_DynArray_IsEmpty(map->items);
 }
 
 

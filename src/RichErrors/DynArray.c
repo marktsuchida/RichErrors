@@ -291,6 +291,12 @@ size_t RERR_DynArray_GetSize(RERR_DynArrayPtr arr)
 }
 
 
+bool RERR_DynArray_IsEmpty(RERR_DynArrayPtr arr)
+{
+    return arr->size == 0;
+}
+
+
 void* RERR_DynArray_At(RERR_DynArrayPtr arr, size_t index)
 {
     return Begin(arr) + index * arr->elemSize;

@@ -46,6 +46,7 @@ void RERR_DynArray_Clear(RERR_DynArrayPtr arr);
 void* RERR_DynArray_Erase(RERR_DynArrayPtr arr, void* pos);
 void* RERR_DynArray_Insert(RERR_DynArrayPtr arr, void* pos);
 size_t RERR_DynArray_GetSize(RERR_DynArrayPtr arr);
+bool RERR_DynArray_IsEmpty(RERR_DynArrayPtr arr);
 void* RERR_DynArray_At(RERR_DynArrayPtr arr, size_t index);
 void* RERR_DynArray_BSearchInsertionPoint(RERR_DynArrayPtr arr, const void* key,
     RERR_DynArrayCompareFunc compare);
