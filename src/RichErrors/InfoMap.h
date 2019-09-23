@@ -70,7 +70,12 @@ extern "C" {
  * well unless the code is very carefully written (which in turn would take
  * disproportionate effort).
  *
- * TODO Out-of-memory state
+ * Because info maps are used to convey error information, it is desirable for
+ * them to never cause their own errors. To this end, an info map can switch
+ * into an "out-of-memory" mode if any allocation for its internal storage
+ * fails. This way, error reporting code can continue to run, and the reported
+ * error will gracefully degrade such that it is still valid, albeit without
+ * the extra information.
  */
 typedef struct RERR_InfoMap* RERR_InfoMapPtr;
 
@@ -96,12 +101,17 @@ enum {
 
 /// Create an info map.
 /**
- * \return Null if allocation failed.
- * \return Opaque pointer to map otherwise.
+ * \return Opaque pointer to map (never null).
  *
  * \sa RERR_InfoMap_Destroy()
  */
 RERR_InfoMapPtr RERR_InfoMap_Create(void);
+
+/// Create an info map, simulating an allocation failure.
+/**
+ * This function is provided for testing purposes.
+ */
+RERR_InfoMapPtr RERR_InfoMap_CreateOutOfMemory(void);
 
 /// Destroy an info map.
 /**
@@ -165,6 +175,19 @@ void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map);
  * \sa RERR_InfoMap_MakeImmutable()
  */
 bool RERR_InfoMap_IsMutable(RERR_InfoMapPtr map);
+
+/// Simulate a mutating operation that causes an allocation error.
+/**
+ * This function is provided for testing purposes.
+ */
+void RERR_InfoMap_MakeOutOfMemory(RERR_InfoMapPtr map);
+
+/// Return whether an info map is in the out-of-memory state.
+/**
+ * \return `true` if \p map is in the out-of-memory state.
+ * \return `false` if \p map is null or it is not in the out-of-memory state.
+ */
+bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map);
 
 /// Return the number of items in an info map.
 /**

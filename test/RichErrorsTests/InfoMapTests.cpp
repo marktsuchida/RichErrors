@@ -163,3 +163,23 @@ TEST_CASE("Numeic", "[RERR_InfoMap]") {
 
     RERR_InfoMap_Destroy(m);
 }
+
+
+TEST_CASE("Out of memory", "[RERR_InfoMap]") {
+    RERR_InfoMapPtr m = RERR_InfoMap_CreateOutOfMemory();
+    REQUIRE(m != nullptr);
+    REQUIRE(RERR_InfoMap_IsOutOfMemory(m));
+    RERR_InfoMap_SetString(m, "key", "value"); // Should be ignored
+    REQUIRE(RERR_InfoMap_IsEmpty(m));
+    RERR_InfoMap_Destroy(m);
+
+    m = RERR_InfoMap_Create();
+    RERR_InfoMap_SetString(m, "key", "value");
+    RERR_InfoMap_MakeOutOfMemory(m);
+    REQUIRE(RERR_InfoMap_IsOutOfMemory(m));
+    RERR_InfoMap_SetString(m, "key2", "value2");
+    REQUIRE(RERR_InfoMap_IsEmpty(m));
+    RERR_InfoMap_MakeImmutable(m); // Still works
+    REQUIRE(!RERR_InfoMap_IsMutable(m));
+    RERR_InfoMap_Destroy(m);
+}
