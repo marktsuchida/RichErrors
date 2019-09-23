@@ -34,31 +34,31 @@
 extern "C" {
 #endif
 
-typedef struct DynArray* DynArrayPtr;
+typedef struct RERR_DynArray* RERR_DynArrayPtr;
 
-typedef int (*DynArrayCompareFunc)(const void* lhsElem, const void* rhsKey);
+typedef int (*RERR_DynArrayCompareFunc)(const void* lhsElem, const void* rhsKey);
 
 
-DynArrayPtr DynArray_Create(size_t elemSize);
-void DynArray_Destroy(DynArrayPtr arr);
-void DynArray_ReserveCapacity(DynArrayPtr arr, size_t capacity);
-void DynArray_Clear(DynArrayPtr arr);
-void* DynArray_Erase(DynArrayPtr arr, void* pos);
-void* DynArray_Insert(DynArrayPtr arr, void* pos);
-size_t DynArray_Size(DynArrayPtr arr);
-void* DynArray_At(DynArrayPtr arr, size_t index);
-void* DynArray_BSearchInsertionPoint(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare);
-void* DynArray_BSearchExact(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare);
-void* DynArray_FindFirstEqual(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare);
+RERR_DynArrayPtr RERR_DynArray_Create(size_t elemSize);
+void RERR_DynArray_Destroy(RERR_DynArrayPtr arr);
+void RERR_DynArray_ReserveCapacity(RERR_DynArrayPtr arr, size_t capacity);
+void RERR_DynArray_Clear(RERR_DynArrayPtr arr);
+void* RERR_DynArray_Erase(RERR_DynArrayPtr arr, void* pos);
+void* RERR_DynArray_Insert(RERR_DynArrayPtr arr, void* pos);
+size_t RERR_DynArray_GetSize(RERR_DynArrayPtr arr);
+void* RERR_DynArray_At(RERR_DynArrayPtr arr, size_t index);
+void* RERR_DynArray_BSearchInsertionPoint(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare);
+void* RERR_DynArray_BSearch(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare);
+void* RERR_DynArray_FindFirst(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare);
 
-void* DynArray_Begin(DynArrayPtr arr);
-void* DynArray_End(DynArrayPtr arr);
-void* DynArray_Front(DynArrayPtr arr);
-void* DynArray_Back(DynArrayPtr arr);
-void* DynArray_Advance(DynArrayPtr arr, void* it);
+void* RERR_DynArray_Begin(RERR_DynArrayPtr arr);
+void* RERR_DynArray_End(RERR_DynArrayPtr arr);
+void* RERR_DynArray_Front(RERR_DynArrayPtr arr);
+void* RERR_DynArray_Back(RERR_DynArrayPtr arr);
+void* RERR_DynArray_Advance(RERR_DynArrayPtr arr, void* it);
 
 
 #ifdef __cplusplus

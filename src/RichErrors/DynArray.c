@@ -32,7 +32,7 @@
 #include <string.h>
 
 
-struct DynArray {
+struct RERR_DynArray {
     char* elems;
     size_t size;
     size_t capacity;
@@ -43,19 +43,19 @@ struct DynArray {
 };
 
 
-static inline char* Begin(DynArrayPtr arr)
+static inline char* Begin(RERR_DynArrayPtr arr)
 {
     return arr->elems;
 }
 
 
-static inline char* End(DynArrayPtr arr)
+static inline char* End(RERR_DynArrayPtr arr)
 {
     return Begin(arr) + arr->size * arr->elemSize;
 }
 
 
-static inline char* Advance(DynArrayPtr arr, char* it)
+static inline char* Advance(RERR_DynArrayPtr arr, char* it)
 {
     return it + arr->elemSize;
 }
@@ -79,7 +79,7 @@ static inline size_t RoundUpToPowerOf2(size_t s)
 }
 
 
-static inline size_t IdealCapacity(DynArrayPtr arr, size_t size)
+static inline size_t IdealCapacity(RERR_DynArrayPtr arr, size_t size)
 {
     if (size == 0) {
         return 0;
@@ -100,7 +100,7 @@ static inline size_t IdealCapacity(DynArrayPtr arr, size_t size)
 
 
 // Precondition: newCap >= arr->size
-static inline bool SetCapacity(DynArrayPtr arr, size_t newCap)
+static inline bool SetCapacity(RERR_DynArrayPtr arr, size_t newCap)
 {
     if (newCap == 0) {
         free(arr->elems);
@@ -126,7 +126,7 @@ static inline bool SetCapacity(DynArrayPtr arr, size_t newCap)
 }
 
 
-static inline bool EnsureCapacity(DynArrayPtr arr, size_t size)
+static inline bool EnsureCapacity(RERR_DynArrayPtr arr, size_t size)
 {
     if (arr->capacity >= size) {
         return true;
@@ -135,7 +135,7 @@ static inline bool EnsureCapacity(DynArrayPtr arr, size_t size)
 }
 
 
-static inline void MaybeShrink(DynArrayPtr arr)
+static inline void MaybeShrink(RERR_DynArrayPtr arr)
 {
     size_t idealCap = IdealCapacity(arr, arr->size + arr->capHysteresis);
     if (arr->capacity > idealCap) {
@@ -144,8 +144,8 @@ static inline void MaybeShrink(DynArrayPtr arr)
 }
 
 
-static inline void* BSearch(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare, bool exact)
+static inline void* BSearch(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare, bool exact)
 {
     char* left = Begin(arr);
     char* right = End(arr);
@@ -173,8 +173,8 @@ static inline void* BSearch(DynArrayPtr arr, const void* key,
 }
 
 
-static inline void* LinSearch(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare, bool exact)
+static inline void* LinSearch(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare, bool exact)
 {
     char* begin = Begin(arr);
     char* end = End(arr);
@@ -196,13 +196,13 @@ static inline void* LinSearch(DynArrayPtr arr, const void* key,
 }
 
 
-DynArrayPtr DynArray_Create(size_t elemSize)
+RERR_DynArrayPtr RERR_DynArray_Create(size_t elemSize)
 {
     if (elemSize == 0) {
         return NULL;
     }
 
-    DynArrayPtr ret = calloc(1, sizeof(struct DynArray));
+    RERR_DynArrayPtr ret = calloc(1, sizeof(struct RERR_DynArray));
     if (!ret) {
         return NULL;
     }
@@ -223,7 +223,7 @@ DynArrayPtr DynArray_Create(size_t elemSize)
 }
 
 
-void DynArray_Destroy(DynArrayPtr arr)
+void RERR_DynArray_Destroy(RERR_DynArrayPtr arr)
 {
     arr->size = 0;
     free(arr->elems);
@@ -233,7 +233,7 @@ void DynArray_Destroy(DynArrayPtr arr)
 }
 
 
-void DynArray_ReserveCapacity(DynArrayPtr arr, size_t capacity)
+void RERR_DynArray_ReserveCapacity(RERR_DynArrayPtr arr, size_t capacity)
 {
     if (capacity < arr->size) {
         capacity = arr->size;
@@ -244,14 +244,14 @@ void DynArray_ReserveCapacity(DynArrayPtr arr, size_t capacity)
 }
 
 
-void DynArray_Clear(DynArrayPtr arr)
+void RERR_DynArray_Clear(RERR_DynArrayPtr arr)
 {
     arr->size = 0;
     MaybeShrink(arr);
 }
 
 
-void* DynArray_Erase(DynArrayPtr arr, void* pos)
+void* RERR_DynArray_Erase(RERR_DynArrayPtr arr, void* pos)
 {
     char* it = (char*)pos;
 
@@ -267,7 +267,7 @@ void* DynArray_Erase(DynArrayPtr arr, void* pos)
 }
 
 
-void* DynArray_Insert(DynArrayPtr arr, void* pos)
+void* RERR_DynArray_Insert(RERR_DynArrayPtr arr, void* pos)
 {
     char* it = (char*)pos;
     size_t saveOffset = it - Begin(arr);
@@ -285,20 +285,20 @@ void* DynArray_Insert(DynArrayPtr arr, void* pos)
 }
 
 
-size_t DynArray_Size(DynArrayPtr arr)
+size_t RERR_DynArray_GetSize(RERR_DynArrayPtr arr)
 {
     return arr->size;
 }
 
 
-void* DynArray_At(DynArrayPtr arr, size_t index)
+void* RERR_DynArray_At(RERR_DynArrayPtr arr, size_t index)
 {
     return Begin(arr) + index * arr->elemSize;
 }
 
 
-void* DynArray_BSearchInsertionPoint(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare)
+void* RERR_DynArray_BSearchInsertionPoint(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare)
 {
     // TODO: For maximum performance, it may make sense to use linear search
     // when arr->size is below some threshold (to be determined empirically).
@@ -307,8 +307,8 @@ void* DynArray_BSearchInsertionPoint(DynArrayPtr arr, const void* key,
 }
 
 
-void* DynArray_BSearchExact(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare)
+void* RERR_DynArray_BSearch(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare)
 {
     // TODO: For maximum performance, it may make sense to use linear search
     // when arr->size is below some threshold (to be determined empirically).
@@ -317,26 +317,26 @@ void* DynArray_BSearchExact(DynArrayPtr arr, const void* key,
 }
 
 
-void* DynArray_FindFirstEqual(DynArrayPtr arr, const void* key,
-    DynArrayCompareFunc compare)
+void* RERR_DynArray_FindFirst(RERR_DynArrayPtr arr, const void* key,
+    RERR_DynArrayCompareFunc compare)
 {
     return LinSearch(arr, key, compare, true);
 }
 
 
-void* DynArray_Begin(DynArrayPtr arr)
+void* RERR_DynArray_Begin(RERR_DynArrayPtr arr)
 {
     return Begin(arr);
 }
 
 
-void* DynArray_End(DynArrayPtr arr)
+void* RERR_DynArray_End(RERR_DynArrayPtr arr)
 {
     return End(arr);
 }
 
 
-void* DynArray_Front(DynArrayPtr arr)
+void* RERR_DynArray_Front(RERR_DynArrayPtr arr)
 {
     if (arr->size > 0) {
         return Begin(arr);
@@ -345,7 +345,7 @@ void* DynArray_Front(DynArrayPtr arr)
 }
 
 
-void* DynArray_Back(DynArrayPtr arr)
+void* RERR_DynArray_Back(RERR_DynArrayPtr arr)
 {
     if (arr->size > 0) {
         return End(arr) - arr->elemSize;
@@ -354,7 +354,7 @@ void* DynArray_Back(DynArrayPtr arr)
 }
 
 
-void* DynArray_Advance(DynArrayPtr arr, void* it)
+void* RERR_DynArray_Advance(RERR_DynArrayPtr arr, void* it)
 {
     return Advance(arr, it);
 }

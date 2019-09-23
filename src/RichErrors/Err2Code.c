@@ -58,7 +58,7 @@ struct RERR_ErrorMap {
 
     RecursiveMutex mutex;
     int32_t nextCode;
-    DynArrayPtr mappings; // Always sorted (MappedError_Compare)
+    RERR_DynArrayPtr mappings; // Always sorted (MappedError_Compare)
 };
 
 
@@ -88,7 +88,7 @@ static struct MappedError* ErrorMap_Find(RERR_ErrorMapPtr map, ThreadID thread, 
     key.code = code;
     key.error = NULL;
 
-    return DynArray_BSearchExact(map->mappings, &key, MappedError_Compare);
+    return RERR_DynArray_BSearch(map->mappings, &key, MappedError_Compare);
 }
 
 
@@ -101,9 +101,9 @@ static RERR_ErrorPtr ErrorMap_Insert(RERR_ErrorMapPtr map,
     key.code = code;
     key.error = NULL;
 
-    struct MappedError* p = DynArray_BSearchInsertionPoint(map->mappings,
+    struct MappedError* p = RERR_DynArray_BSearchInsertionPoint(map->mappings,
         &key, MappedError_Compare);
-    p = DynArray_Insert(map->mappings, p);
+    p = RERR_DynArray_Insert(map->mappings, p);
     if (!p) {
         return RERR_Error_CreateOutOfMemory();
     }
@@ -190,14 +190,14 @@ RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
         return err;
     }
 
-    DynArrayPtr mappings = DynArray_Create(sizeof(struct MappedError));
+    RERR_DynArrayPtr mappings = RERR_DynArray_Create(sizeof(struct MappedError));
     if (!mappings) {
         return RERR_Error_CreateOutOfMemory();
     }
 
     *map = calloc(1, sizeof(struct RERR_ErrorMap));
     if (!*map) {
-        DynArray_Destroy(mappings);
+        RERR_DynArray_Destroy(mappings);
         return RERR_Error_CreateOutOfMemory();
     }
 
@@ -222,13 +222,13 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map)
         return;
     }
 
-    struct MappedError* begin = DynArray_Begin(map->mappings);
-    struct MappedError* end = DynArray_End(map->mappings);
-    for (struct MappedError* it = begin; it != end; it = DynArray_Advance(map->mappings, it)) {
+    struct MappedError* begin = RERR_DynArray_Begin(map->mappings);
+    struct MappedError* end = RERR_DynArray_End(map->mappings);
+    for (struct MappedError* it = begin; it != end; it = RERR_DynArray_Advance(map->mappings, it)) {
         RERR_Error_Destroy(it->error);
     }
 
-    DynArray_Destroy(map->mappings);
+    RERR_DynArray_Destroy(map->mappings);
 
     free(map);
 }
@@ -330,7 +330,7 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
         struct MappedError* found = ErrorMap_Find(map, GetThisThreadId(), mappedCode);
         if (found) {
             ret = found->error;
-            DynArray_Erase(map->mappings, found);
+            RERR_DynArray_Erase(map->mappings, found);
         }
         else {
             ret = RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
@@ -353,14 +353,14 @@ void RERR_ErrorMap_ClearThreadLocal(RERR_ErrorMapPtr map)
 
     LockMutex(&map->mutex);
     {
-        struct MappedError* begin = DynArray_Begin(map->mappings);
-        for (struct MappedError* it = begin; it != DynArray_End(map->mappings); ) {
+        struct MappedError* begin = RERR_DynArray_Begin(map->mappings);
+        for (struct MappedError* it = begin; it != RERR_DynArray_End(map->mappings); ) {
             if (it->thread == thisThread) {
                 RERR_Error_Destroy(it->error);
-                it = DynArray_Erase(map->mappings, it);
+                it = RERR_DynArray_Erase(map->mappings, it);
             }
             else {
-                it = DynArray_Advance(map->mappings, it);
+                it = RERR_DynArray_Advance(map->mappings, it);
             }
         }
     }

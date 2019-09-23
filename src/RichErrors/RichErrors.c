@@ -54,7 +54,7 @@ static struct RERR_Domain RichErrorsDomain = {
 
 // Globally registered domains. We use an array of pointers, so that domain
 // pointers always remain valid.
-static DynArrayPtr domains; // Elements are RERR_DomainPtr, sorted by key
+static RERR_DynArrayPtr domains; // Elements are RERR_DomainPtr, sorted by key
 static RecursiveMutex DECLARE_STATIC_MUTEX(domainsLock);
 static MutexInitializer DECLARE_MUTEX_INITIALIZER(domainsLockInit);
 
@@ -162,7 +162,7 @@ static RERR_DomainPtr Domain_Find(const char* domainName)
 
     RERR_DomainPtr* found = NULL;
     if (domains) {
-        found = DynArray_BSearchExact(domains, domainName, Domain_Compare);
+        found = RERR_DynArray_BSearch(domains, domainName, Domain_Compare);
     }
     RERR_DomainPtr ret = found ? *found : NULL;
 
@@ -214,15 +214,15 @@ static void Domain_Destroy(RERR_DomainPtr domain)
 static RERR_ErrorPtr Domain_Insert(RERR_DomainPtr domain)
 {
     if (!domains) {
-        domains = DynArray_Create(sizeof(RERR_DomainPtr));
+        domains = RERR_DynArray_Create(sizeof(RERR_DomainPtr));
         if (!domains) {
             return RERR_OUT_OF_MEMORY;
         }
     }
 
-    RERR_DomainPtr* it = DynArray_BSearchInsertionPoint(domains,
+    RERR_DomainPtr* it = RERR_DynArray_BSearchInsertionPoint(domains,
         domain->name, Domain_Compare);
-    it = DynArray_Insert(domains, it);
+    it = RERR_DynArray_Insert(domains, it);
     if (!it) {
         return RERR_OUT_OF_MEMORY;
     }
@@ -240,15 +240,15 @@ void RERR_Domain_UnregisterAll(void)
         return;
     }
 
-    RERR_DomainPtr* begin = DynArray_Begin(domains);
-    RERR_DomainPtr* end = DynArray_End(domains);
-    for (RERR_DomainPtr* it = begin; it != end; it = DynArray_Advance(domains, it)) {
+    RERR_DomainPtr* begin = RERR_DynArray_Begin(domains);
+    RERR_DomainPtr* end = RERR_DynArray_End(domains);
+    for (RERR_DomainPtr* it = begin; it != end; it = RERR_DynArray_Advance(domains, it)) {
         Domain_Destroy(*it);
     }
 
     // Actually we only need to clear, but we deallocate so that memory leak
     // detection in unit tests will not see the leftover static array.
-    DynArray_Destroy(domains);
+    RERR_DynArray_Destroy(domains);
     domains = NULL;
 
     UnlockMutex(&domainsLock);

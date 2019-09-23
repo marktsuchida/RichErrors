@@ -78,7 +78,7 @@ struct SmallMapItem {
 
 
 struct SmallMap {
-    DynArrayPtr items; // Sorted by key strcmp
+    RERR_DynArrayPtr items; // Sorted by key strcmp
     bool frozen;
     size_t refCount; // Always 1 unless frozen
 };
@@ -150,12 +150,12 @@ error:
 // Precondition: map != NULL
 static void Clear(SmallMapPtr map)
 {
-    SmallMapIterator begin = DynArray_Begin(map->items);
-    SmallMapIterator end = DynArray_End(map->items);
+    SmallMapIterator begin = RERR_DynArray_Begin(map->items);
+    SmallMapIterator end = RERR_DynArray_End(map->items);
     for (SmallMapIterator it = begin; it != end; ++it) {
         ClearItem(it);
     }
-    DynArray_Clear(map->items);
+    RERR_DynArray_Clear(map->items);
 }
 
 
@@ -167,10 +167,10 @@ static SmallMapPtr MutableCopy(SmallMapPtr source)
         goto error;
     }
 
-    SmallMapIterator begin = DynArray_Begin(source->items);
-    SmallMapIterator end = DynArray_End(source->items);
+    SmallMapIterator begin = RERR_DynArray_Begin(source->items);
+    SmallMapIterator end = RERR_DynArray_End(source->items);
     for (SmallMapIterator it = begin; it != end; ++it) {
-        SmallMapIterator ins = DynArray_Insert(ret->items, DynArray_End(ret->items));
+        SmallMapIterator ins = RERR_DynArray_Insert(ret->items, RERR_DynArray_End(ret->items));
         if (!ins) {
             goto error;
         }
@@ -197,7 +197,7 @@ static int ItemKeyCompare(const struct SmallMapItem* item, const char* key)
 
 static inline SmallMapIterator Find(SmallMapPtr map, const char* key)
 {
-    return DynArray_BSearchExact(map->items, key, ItemKeyCompare);
+    return RERR_DynArray_BSearch(map->items, key, ItemKeyCompare);
 }
 
 
@@ -209,10 +209,10 @@ static inline SmallMapIterator Find(SmallMapPtr map, const char* key)
 // Returns SmallMapErrorOutOfMemory if allocation of capacity or key copy failed
 static SmallMapError SetKey(SmallMapPtr map, const char* key, SmallMapIterator* it)
 {
-    *it = DynArray_BSearchInsertionPoint(map->items, key, ItemKeyCompare);
+    *it = RERR_DynArray_BSearchInsertionPoint(map->items, key, ItemKeyCompare);
 
     // Found exact, so need to overwrite
-    if (*it != DynArray_End(map->items) && strcmp((*it)->key, key) == 0) {
+    if (*it != RERR_DynArray_End(map->items) && strcmp((*it)->key, key) == 0) {
         // Overwriting value in place.
         // Evacuate key while we clear the item.
         const char* saveKey = (*it)->key;
@@ -232,7 +232,7 @@ static SmallMapError SetKey(SmallMapPtr map, const char* key, SmallMapIterator* 
     }
     strncpy(keyCopy, key, keyLen + 1);
 
-    *it = DynArray_Insert(map->items, *it);
+    *it = RERR_DynArray_Insert(map->items, *it);
     if (!*it) {
         ret = SmallMapErrorOutOfMemory;
         goto exit;
@@ -255,7 +255,7 @@ SmallMapPtr SmallMap_Create(void)
     }
     ret->refCount = 1;
 
-    ret->items = DynArray_Create(sizeof(struct SmallMapItem));
+    ret->items = RERR_DynArray_Create(sizeof(struct SmallMapItem));
     if (!ret->items) {
         free(ret);
         return NULL;
@@ -277,7 +277,7 @@ void SmallMap_Destroy(SmallMapPtr map)
 
     // TODO Clear() may realloc to shrink, which is a waste
     Clear(map);
-    DynArray_Destroy(map->items);
+    RERR_DynArray_Destroy(map->items);
     free(map);
 }
 
@@ -338,7 +338,7 @@ size_t SmallMap_GetSize(SmallMapPtr map)
     if (!map) {
         return 0;
     }
-    return DynArray_Size(map->items);
+    return RERR_DynArray_GetSize(map->items);
 }
 
 
@@ -347,7 +347,7 @@ bool SmallMap_IsEmpty(SmallMapPtr map)
     if (!map) {
         return true;
     }
-    return DynArray_Size(map->items) == 0;
+    return RERR_DynArray_GetSize(map->items) == 0;
 }
 
 
@@ -357,7 +357,7 @@ void SmallMap_ReserveCapacity(SmallMapPtr map, size_t capacity)
         return;
     }
 
-    DynArray_ReserveCapacity(map->items, capacity);
+    RERR_DynArray_ReserveCapacity(map->items, capacity);
 }
 
 
@@ -492,7 +492,7 @@ bool SmallMap_Remove(SmallMapPtr map, const char* key)
     }
 
     ClearItem(found);
-    DynArray_Erase(map->items, found);
+    RERR_DynArray_Erase(map->items, found);
 
     return true;
 }
