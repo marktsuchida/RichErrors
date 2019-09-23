@@ -325,7 +325,7 @@ int32_t RERR_Error_GetCode(RERR_ErrorPtr error);
 
 /// Format the error code of the given error.
 /**
- * The destination buffer should be at least #RERR_MAX_FORMATTED_CODE_SIZE
+ * The destination buffer should be at least #RERR_FORMATTED_CODE_MAX_SIZE
  * bytes to guarantee that no truncation occurs.
  *
  * If the given error does not have an error code, a short message to that

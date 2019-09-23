@@ -30,7 +30,7 @@
 /** \file
  * \brief A key-value map with string keys and POD values.
  *
- * Note that these functions are documented by are internal only and not part
+ * Note that these functions, though documented, are internal only and not part
  * of the RichErrors API.
  */
 
