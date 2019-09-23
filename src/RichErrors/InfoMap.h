@@ -189,6 +189,12 @@ void RERR_InfoMap_MakeOutOfMemory(RERR_InfoMapPtr map);
  */
 bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map);
 
+/// Return whether the map has seen incorrect construction.
+bool RERR_InfoMap_HasProgrammingErrors(RERR_InfoMapPtr map);
+
+/// Get error message for incorrect construction.
+size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char* dest, size_t destSize);
+
 /// Return the number of items in an info map.
 /**
  * \return Zero if \p map is null.

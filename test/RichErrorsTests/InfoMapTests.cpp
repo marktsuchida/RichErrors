@@ -183,3 +183,78 @@ TEST_CASE("Out of memory", "[RERR_InfoMap]") {
     REQUIRE(!RERR_InfoMap_IsMutable(m));
     RERR_InfoMap_Destroy(m);
 }
+
+
+TEST_CASE("Programming errors", "[RERR_InfoMap]") {
+    SECTION("Null key") {
+        RERR_InfoMapPtr m = RERR_InfoMap_Create();
+        REQUIRE(!RERR_InfoMap_HasProgrammingErrors(m));
+
+        RERR_InfoMap_SetString(m, nullptr, "value");
+
+        REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
+        size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
+        REQUIRE(size > 0);
+        char* msg = (char*)malloc(size);
+        REQUIRE(msg != nullptr);
+        RERR_InfoMap_GetProgrammingErrors(m, msg, size);
+        REQUIRE(strlen(msg) + 1 == size);
+        free(msg);
+        RERR_InfoMap_Destroy(m);
+    }
+
+    SECTION("Null value") {
+        RERR_InfoMapPtr m = RERR_InfoMap_Create();
+        REQUIRE(!RERR_InfoMap_HasProgrammingErrors(m));
+
+        RERR_InfoMap_SetString(m, "key", nullptr);
+
+        REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
+        size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
+        REQUIRE(size > 0);
+        char* msg = (char*)malloc(size);
+        REQUIRE(msg != nullptr);
+        RERR_InfoMap_GetProgrammingErrors(m, msg, size);
+        REQUIRE(strlen(msg) + 1 == size);
+        free(msg);
+        RERR_InfoMap_Destroy(m);
+    }
+
+    SECTION("Mutate immutable") {
+        RERR_InfoMapPtr m = RERR_InfoMap_Create();
+        REQUIRE(!RERR_InfoMap_HasProgrammingErrors(m));
+
+        RERR_InfoMap_MakeImmutable(m);
+        RERR_InfoMap_SetString(m, "key", "value");
+
+        REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
+        size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
+        REQUIRE(size > 0);
+        char* msg = (char*)malloc(size);
+        REQUIRE(msg != nullptr);
+        RERR_InfoMap_GetProgrammingErrors(m, msg, size);
+        REQUIRE(strlen(msg) + 1 == size);
+        free(msg);
+        RERR_InfoMap_Destroy(m);
+    }
+
+    SECTION("All errors") {
+        RERR_InfoMapPtr m = RERR_InfoMap_Create();
+        REQUIRE(!RERR_InfoMap_HasProgrammingErrors(m));
+
+        RERR_InfoMap_SetString(m, nullptr, "value");
+        RERR_InfoMap_SetString(m, "key", nullptr);
+        RERR_InfoMap_MakeImmutable(m);
+        RERR_InfoMap_SetString(m, "key", "value");
+
+        REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
+        size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
+        REQUIRE(size > 0);
+        char* msg = (char*)malloc(size);
+        REQUIRE(msg != nullptr);
+        RERR_InfoMap_GetProgrammingErrors(m, msg, size);
+        REQUIRE(strlen(msg) + 1 == size);
+        free(msg);
+        RERR_InfoMap_Destroy(m);
+    }
+}

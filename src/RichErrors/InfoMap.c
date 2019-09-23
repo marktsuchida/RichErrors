@@ -426,6 +426,65 @@ bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map)
 }
 
 
+bool RERR_InfoMap_HasProgrammingErrors(RERR_InfoMapPtr map)
+{
+    const uint32_t errorFlags = FLAG_ERROR_ATTEMPT_TO_MUTATE_IMMUTABLE |
+        FLAG_ERROR_NULL_KEY_GIVEN | FLAG_ERROR_NULL_VALUE_GIVEN;
+    return map->flags & errorFlags;
+}
+
+
+static inline void ConcatString(char* restrict dest, const char* restrict src, size_t destSize)
+{
+    if (!dest || destSize == 0 || !src) {
+        return;
+    }
+    size_t destLen = strlen(dest);
+    if (destLen < destSize - 1) {
+        strncat(dest, src, destSize - 1 - destLen);
+        dest[destSize - 1] = '\0';
+    }
+}
+
+
+size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char* dest, size_t destSize)
+{
+    static const char* const err1 = "Attempt(s) made to mutate immutable map.";
+    static const char* const err2 = "Null key(s) passed to mutating function(s).";
+    static const char* const err3 = "Null value(s) passed to mutating function(s).";
+
+    if (dest && destSize > 0) {
+        dest[0] = '\0';
+    }
+    size_t totalLen = 0;
+
+    if (map->flags & FLAG_ERROR_ATTEMPT_TO_MUTATE_IMMUTABLE) {
+        ConcatString(dest, err1, destSize);
+        totalLen += strlen(err1);
+    }
+
+    if (map->flags & FLAG_ERROR_NULL_KEY_GIVEN) {
+        if (totalLen > 0) {
+            ConcatString(dest, " ", destSize);
+            ++totalLen;
+        }
+        ConcatString(dest, err2, destSize);
+        totalLen += strlen(err2);
+    }
+
+    if (map->flags & FLAG_ERROR_NULL_VALUE_GIVEN) {
+        if (totalLen > 0) {
+            ConcatString(dest, " ", destSize);
+            ++totalLen;
+        }
+        ConcatString(dest, err3, destSize);
+        totalLen += strlen(err3);
+    }
+
+    return totalLen + 1;
+}
+
+
 size_t RERR_InfoMap_GetSize(RERR_InfoMapPtr map)
 {
     if (!map) {
