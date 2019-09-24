@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #define _CRT_SECURE_NO_WARNINGS
-#include "InfoMap.h"
+#include "RichErrors/InfoMap.h"
 
 #include "DynArray.h"
 

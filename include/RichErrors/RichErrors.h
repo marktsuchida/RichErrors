@@ -65,6 +65,8 @@
  *   because this library was created for use by non-localized software.
  */
 
+#include "RichErrors/InfoMap.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -234,6 +236,19 @@ RERR_ErrorPtr RERR_Error_Create(const char* message);
 RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
     const char* message);
 
+/// Create an error with an error code and auxiliary information.
+/**
+ * Errors can only have auxiliary information if they also have a domain and
+ * code, because otherwise there would be no context in which to interpret such
+ * information.
+ *
+ * If \p info is null, this function behaves exactly like
+ * RERR_Error_CreateWithCode(). Otherwise, \p domainName and \p code must be
+ * valid and ownership of \p info is taken by the new error.
+ */
+RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
+    RERR_InfoMapPtr info, const char* message);
+
 /// Destroy an error object.
 /**
  * This function is safe to call on any properly constructed error, including
@@ -311,6 +326,15 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
 RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
     const char* domainName, int32_t code, const char* message);
 
+/// Created a nested error with error code and auxiliary info.
+/**
+ * \sa RERR_Error_WrapWithCode()
+ * \sa RERR_Error_CreateWithInfo()
+ */
+RERR_ErrorPtr RERR_Error_WrapWithInfo(RERR_ErrorPtr cause,
+    const char* domainName, int32_t code, RERR_InfoMapPtr info,
+    const char* message);
+
 /// Return whether the given error has an error domain and code.
 bool RERR_Error_HasCode(RERR_ErrorPtr error);
 
@@ -338,6 +362,16 @@ int32_t RERR_Error_GetCode(RERR_ErrorPtr error);
  * effect will be copied to `dest`.
  */
 void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize);
+
+/// Return whether the given error has non-empty auxiliary info.
+bool RERR_Error_HasInfo(RERR_ErrorPtr error);
+
+/// Get auxiliary info attached to the given error.
+/**
+ * The returned info map is immutable and owned by the caller. However, it is
+ * not thread-safe independently of the error from which it was retrieved.
+ */
+RERR_InfoMapPtr RERR_Error_GetInfo(RERR_ErrorPtr error);
 
 /// Return the error message of the given error.
 /**

@@ -28,7 +28,7 @@
 #include "../catch2/catch.hpp"
 #include "TestDefs.h"
 
-#include "../../src/RichErrors/InfoMap.h"
+#include "../../include/RichErrors/InfoMap.h"
 
 
 TEST_CASE("Null behavior", "[RERR_InfoMap]") {

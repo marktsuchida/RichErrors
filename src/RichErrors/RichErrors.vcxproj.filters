@@ -47,7 +47,7 @@
     <ClInclude Include="DynArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InfoMap.h">
+    <ClInclude Include="..\..\include\RichErrors\InfoMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

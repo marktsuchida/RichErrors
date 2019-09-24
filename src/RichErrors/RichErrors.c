@@ -67,6 +67,7 @@ struct RERR_Error {
     int32_t code; // Zero if no domain
     const char* message; // String owned by this RERR_Error object
     struct RERR_Error* cause; // Original error, owned by this RERR_Error
+    RERR_InfoMapPtr info;
     uint32_t refCount;
 };
 
@@ -366,6 +367,40 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
 }
 
 
+RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
+    RERR_InfoMapPtr info, const char* message)
+{
+    RERR_ErrorPtr ret = RERR_Error_CreateWithCode(domainName, code, message);
+
+    // We treat empty info map the same as no info map.
+    if (RERR_InfoMap_IsEmpty(info)) { // Includes info == NULL
+        goto exit;
+    }
+
+    // Domain is required for having info.
+    if (!domainName) {
+        goto exit;
+    }
+
+    // If there was an error while creating the error, the info no longer
+    // pertains to the error to be returned. Since we have ownership anyway,
+    // destroy it.
+    if (ret == RERR_OUT_OF_MEMORY ||
+        !ret->domain ||
+        strcmp(ret->domain->name, domainName) != 0 ||
+        ret->code != code)
+    {
+        goto exit;
+    }
+
+    ret->info = RERR_InfoMap_ImmutableCopy(info);
+
+exit:
+    RERR_InfoMap_Destroy(info);
+    return ret;
+}
+
+
 void RERR_Error_Destroy(RERR_ErrorPtr error)
 {
     if (!error || error == RERR_OUT_OF_MEMORY)
@@ -414,6 +449,19 @@ RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause, const char* domainNam
     int32_t code, const char* message)
 {
     RERR_ErrorPtr ret = RERR_Error_CreateWithCode(domainName, code, message);
+    if (ret == RERR_OUT_OF_MEMORY) {
+        RERR_Error_Destroy(cause);
+        return ret;
+    }
+    ret->cause = cause;
+    return ret;
+}
+
+
+RERR_ErrorPtr RERR_Error_WrapWithInfo(RERR_ErrorPtr cause, const char* domainName,
+    int32_t code, RERR_InfoMapPtr info, const char* message)
+{
+    RERR_ErrorPtr ret = RERR_Error_CreateWithInfo(domainName, code, info, message);
     if (ret == RERR_OUT_OF_MEMORY) {
         RERR_Error_Destroy(cause);
         return ret;
@@ -562,6 +610,26 @@ void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize)
     strcat(dest, lparen);
     strcat(dest, secondary);
     strcat(dest, rparen);
+}
+
+
+bool RERR_Error_HasInfo(RERR_ErrorPtr error)
+{
+    if (!error || error == RERR_OUT_OF_MEMORY) {
+        return false;
+    }
+    return error->info && !RERR_InfoMap_IsEmpty(error->info);
+}
+
+
+RERR_InfoMapPtr RERR_Error_GetInfo(RERR_ErrorPtr error)
+{
+    if (!error || error == RERR_OUT_OF_MEMORY || !error->info) {
+        RERR_InfoMapPtr ret = RERR_InfoMap_Create();
+        RERR_InfoMap_MakeImmutable(ret);
+        return ret;
+    }
+    return RERR_InfoMap_ImmutableCopy(error->info);
 }
 
 

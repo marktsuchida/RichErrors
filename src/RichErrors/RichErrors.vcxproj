@@ -156,10 +156,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\RichErrors\Err2Code.h" />
     <ClInclude Include="..\..\include\RichErrors\Err2Code.hpp" />
+    <ClInclude Include="..\..\include\RichErrors\InfoMap.h" />
     <ClInclude Include="..\..\include\RichErrors\RichErrors.h" />
     <ClInclude Include="..\..\include\RichErrors\RichErrors.hpp" />
     <ClInclude Include="DynArray.h" />
-    <ClInclude Include="InfoMap.h" />
     <ClInclude Include="Threads.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
