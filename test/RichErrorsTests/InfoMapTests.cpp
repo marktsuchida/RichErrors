@@ -215,7 +215,9 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         char* msg = (char*)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
-        REQUIRE(strlen(msg) + 1 == size);
+        if (msg != nullptr) { // Avoid MSVC 'msg may be null' warning
+            REQUIRE(strlen(msg) + 1 == size);
+        }
         free(msg);
         RERR_InfoMap_Destroy(m);
     }
@@ -233,7 +235,9 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         char* msg = (char*)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
-        REQUIRE(strlen(msg) + 1 == size);
+        if (msg != nullptr) { // Avoid MSVC 'msg may be null' warning
+            REQUIRE(strlen(msg) + 1 == size);
+        }
         free(msg);
         RERR_InfoMap_Destroy(m);
     }
@@ -253,7 +257,9 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         char* msg = (char*)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
-        REQUIRE(strlen(msg) + 1 == size);
+        if (msg != nullptr) { // Avoid MSVC 'msg may be null' warning
+            REQUIRE(strlen(msg) + 1 == size);
+        }
         free(msg);
         RERR_InfoMap_Destroy(m);
     }
