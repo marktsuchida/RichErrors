@@ -259,6 +259,11 @@ TEST_CASE("Code formatting") {
     FormatCode(RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
     CHECK(strcmp(buf, "0x00000000") == 0);
 
+    FormatCode(RERR_CodeFormat_Hex32 | RERR_CodeFormat_HexNoPad, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0xffffffff") == 0);
+    FormatCode(RERR_CodeFormat_Hex32 | RERR_CodeFormat_HexNoPad, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0x0") == 0);
+
     FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf, sizeof(buf));
     CHECK(strcmp(buf, "-1 (0xffffffff)") == 0);
     FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
@@ -283,6 +288,11 @@ TEST_CASE("Code formatting") {
     CHECK(strcmp(buf, "0xffff") == 0);
     FormatCode(RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
     CHECK(strcmp(buf, "0x0000") == 0);
+
+    FormatCode(RERR_CodeFormat_Hex16 | RERR_CodeFormat_HexNoPad, -1, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0xffff") == 0);
+    FormatCode(RERR_CodeFormat_Hex16 | RERR_CodeFormat_HexNoPad, 0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0x0") == 0);
 
     FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, -1, buf, sizeof(buf));
     CHECK(strcmp(buf, "-1 (0xffff)") == 0);

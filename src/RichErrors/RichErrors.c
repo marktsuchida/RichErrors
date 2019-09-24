@@ -86,7 +86,7 @@ static inline void FreeConst(const void* m)
 
 static RERR_ErrorPtr CodeFormat_Check(RERR_CodeFormat format)
 {
-    switch (format) {
+    switch (format & ~RERR_CodeFormat_HexNoPad) {
     case RERR_CodeFormat_I32:
     case RERR_CodeFormat_U32:
     case RERR_CodeFormat_Hex32:
@@ -556,7 +556,9 @@ void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize)
         snprintf(dec, sizeof(dec), "%" PRIu32, code);
     }
     if (format & RERR_CodeFormat_Hex32) {
-        snprintf(hex, sizeof(hex), "0x%08" PRIx32, code);
+        const char* const fmt = format & RERR_CodeFormat_HexNoPad ?
+            "0x%" PRIx32 : "0x%08" PRIx32;
+        snprintf(hex, sizeof(hex), fmt, code);
     }
     if (format & RERR_CodeFormat_I16) {
         snprintf(dec, sizeof(dec), "%" PRId16, (int16_t)code);
@@ -565,7 +567,9 @@ void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize)
         snprintf(dec, sizeof(dec), "%" PRIu16, (int16_t)code);
     }
     if (format & RERR_CodeFormat_Hex16) {
-        snprintf(hex, sizeof(hex), "0x%04" PRIx16, (int16_t)code);
+        const char* const fmt = format & RERR_CodeFormat_HexNoPad ?
+            "0x%" PRIx16 : "0x%04" PRIx16;
+        snprintf(hex, sizeof(hex), fmt, (int16_t)code);
     }
 
     size_t decLen = strlen(dec);

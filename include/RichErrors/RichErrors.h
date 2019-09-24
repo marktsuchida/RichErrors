@@ -149,7 +149,7 @@ enum {
 };
 
 /// Error code formatting mode.
-typedef int32_t RERR_CodeFormat;
+typedef uint32_t RERR_CodeFormat;
 
 /// Constants for type ::RERR_CodeFormat.
 /**
@@ -172,6 +172,9 @@ enum {
     RERR_CodeFormat_I16 = 8, ///< 16-bit signed integer, decimal
     RERR_CodeFormat_U16 = 16, ///< 16-bit unsigned integer, decimal
     RERR_CodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
+
+    /// Modifier to remove leading zeros from hex formats
+    RERR_CodeFormat_HexNoPad = 1 << 31,
 };
 
 /// Maximum length of formatted error code.
