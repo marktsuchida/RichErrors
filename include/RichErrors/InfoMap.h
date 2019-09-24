@@ -137,9 +137,6 @@ void RERR_InfoMap_Destroy(RERR_InfoMapPtr map);
  * or modify it before attaching to a new error), you should use
  * RERR_InfoMap_MutableCopy().
  *
- * TODO: Given this restriction, this function should probably always return an
- * immutable copy, performing a deep copy when the original is mutable.
- *
  * The return value is guaranteed to be non-null if \p source is not null and
  * is immutable.
  *

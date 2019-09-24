@@ -36,6 +36,7 @@
 #endif
 
 #include "RichErrors/RichErrors.h"
+#include "RichErrors/InfoMap.hpp"
 
 #include <exception>
 #include <string>
@@ -113,6 +114,15 @@ namespace RERR {
             ptr{ RERR_Error_CreateWithCode(domain.c_str(), code, message.c_str()) }
         {}
 
+        /// Construct with error code and auxiliary info.
+        /**
+         * Because the new error takes ownership of the info map, it must be an
+         * rvalue (use `std::move()` if necessary).
+         */
+        Error(std::string const& domain, int32_t code, InfoMap&& info, std::string const& message) noexcept :
+            ptr{ RERR_Error_CreateWithInfo(domain.c_str(), code, info.ReleaseCPtr(), message.c_str()) }
+        {}
+
         /// Construct with cause, without error code.
         /**
          * Because the new error takes ownership of the cause, the cause must
@@ -131,6 +141,17 @@ namespace RERR {
          */
         Error(Error&& cause, std::string const& domain, int32_t code, std::string const& message) noexcept :
             ptr{ RERR_Error_WrapWithCode(cause.ptr, domain.c_str(), code, message.c_str()) }
+        {
+            cause.ptr = nullptr;
+        }
+
+        /// Construct with cause, error code, and auxiliary info.
+        /**
+         * Because the new error takes ownership of the cause and the info map,
+         * they must be rvalues (use `std::move()` if necessary).
+         */
+        Error(Error&& cause, std::string const& domain, int32_t code, InfoMap&& info, std::string const& message) noexcept :
+            ptr{ RERR_Error_WrapWithInfo(cause.ptr, domain.c_str(), code, info.ReleaseCPtr(), message.c_str()) }
         {
             cause.ptr = nullptr;
         }
@@ -219,6 +240,16 @@ namespace RERR {
             char buf[RERR_FORMATTED_CODE_MAX_SIZE];
             RERR_Error_FormatCode(ptr, buf, sizeof(buf));
             return buf;
+        }
+
+        /// Return whether non-empty auxiliary info is attached.
+        bool HasInfo() const noexcept {
+            return RERR_Error_HasInfo(ptr);
+        }
+
+        /// Get the auxiliary info attached to this error.
+        InfoMap GetInfo() const noexcept {
+            return InfoMap(RERR_Error_GetInfo(ptr));
         }
 
         /// Return the error message.

@@ -28,7 +28,7 @@
 #include "../catch2/catch.hpp"
 #include "TestDefs.h"
 
-#include "../../include/RichErrors/InfoMap.h"
+#include "RichErrors/InfoMap.h"
 
 
 TEST_CASE("Null behavior", "[RERR_InfoMap]") {
@@ -186,6 +186,18 @@ TEST_CASE("Out of memory", "[RERR_InfoMap]") {
 
 
 TEST_CASE("Programming errors", "[RERR_InfoMap]") {
+    SECTION("No errors") {
+        RERR_InfoMapPtr m = RERR_InfoMap_Create();
+        REQUIRE(!RERR_InfoMap_HasProgrammingErrors(m));
+
+        size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
+        REQUIRE(size == 1);
+        char msg[256];
+        RERR_InfoMap_GetProgrammingErrors(m, msg, sizeof(msg));
+        REQUIRE(strlen(msg) == 0);
+        RERR_InfoMap_Destroy(m);
+    }
+
     SECTION("Null key") {
         RERR_InfoMapPtr m = RERR_InfoMap_Create();
         REQUIRE(!RERR_InfoMap_HasProgrammingErrors(m));

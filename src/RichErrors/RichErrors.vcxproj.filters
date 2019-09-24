@@ -50,5 +50,8 @@
     <ClInclude Include="..\..\include\RichErrors\InfoMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\RichErrors\InfoMap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

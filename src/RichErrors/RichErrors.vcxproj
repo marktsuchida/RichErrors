@@ -157,6 +157,7 @@
     <ClInclude Include="..\..\include\RichErrors\Err2Code.h" />
     <ClInclude Include="..\..\include\RichErrors\Err2Code.hpp" />
     <ClInclude Include="..\..\include\RichErrors\InfoMap.h" />
+    <ClInclude Include="..\..\include\RichErrors\InfoMap.hpp" />
     <ClInclude Include="..\..\include\RichErrors\RichErrors.h" />
     <ClInclude Include="..\..\include\RichErrors\RichErrors.hpp" />
     <ClInclude Include="DynArray.h" />
