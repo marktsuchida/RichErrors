@@ -264,3 +264,47 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         RERR_InfoMap_Destroy(m);
     }
 }
+
+
+TEST_CASE("Iteration", "[RERR_InfoMap]") {
+    RERR_InfoMapPtr m = RERR_InfoMap_Create();
+
+    RERR_InfoMap_SetString(m, "k0", "value");
+    RERR_InfoMap_SetBool(m, "k1", true);
+    RERR_InfoMap_SetI64(m, "k2", -42);
+    RERR_InfoMap_SetU64(m, "k3", 42);
+    RERR_InfoMap_SetF64(m, "k4", 42.5);
+    RERR_InfoMap_MakeImmutable(m);
+
+    RERR_InfoMapIterator begin = RERR_InfoMap_Begin(m);
+    RERR_InfoMapIterator end = RERR_InfoMap_End(m);
+    for (RERR_InfoMapIterator it = begin; it != end; it = RERR_InfoMap_Advance(m, it)) {
+        const char* key = RERR_InfoMapIterator_GetKey(it);
+        REQUIRE(strncmp(key, "k", 1) == 0);
+        REQUIRE(RERR_InfoMapIterator_GetType(it) != RERR_InfoValueTypeInvalid);
+        switch (RERR_InfoMapIterator_GetType(it)) {
+        case RERR_InfoValueTypeString:
+            REQUIRE(strcmp(key, "k0") == 0);
+            REQUIRE(strcmp(RERR_InfoMapIterator_GetString(it), "value") == 0);
+            break;
+        case RERR_InfoValueTypeBool:
+            REQUIRE(strcmp(key, "k1") == 0);
+            REQUIRE(RERR_InfoMapIterator_GetBool(it));
+            break;
+        case RERR_InfoValueTypeI64:
+            REQUIRE(strcmp(key, "k2") == 0);
+            REQUIRE(RERR_InfoMapIterator_GetI64(it) == -42);
+            break;
+        case RERR_InfoValueTypeU64:
+            REQUIRE(strcmp(key, "k3") == 0);
+            REQUIRE(RERR_InfoMapIterator_GetU64(it) == 42);
+            break;
+        case RERR_InfoValueTypeF64:
+            REQUIRE(strcmp(key, "k4") == 0);
+            REQUIRE(RERR_InfoMapIterator_GetF64(it) == 42.5);
+            break;
+        }
+    }
+
+    RERR_InfoMap_Destroy(m);
+}

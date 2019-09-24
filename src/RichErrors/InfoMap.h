@@ -438,12 +438,76 @@ bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value);
  */
 bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value);
 
-/*
- * TODO
+/// Get the beginning of the map as an iterator.
+/**
+ * Like a C++ iterator, the result can be used to iterate over all items in the
+ * map.
  *
- * - Iterate keys
- * - C++ interface
+ * \sa RERR_InfoMap_End(), RERR_InfoMap_Advance()
  */
+RERR_InfoMapIterator RERR_InfoMap_Begin(RERR_InfoMapPtr map);
+
+/// Get the end of the map as an iterator.
+/**
+ * Like a C++ iterator, the result points to the past-last position of the map.
+ *
+ * \sa RERR_InfoMap_Begin(), RERR_InfoMap_Advance()
+ */
+RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map);
+
+/// Advance an iterator.
+/**
+ * This is analogous to incrementing a C++ iterator. A loop over all items of a
+ * map may be written like this:
+ *
+ *     RERR_InfoMapIterator begin = RERR_InfoMap_Begin(map);
+ *     RERR_InfoMapIterator end = RERR_InfoMap_End(map);
+ *     for (RERR_InfoMapIterator it = begin; it != end; it = RERR_InfoMap_Advance(map, it)) {
+ *         const char* key = RERR_InfoMapIterator_GetKey(it);
+ *         // ...
+ *     }
+ *
+ * Iterator support for info maps is intended for reading out items only.
+ * Iterators are invalid if the map is mutable and is modified.
+ */
+RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map, RERR_InfoMapIterator it);
+
+/// Get the key of an item pointed to by an iterator.
+const char* RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it);
+
+/// Get the value type of an item pointed to by an iterator.
+RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it);
+
+/// Get the string value of an item pointed to by an iterator.
+/**
+ * If the item does not contain a string value, behavior is undefined.
+ */
+const char* RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it);
+
+/// Get the boolean value of an item pointed to by an iterator.
+/**
+ * If the item does not contain a boolean value, behavior is undefined.
+ */
+bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it);
+
+/// Get the signed integer value of an item pointed to by an iterator.
+/**
+ * If the item does not contain a signed integer value, behavior is undefined.
+ */
+int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it);
+
+/// Get the unsigned integer value of an item pointed to by an iterator.
+/**
+ * If the item does not contain a unsigned integer value, behavior is undefined.
+ */
+uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it);
+
+/// Get the floating-point value of an item pointed to by an iterator.
+/**
+ * If the item does not contain a floating-point value, behavior is undefined.
+ */
+double RERR_InfoMapIterator_GetF64(RERR_InfoMapIterator it);
+
 
 #ifdef __cplusplus
 } // extern "C"

@@ -55,6 +55,8 @@ void* RERR_DynArray_BSearch(RERR_DynArrayPtr arr, const void* key,
 void* RERR_DynArray_FindFirst(RERR_DynArrayPtr arr, const void* key,
     RERR_DynArrayCompareFunc compare);
 
+// Iterators. Note that pointer arithmetic cannot be used due to being void*.
+// (GCC allows void* arithmetic but result will be incorrect.)
 void* RERR_DynArray_Begin(RERR_DynArrayPtr arr);
 void* RERR_DynArray_End(RERR_DynArrayPtr arr);
 void* RERR_DynArray_Front(RERR_DynArrayPtr arr);

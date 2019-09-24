@@ -874,3 +874,123 @@ bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value)
     *value = found->value.value.f64;
     return true;
 }
+
+
+RERR_InfoMapIterator RERR_InfoMap_Begin(RERR_InfoMapPtr map)
+{
+    if (!map || RERR_InfoMap_IsOutOfMemory(map)) {
+        // begin and end must be equal even if map is "empty"
+        return NULL;
+    }
+    return RERR_DynArray_Begin(map->items);
+}
+
+
+RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map)
+{
+    if (!map || RERR_InfoMap_IsOutOfMemory(map)) {
+        // begin and end must be equal even if map is "empty"
+        return NULL;
+    }
+    return RERR_DynArray_End(map->items);
+}
+
+
+RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map, RERR_InfoMapIterator it)
+{
+#ifndef NDEBUG
+    if (!it || it == RERR_InfoMap_End(map)) {
+        abort();
+    }
+#endif
+
+    // In the current array-based implementation we could advance the iterator
+    // without having a reference to the whole map, but we demand such a
+    // reference in case we change the map storage implementation in the
+    // future.
+    return RERR_DynArray_Advance(map->items, it);
+}
+
+
+const char* RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it)
+{
+    if (!it) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return NULL;
+    }
+    return it->key;
+}
+
+
+RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it)
+{
+    if (!it) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return RERR_InfoValueTypeInvalid;
+    }
+    return it->value.type;
+}
+
+
+const char* RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it)
+{
+    if (!it || it->value.type != RERR_InfoValueTypeString) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return NULL;
+    }
+    return it->value.value.string;
+}
+
+
+bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it)
+{
+    if (!it || it->value.type != RERR_InfoValueTypeBool) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return false;
+    }
+    return it->value.value.boolean;
+}
+
+
+int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it)
+{
+    if (!it || it->value.type != RERR_InfoValueTypeI64) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return 0;
+    }
+    return it->value.value.i64;
+}
+
+
+uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it)
+{
+    if (!it || it->value.type != RERR_InfoValueTypeU64) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return 0;
+    }
+    return it->value.value.u64;
+}
+
+
+double RERR_InfoMapIterator_GetF64(RERR_InfoMapIterator it)
+{
+    if (!it || it->value.type != RERR_InfoValueTypeF64) {
+#ifndef NDEBUG
+        abort();
+#endif
+        return nan("");
+    }
+    return it->value.value.f64;
+}
