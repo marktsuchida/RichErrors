@@ -247,6 +247,12 @@ void RERR_Error_Destroy(RERR_ErrorPtr error);
  * function exists to support copy construction of C++ exceptions that wrap an
  * error.
  *
+ * Note also that copy support is not thread safe. Copies cannot safely be
+ * shared between threads without external synchronization around copying and
+ * destroying of the error. (The current implementation uses reference counting
+ * without any synchronization.) This is intentional because copying is
+ * supported solely to allow errors to be wrapped in C++ exceptions.
+ *
  * Because C++ exception objects must be no-throw copyable, this function is
  * designed not to return an error. How this is achieved is an implementation
  * detail that user code should not depend upon, but the error pointer returned

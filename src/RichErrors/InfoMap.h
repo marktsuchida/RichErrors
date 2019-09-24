@@ -129,6 +129,17 @@ void RERR_InfoMap_Destroy(RERR_InfoMapPtr map);
  * If \p source is immutable, the returned map is also immutable and may share
  * storage with the source.
  *
+ * As a consequence, copying is not thread-safe: making a copy is not
+ * not sufficient for safe sharing of a map across threads. This is
+ * intentional, as info maps are not intended for such use. (See the
+ * documentation for RERR_Error_Copy()). If you need a new copy of the map that
+ * is independent of the original (for example, because you want to add to it
+ * or modify it before attaching to a new error), you should use
+ * RERR_InfoMap_MutableCopy().
+ *
+ * TODO: Given this restriction, this function should probably always return an
+ * immutable copy, performing a deep copy when the original is mutable.
+ *
  * The return value is guaranteed to be non-null if \p source is not null and
  * is immutable.
  *
@@ -141,6 +152,8 @@ RERR_InfoMapPtr RERR_InfoMap_Copy(RERR_InfoMapPtr source);
 /**
  * The copy is mutable even if the source is immutable.
  *
+ * \sa RERR_InfoMap_Copy()
+ *
  * \return Null if allocation failed or if \p source is null.
  * \return Opaque pointer to the copy otherwise.
  */
@@ -152,6 +165,8 @@ RERR_InfoMapPtr RERR_InfoMap_MutableCopy(RERR_InfoMapPtr source);
  *
  * This is a convenience function equivalent to calling RERR_InfoMap_Copy()
  * followed by RERR_InfoMap_MakeImmutable().
+ *
+ * \sa RERR_InfoMap_Copy()
  *
  * \return Null if allocation failed or if \p source is null.
  * \return Opaque pointer to the copy otherwise.
