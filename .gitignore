@@ -1,7 +1,2 @@
-.vs/
-x64/
-x86/
-Release/
-Debug/
-*.vcxproj.user
 doc/doxygen/
+build/
