@@ -6,6 +6,7 @@ test_srcs = [
     'InfoMapTests.cpp',
     'RichErrorsCppTests.cpp',
     'RichErrorsTests.cpp',
+    'TestDefs.h',
     'main.cpp',
 ]
 
