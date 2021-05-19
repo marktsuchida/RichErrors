@@ -143,10 +143,11 @@ static RERR_ErrorPtr Domain_Check(const char* domainName)
 }
 
 
-static int Domain_Compare(const void* lhs, const char* rhs)
+static int Domain_Compare(const void* lhs, const void* rhs)
 {
+    const char* rhs_charp = rhs;
     RERR_DomainPtr elem = *(const RERR_DomainPtr*)lhs;
-    return strcmp(elem->name, rhs);
+    return strcmp(elem->name, rhs_charp);
 }
 
 

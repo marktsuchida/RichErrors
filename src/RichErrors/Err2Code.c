@@ -62,8 +62,11 @@ struct RERR_ErrorMap {
 };
 
 
-static int MappedError_Compare(const struct MappedError* lhs, const struct MappedError* rhs)
+static int MappedError_Compare(const void* l, const void* r)
 {
+    const struct MappedError* lhs = l;
+    const struct MappedError* rhs = r;
+
     if (lhs->thread < rhs->thread) {
         return -1;
     }

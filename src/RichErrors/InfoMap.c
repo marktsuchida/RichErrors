@@ -219,9 +219,11 @@ error:
 }
 
 
-static int ItemKeyCompare(const struct RERR_InfoMapItem* item, const char* key)
+static int ItemKeyCompare(const void* item, const void* key)
 {
-    return strcmp(item->key, key);
+    const struct RERR_InfoMapItem* i = item;
+    const char* k = key;
+    return strcmp(i->key, k);
 }
 
 
