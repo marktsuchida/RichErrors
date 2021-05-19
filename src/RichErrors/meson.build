@@ -16,4 +16,5 @@ main_lib = static_library('RichErrors',
             public_cpp_headers,
         ],
         include_directories: public_inc,
+        dependencies: threads_dep,
         install: true)
