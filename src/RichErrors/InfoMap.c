@@ -422,7 +422,7 @@ void RERR_InfoMap_MakeOutOfMemory(RERR_InfoMapPtr map)
 bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map)
 {
     return map == INFOMAP_OUT_OF_MEMORY ||
-        map && (map->flags & FLAG_OUT_OF_MEMORY);
+        (map && (map->flags & FLAG_OUT_OF_MEMORY));
 }
 
 

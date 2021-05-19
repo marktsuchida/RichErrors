@@ -128,7 +128,7 @@ static inline bool CodeIsInRange(int32_t code, int32_t minCode, int32_t maxCode)
 {
     bool continuousRange = minCode <= maxCode;
     return (continuousRange && minCode <= code && code <= maxCode) ||
-        !continuousRange && (minCode <= code || code <= maxCode);
+        (!continuousRange && (minCode <= code || code <= maxCode));
 }
 
 
