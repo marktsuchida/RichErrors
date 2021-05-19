@@ -110,9 +110,9 @@ TEST_CASE("BSearch", "[RERR_DynArray]") {
     REQUIRE(RERR_DynArray_FindFirst(a, &key, CompareInt) == nullptr);
 
     size_t size = 7;
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         auto p = RERR_DynArray_Insert(a, RERR_DynArray_End(a));
-        *static_cast<int*>(p) = i;
+        *static_cast<int*>(p) = static_cast<int>(i);
     }
 
     key = -1;
