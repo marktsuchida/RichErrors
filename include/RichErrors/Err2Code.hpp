@@ -38,6 +38,8 @@
 #include "RichErrors/RichErrors.hpp"
 #include "RichErrors/Err2Code.h"
 
+#include <cstring>
+
 
 namespace RERR {
 
