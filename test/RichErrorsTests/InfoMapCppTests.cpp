@@ -1,7 +1,7 @@
 // RichErrors: A C library for rich (nested) error information.
 // Author: Mark A. Tsuchida
 //
-// Copyright 2019 The Board of Regents of the University of Wisconsin System
+// Copyright 2019-2021 Board of Regents of the University of Wisconsin System
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
