@@ -55,8 +55,12 @@ static struct RERR_Domain RichErrorsDomain = {
 // Globally registered domains. We use an array of pointers, so that domain
 // pointers always remain valid.
 static RERR_DynArrayPtr domains; // Elements are RERR_DomainPtr, sorted by key
-static RecursiveMutex DECLARE_STATIC_MUTEX(domainsLock);
-static MutexInitializer DECLARE_MUTEX_INITIALIZER(domainsLockInit);
+static Mutex domainsLock;
+static CallOnceFlag domainsLockInit = CALL_ONCE_FLAG_INITIALIZER;
+static void InitDomainsLock(void)
+{
+    InitRecursiveMutex(&domainsLock);
+}
 
 
 #define MAX_DOMAIN_LENGTH 63 // Not including null terminator
@@ -157,8 +161,7 @@ static RERR_DomainPtr Domain_Find(const char* domainName)
         return &RichErrorsDomain;
     }
 
-    EnsureInitMutex(&domainsLock, &domainsLockInit);
-
+    CallOnce(&domainsLockInit, InitDomainsLock);
     LockMutex(&domainsLock);
 
     RERR_DomainPtr* found = NULL;
@@ -234,7 +237,7 @@ static RERR_ErrorPtr Domain_Insert(RERR_DomainPtr domain)
 
 void RERR_Domain_UnregisterAll(void)
 {
-    EnsureInitMutex(&domainsLock, &domainsLockInit);
+    CallOnce(&domainsLockInit, InitDomainsLock);
     LockMutex(&domainsLock);
 
     if (!domains) {
@@ -279,7 +282,7 @@ RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
     }
 
     RERR_ErrorPtr ret = RERR_NO_ERROR;
-    EnsureInitMutex(&domainsLock, &domainsLockInit);
+    CallOnce(&domainsLockInit, InitDomainsLock);
     LockMutex(&domainsLock);
 
     const struct RERR_Domain* found = Domain_Find(domainName);

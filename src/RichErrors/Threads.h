@@ -49,25 +49,21 @@
 
 #if USE_WIN32THREADS
 
-typedef CRITICAL_SECTION RecursiveMutex;
-#define DECLARE_STATIC_MUTEX(m) m
+typedef CRITICAL_SECTION Mutex;
 
-typedef INIT_ONCE MutexInitializer;
-#define DECLARE_MUTEX_INITIALIZER(i) i = INIT_ONCE_STATIC_INIT
+typedef INIT_ONCE CallOnceFlag;
+
+#define CALL_ONCE_FLAG_INITIALIZER INIT_ONCE_STATIC_INIT
 
 typedef DWORD ThreadID;
 
 #else // pthreads
 
-typedef pthread_mutex_t RecursiveMutex;
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER
-#define DECLARE_STATIC_MUTEX(m) m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER
-#else
-#define DECLARE_STATIC_MUTEX(m) m = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-#endif
+typedef pthread_mutex_t Mutex;
 
-typedef int MutexInitializer;
-#define DECLARE_MUTEX_INITIALIZER(i) i
+typedef pthread_once_t CallOnceFlag;
+
+#define CALL_ONCE_FLAG_INITIALIZER PTHREAD_ONCE_INIT
 
 // Since we're not displaying, pthread_t is ok.
 typedef pthread_t ThreadID;
@@ -76,10 +72,10 @@ typedef pthread_t ThreadID;
 
 
 //
-// Mutex nonstatic initialization
+// Mutex initialization
 //
 
-static inline void InitMutex(RecursiveMutex* mutex)
+static inline void InitRecursiveMutex(Mutex* mutex)
 {
 #if USE_WIN32THREADS
     InitializeCriticalSection(mutex);
@@ -99,24 +95,25 @@ static inline void InitMutex(RecursiveMutex* mutex)
 
 
 //
-// Mutex static initialization
+// Call-once support
 //
 
 #if USE_WIN32THREADS
-// Nonstatic since we take the pointer (won't be inlined)
-inline BOOL __stdcall RERR_Internal_InitializeMutexCallback(PINIT_ONCE i, PVOID param, PVOID* c)
+// Not static since we are taking the pointer (won't be inlined anyway).
+inline BOOL __stdcall RERR_Internal_CallOnceCallback(PINIT_ONCE i, PVOID param, PVOID* c)
 {
-    InitializeCriticalSection((RecursiveMutex*)param);
+    void (*func)(void) = param;
+    func();
     return TRUE;
 }
 #endif
 
-static inline void EnsureInitMutex(RecursiveMutex* mutex, MutexInitializer* init)
+static inline void CallOnce(CallOnceFlag *flag, void (*func)(void))
 {
 #if USE_WIN32THREADS
-    InitOnceExecuteOnce(init, RERR_Internal_InitializeMutexCallback, mutex, NULL);
+    InitOnceExecuteOnce(flag, RERR_Internal_CallOnceCallback, func, NULL);
 #else
-    // pthread mutex uses static initializer
+    pthread_once(flag, func);
 #endif
 }
 
@@ -125,7 +122,7 @@ static inline void EnsureInitMutex(RecursiveMutex* mutex, MutexInitializer* init
 // Mutex lock and unlock
 //
 
-static inline void LockMutex(RecursiveMutex* mutex)
+static inline void LockMutex(Mutex* mutex)
 {
 #if USE_WIN32THREADS
     EnterCriticalSection(mutex);
@@ -134,7 +131,7 @@ static inline void LockMutex(RecursiveMutex* mutex)
 #endif
 }
 
-static inline void UnlockMutex(RecursiveMutex* mutex)
+static inline void UnlockMutex(Mutex* mutex)
 {
 #if USE_WIN32THREADS
     LeaveCriticalSection(mutex);

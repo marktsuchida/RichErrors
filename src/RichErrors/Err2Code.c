@@ -56,7 +56,7 @@ struct RERR_ErrorMap {
     int32_t oomCode; // const
     int32_t failCode; // const
 
-    RecursiveMutex mutex;
+    Mutex mutex;
     int32_t nextCode;
     RERR_DynArrayPtr mappings; // Always sorted (MappedError_Compare)
 };
@@ -207,7 +207,7 @@ RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
     (*map)->oomCode = config->outOfMemoryCode;
     (*map)->failCode = config->mapFailureCode;
 
-    InitMutex(&(*map)->mutex);
+    InitRecursiveMutex(&(*map)->mutex);
     (*map)->nextCode = (*map)->minCode;
 
     (*map)->mappings = mappings;
