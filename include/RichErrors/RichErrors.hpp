@@ -324,7 +324,7 @@ namespace RERR {
 
     /// An exception that wraps Error.
     class Exception : public virtual std::exception {
-        Error error;
+        ::RERR::Error error;
 
     public:
         ~Exception() = default;
@@ -342,7 +342,7 @@ namespace RERR {
         Exception& operator=(Exception&& rhs) noexcept = default;
 
         /// Move construct from an error.
-        explicit Exception(Error&& error) noexcept :
+        explicit Exception(::RERR::Error&& error) noexcept :
             error{ std::move(error) }
         {}
 
@@ -359,7 +359,7 @@ namespace RERR {
         }
 
         /// Access the wrapped error.
-        Error const& Error() const noexcept {
+        ::RERR::Error const& Error() const noexcept {
             return error;
         }
     };
