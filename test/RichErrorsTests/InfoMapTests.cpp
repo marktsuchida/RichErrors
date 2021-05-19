@@ -30,6 +30,8 @@
 
 #include "RichErrors/InfoMap.h"
 
+#include <string.h>
+
 
 TEST_CASE("Null behavior", "[RERR_InfoMap]") {
     RERR_InfoMap_Destroy(nullptr);
