@@ -568,12 +568,12 @@ void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize)
         snprintf(dec, sizeof(dec), "%" PRId16, (int16_t)code);
     }
     if (format & RERR_CodeFormat_U16) {
-        snprintf(dec, sizeof(dec), "%" PRIu16, (int16_t)code);
+        snprintf(dec, sizeof(dec), "%" PRIu16, (uint16_t)code);
     }
     if (format & RERR_CodeFormat_Hex16) {
         const char* const fmt = format & RERR_CodeFormat_HexNoPad ?
             "0x%" PRIx16 : "0x%04" PRIx16;
-        snprintf(hex, sizeof(hex), fmt, (int16_t)code);
+        snprintf(hex, sizeof(hex), fmt, (uint16_t)code);
     }
 
     size_t decLen = strlen(dec);
