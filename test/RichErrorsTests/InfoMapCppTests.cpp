@@ -34,6 +34,7 @@ TEST_CASE("C++ Iteration", "[RERR::InfoMap]") {
     RERR::InfoMap m;
 
     for (auto const& item : m) {
+        (void)item; // Avoid 'unused' warning
         REQUIRE(false); // Empty
     }
 
