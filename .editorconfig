@@ -9,8 +9,5 @@ indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.sln]
-indent_style = tab
-
-[*.{vcxproj,vcxproj.filters}]
+[*.yml]
 indent_size = 2
