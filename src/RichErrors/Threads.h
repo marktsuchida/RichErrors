@@ -75,23 +75,7 @@ typedef pthread_t ThreadID;
 // Mutex initialization
 //
 
-static inline void InitRecursiveMutex(Mutex* mutex)
-{
-#if USE_WIN32THREADS
-    InitializeCriticalSection(mutex);
-#else
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr,
-#ifdef PTHREAD_MUTEX_RECURSIVE
-        PTHREAD_MUTEX_RECURSIVE
-#else
-        PTHREAD_MUTEX_RECURSIVE_NP
-#endif
-    );
-    pthread_mutex_init(mutex, &attr);
-#endif
-}
+void InitRecursiveMutex(Mutex* mutex);
 
 
 //

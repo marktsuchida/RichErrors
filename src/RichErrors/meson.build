@@ -4,6 +4,7 @@ main_srcs = [
     'Err2Code.c',
     'InfoMap.c',
     'RichErrors.c',
+    'Threads.c',
     'Threads.h',
 ]
 
