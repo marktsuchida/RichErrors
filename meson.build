@@ -1,4 +1,5 @@
-project('RichErrors', 'c', 'cpp')
+project('RichErrors', 'c', 'cpp',
+        default_options: ['c_std=c11', 'cpp_std=c++14'])
 
 threads_dep = dependency('threads')
 
