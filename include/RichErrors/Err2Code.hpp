@@ -66,6 +66,7 @@ namespace RERR {
             RERR_ErrorMap_Destroy(ptr);
             ptr = rhs.ptr;
             rhs.ptr = nullptr;
+            return *this;
         }
 
         /// Configuration builder for error map.
