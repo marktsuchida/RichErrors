@@ -37,42 +37,17 @@
 #include <string.h>
 
 
-struct RERR_Domain {
-    const char* name; // Unique key
-    RERR_CodeFormat codeFormat;
-};
-typedef struct RERR_Domain* RERR_DomainPtr;
-
-static struct RERR_Domain RichErrorsCriticalDomain = {
-    RERR_DOMAIN_CRITICAL, RERR_CodeFormat_I32,
-};
-
-static struct RERR_Domain RichErrorsDomain = {
-    RERR_DOMAIN_RICHERRORS, RERR_CodeFormat_I32,
-};
-
-
-// Globally registered domains. We use an array of pointers, so that domain
-// pointers always remain valid.
-static RERR_DynArrayPtr domains; // Elements are RERR_DomainPtr, sorted by key
-static Mutex domainsLock;
-static CallOnceFlag domainsLockInit = CALL_ONCE_FLAG_INITIALIZER;
-static void InitDomainsLock(void)
-{
-    InitRecursiveMutex(&domainsLock);
-}
-
-
 #define MAX_DOMAIN_LENGTH 63 // Not including null terminator
 
 
 struct RERR_Error {
-    const struct RERR_Domain* domain; // Non-owning ref
+    const char* domain; // String owned by this RERR_Error object
     int32_t code; // Zero if no domain
+    RERR_CodeFormat format;
     const char* message; // String owned by this RERR_Error object
     struct RERR_Error* cause; // Original error, owned by this RERR_Error
     RERR_InfoMapPtr info;
-    uint32_t refCount;
+    uint32_t refCount; // For immutable copy support
 };
 
 
@@ -82,9 +57,10 @@ struct RERR_Error {
 #define RERR_OUT_OF_MEMORY ((RERR_ErrorPtr) -1)
 
 
-static inline void FreeConst(const void* m)
+static RERR_ErrorPtr Create_RichErrorsError(int32_t code, const char* message)
 {
-    free((void*)m);
+    return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS, code,
+        RERR_CodeFormat_I32, message);
 }
 
 
@@ -104,209 +80,39 @@ static RERR_ErrorPtr CodeFormat_Check(RERR_CodeFormat format)
         return RERR_NO_ERROR;
     }
 
-    return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-        RERR_ECODE_CODEFORMAT_INVALID,
+    return Create_RichErrorsError(RERR_ECODE_CODEFORMAT_INVALID,
         "Invalid error code format");
 }
 
 
-// Precondition: domainName != NULL
-static RERR_ErrorPtr Domain_Check(const char* domainName)
+// Precondition: domain != NULL
+static RERR_ErrorPtr Domain_Check(const char* domain)
 {
-    if (domainName[0] == '\0') {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_NAME_EMPTY, "Empty error domain name");
+    if (domain[0] == '\0') {
+        return Create_RichErrorsError(RERR_ECODE_DOMAIN_NAME_EMPTY,
+            "Empty error domain name");
     }
 
-    size_t len = strlen(domainName);
+    size_t len = strlen(domain);
     if (len > MAX_DOMAIN_LENGTH) {
         char fmt[] = "Error domain name exceeding %d characters: ";
         char msg[sizeof(fmt) + MAX_DOMAIN_LENGTH + 32];
         snprintf(msg, sizeof(msg), fmt, MAX_DOMAIN_LENGTH);
-        strncat(msg, domainName, MAX_DOMAIN_LENGTH);
+        strncat(msg, domain, MAX_DOMAIN_LENGTH);
         strcat(msg, "...");
 
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_NAME_TOO_LONG, msg);
+        return Create_RichErrorsError(RERR_ECODE_DOMAIN_NAME_TOO_LONG, msg);
     }
 
     for (int i = 0; i < len; ++i) {
         // Allow ASCII graphic or space only.
-        if (domainName[i] < ' ' || domainName[i] > '~') {
-            return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-                RERR_ECODE_DOMAIN_NAME_INVALID,
+        if (domain[i] < ' ' || domain[i] > '~') {
+            return Create_RichErrorsError(RERR_ECODE_DOMAIN_NAME_INVALID,
                 "Error domain containing disallowed characters");
         }
     }
 
     return RERR_NO_ERROR;
-}
-
-
-static int Domain_Compare(const void* lhs, const void* rhs)
-{
-    const char* rhs_charp = rhs;
-    RERR_DomainPtr elem = *(const RERR_DomainPtr*)lhs;
-    return strcmp(elem->name, rhs_charp);
-}
-
-
-// Argument must be pre-checked by caller
-static RERR_DomainPtr Domain_Find(const char* domainName)
-{
-    // The system domains always exist, but is not sotred in the array.
-    if (strcmp(domainName, RERR_DOMAIN_CRITICAL) == 0) {
-        return &RichErrorsCriticalDomain;
-    }
-    if (strcmp(domainName, RERR_DOMAIN_RICHERRORS) == 0) {
-        return &RichErrorsDomain;
-    }
-
-    CallOnce(&domainsLockInit, InitDomainsLock);
-    LockMutex(&domainsLock);
-
-    RERR_DomainPtr* found = NULL;
-    if (domains) {
-        found = RERR_DynArray_BSearch(domains, domainName, Domain_Compare);
-    }
-    RERR_DomainPtr ret = found ? *found : NULL;
-
-    UnlockMutex(&domainsLock);
-
-    return ret;
-}
-
-
-static RERR_DomainPtr Domain_Create(const char* name,
-    RERR_CodeFormat codeFormat)
-{
-    char* nameCopy = NULL;
-    RERR_DomainPtr ret = NULL;
-
-    nameCopy = malloc(strlen(name) + 1);
-    if (!nameCopy) {
-        goto error;
-    }
-    strcpy(nameCopy, name);
-
-    ret = calloc(1, sizeof(struct RERR_Domain));
-    if (!ret) {
-        goto error;
-    }
-    ret->name = nameCopy;
-    ret->codeFormat = codeFormat;
-    return ret;
-
-error:
-    free(ret);
-    free(nameCopy);
-    return NULL;
-}
-
-
-static void Domain_Destroy(RERR_DomainPtr domain)
-{
-    if (!domain) {
-        return;
-    }
-
-    FreeConst(domain->name);
-    free(domain);
-}
-
-
-// Mutex must be held by caller; domain != NULL
-static RERR_ErrorPtr Domain_Insert(RERR_DomainPtr domain)
-{
-    if (!domains) {
-        domains = RERR_DynArray_Create(sizeof(RERR_DomainPtr));
-        if (!domains) {
-            return RERR_OUT_OF_MEMORY;
-        }
-    }
-
-    RERR_DomainPtr* it = RERR_DynArray_BSearchInsertionPoint(domains,
-        domain->name, Domain_Compare);
-    it = RERR_DynArray_Insert(domains, it);
-    if (!it) {
-        return RERR_OUT_OF_MEMORY;
-    }
-    *it = domain;
-    return RERR_NO_ERROR;
-}
-
-
-void RERR_Domain_UnregisterAll(void)
-{
-    CallOnce(&domainsLockInit, InitDomainsLock);
-    LockMutex(&domainsLock);
-
-    if (!domains) {
-        return;
-    }
-
-    RERR_DomainPtr* begin = RERR_DynArray_Begin(domains);
-    RERR_DomainPtr* end = RERR_DynArray_End(domains);
-    for (RERR_DomainPtr* it = begin; it != end; it = RERR_DynArray_Advance(domains, it)) {
-        Domain_Destroy(*it);
-    }
-
-    // Actually we only need to clear, but we deallocate so that memory leak
-    // detection in unit tests will not see the leftover static array.
-    RERR_DynArray_Destroy(domains);
-    domains = NULL;
-
-    UnlockMutex(&domainsLock);
-}
-
-
-RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
-    RERR_CodeFormat codeFormat)
-{
-    if (!domainName) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT, "Null error domain");
-    }
-    RERR_ErrorPtr err = Domain_Check(domainName);
-    if (err) {
-        return err;
-    }
-
-    err = CodeFormat_Check(codeFormat);
-    if (err) {
-        return err;
-    }
-
-    RERR_DomainPtr domain = Domain_Create(domainName, codeFormat);
-    if (!domain) {
-        return RERR_OUT_OF_MEMORY;
-    }
-
-    RERR_ErrorPtr ret = RERR_NO_ERROR;
-    CallOnce(&domainsLockInit, InitDomainsLock);
-    LockMutex(&domainsLock);
-
-    const struct RERR_Domain* found = Domain_Find(domainName);
-    if (found) {
-        char msg0[] = "Cannot register already registered domain: ";
-        char msg[sizeof(msg0) + MAX_DOMAIN_LENGTH + 32];
-        strcpy(msg, msg0);
-        strcat(msg, domainName);
-        ret = RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_ALREADY_EXISTS, msg);
-        goto cleanup;
-    }
-
-    ret = Domain_Insert(domain);
-    if (ret) {
-        goto cleanup;
-    }
-    domain = NULL; // Ownership has been transferred
-
-cleanup:
-    UnlockMutex(&domainsLock);
-    Domain_Destroy(domain);
-    return ret;
 }
 
 
@@ -335,46 +141,51 @@ RERR_ErrorPtr RERR_Error_Create(const char* message)
 }
 
 
-RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
-    const char* message)
+RERR_ErrorPtr RERR_Error_CreateWithCode(const char* codeDomain, int32_t code,
+    RERR_CodeFormat codeFormat, const char* message)
 {
+
     // Allow NULL (but not empty string) for domain, as long as code is zero.
-    if (!domainName) {
+    if (!codeDomain) {
         if (code == 0) {
             return RERR_Error_Create(message);
         }
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT, "Null error domain");
+        return Create_RichErrorsError(RERR_ECODE_NULL_ARGUMENT,
+            "Null code domain with nonzero code");
     }
 
-    RERR_ErrorPtr err = Domain_Check(domainName);
+    RERR_ErrorPtr err = Domain_Check(codeDomain);
     if (err) {
         return err;
     }
 
-    const struct RERR_Domain* d = Domain_Find(domainName);
-    if (!d) {
-        char msg0[] = "Error domain not registered: ";
-        char msg[sizeof(msg0) + MAX_DOMAIN_LENGTH + 32];
-        strcpy(msg, msg0);
-        strcat(msg, domainName);
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_DOMAIN_NOT_REGISTERED, msg);
+    err = CodeFormat_Check(codeFormat);
+    if (err) {
+        return err;
     }
 
     RERR_ErrorPtr ret = RERR_Error_Create(message);
     if (ret != RERR_OUT_OF_MEMORY) {
-        ret->domain = d;
+        size_t len = strlen(codeDomain);
+        char* domainCopy = malloc(len + 1);
+        if (!domainCopy) {
+            RERR_Error_Destroy(ret);
+            return RERR_OUT_OF_MEMORY;
+        }
+        strcpy(domainCopy, codeDomain);
+        ret->domain = domainCopy;
         ret->code = code;
+        ret->format = codeFormat;
     }
     return ret;
 }
 
 
-RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
-    RERR_InfoMapPtr info, const char* message)
+RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* codeDomain, int32_t code,
+    RERR_CodeFormat codeFormat, RERR_InfoMapPtr info, const char* message)
 {
-    RERR_ErrorPtr ret = RERR_Error_CreateWithCode(domainName, code, message);
+    RERR_ErrorPtr ret = RERR_Error_CreateWithCode(codeDomain, code, codeFormat,
+        message);
 
     // We treat empty info map the same as no info map.
     if (RERR_InfoMap_IsEmpty(info)) { // Includes info == NULL
@@ -382,7 +193,7 @@ RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
     }
 
     // Domain is required for having info.
-    if (!domainName) {
+    if (!codeDomain) {
         goto exit;
     }
 
@@ -391,7 +202,7 @@ RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
     // destroy it.
     if (ret == RERR_OUT_OF_MEMORY ||
         !ret->domain ||
-        strcmp(ret->domain->name, domainName) != 0 ||
+        strcmp(ret->domain, codeDomain) != 0 ||
         ret->code != code)
     {
         goto exit;
@@ -412,6 +223,7 @@ void RERR_Error_Destroy(RERR_ErrorPtr error)
 
     if (--error->refCount == 0) {
         free((char*)error->message);
+        free((char*)error->domain);
         RERR_Error_Destroy(error->cause);
         free(error);
     }
@@ -449,10 +261,12 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message)
 }
 
 
-RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause, const char* domainName,
-    int32_t code, const char* message)
+RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
+    const char* codeDomain, int32_t code, RERR_CodeFormat codeFormat,
+    const char* message)
 {
-    RERR_ErrorPtr ret = RERR_Error_CreateWithCode(domainName, code, message);
+    RERR_ErrorPtr ret = RERR_Error_CreateWithCode(codeDomain, code, codeFormat,
+        message);
     if (ret == RERR_OUT_OF_MEMORY) {
         RERR_Error_Destroy(cause);
         return ret;
@@ -462,10 +276,12 @@ RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause, const char* domainNam
 }
 
 
-RERR_ErrorPtr RERR_Error_WrapWithInfo(RERR_ErrorPtr cause, const char* domainName,
-    int32_t code, RERR_InfoMapPtr info, const char* message)
+RERR_ErrorPtr RERR_Error_WrapWithInfo(RERR_ErrorPtr cause,
+    const char* codeDomain, int32_t code, RERR_CodeFormat codeFormat,
+    RERR_InfoMapPtr info, const char* message)
 {
-    RERR_ErrorPtr ret = RERR_Error_CreateWithInfo(domainName, code, info, message);
+    RERR_ErrorPtr ret = RERR_Error_CreateWithInfo(codeDomain, code, codeFormat,
+        info, message);
     if (ret == RERR_OUT_OF_MEMORY) {
         RERR_Error_Destroy(cause);
         return ret;
@@ -498,7 +314,7 @@ const char* RERR_Error_GetDomain(RERR_ErrorPtr error)
     if (!error->domain) {
         return "";
     }
-    return error->domain->name;
+    return error->domain;
 }
 
 
@@ -520,33 +336,26 @@ void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize)
         return;
     }
 
-    if (error == RERR_NO_ERROR) {
+    if (error == RERR_NO_ERROR ||
+        (error != RERR_OUT_OF_MEMORY && !error->domain)) {
         strncpy(dest, "(no code)", destSize);
         dest[destSize - 1] = '\0';
         return;
     }
 
-    const struct RERR_Domain* domain;
     int32_t code;
+    RERR_CodeFormat format;
     if (error == RERR_OUT_OF_MEMORY) {
-        domain = &RichErrorsCriticalDomain;
         code = RERR_ECODE_OUT_OF_MEMORY;
+        format = RERR_CodeFormat_I32;
     }
     else {
-        domain = error->domain;
         code = error->code;
+        format = error->format;
     }
 
-    if (domain == NULL) {
-        strncpy(dest, "(no code)", destSize);
-        dest[destSize - 1] = '\0';
-        return;
-    }
-
-    RERR_CodeFormat format = domain->codeFormat;
-
-    // The format has been checked upon domain registration, so we assume it
-    // has a valid combination of flags. See CodeFormat_Check().
+    // The format has been checked upon error creation, so we assume it has a
+    // valid combination of flags. See CodeFormat_Check().
 
     char dec[16]; // Max: strlen("-2147483648") == 11
     char hex[16]; // Max: strlen("0xffffffff") == 10

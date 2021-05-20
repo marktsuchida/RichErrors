@@ -45,10 +45,8 @@ TEST_CASE("C++ Example") {
     REQUIRE(RERR::Error::OutOfMemory().FormatCode() == "-1");
 
     const char* domain = TESTSTR("domain");
-    RERR::Error e = RERR::RegisterDomain(domain, RERR_CodeFormat_I32);
-    REQUIRE(e.IsSuccess());
 
-    RERR::Error err(domain, 42, TESTSTR("msg"));
+    RERR::Error err(domain, 42, RERR_CodeFormat_I32, TESTSTR("msg"));
 
     RERR::Error err2 = std::move(err);
     REQUIRE(!err.IsError()); // Moved out
@@ -95,6 +93,4 @@ TEST_CASE("C++ Example") {
     catch (RERR::Exception const& e) {
         REQUIRE(e.Error().GetMessage() == msg2);
     }
-
-    RERR::UnregisterAllDomains();
 }

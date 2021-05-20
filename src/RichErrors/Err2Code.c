@@ -135,43 +135,44 @@ static inline bool CodeIsInRange(int32_t code, int32_t minCode, int32_t maxCode)
 }
 
 
+static RERR_ErrorPtr Create_RichErrorsError(int32_t code, const char* message)
+{
+    return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS, code,
+        RERR_CodeFormat_I32, message);
+}
+
+
 static inline RERR_ErrorPtr CheckConfig(const RERR_ErrorMapConfig* config)
 {
     if (!config) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT,
+        return Create_RichErrorsError(RERR_ECODE_NULL_ARGUMENT,
             "Null error map config given");
     }
 
     if (CodeIsInRange(config->noErrorCode,
         config->minMappedCode, config->maxMappedCode)) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_INVALID_CONFIG,
+        return Create_RichErrorsError(RERR_ECODE_MAP_INVALID_CONFIG,
             "Mapped code range contains no-error code");
     }
 
     if (CodeIsInRange(config->outOfMemoryCode,
         config->minMappedCode, config->maxMappedCode)) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_INVALID_CONFIG,
+        return Create_RichErrorsError(RERR_ECODE_MAP_INVALID_CONFIG,
             "Mapped code range contains out-of-memory code");
     }
 
     if (CodeIsInRange(config->mapFailureCode,
         config->minMappedCode, config->maxMappedCode)) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_INVALID_CONFIG,
+        return Create_RichErrorsError(RERR_ECODE_MAP_INVALID_CONFIG,
             "Mapped code range contains map-failure code");
     }
 
     if (config->outOfMemoryCode == config->noErrorCode) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_INVALID_CONFIG,
+        return Create_RichErrorsError(RERR_ECODE_MAP_INVALID_CONFIG,
             "Out-of-memory code cannot equal no-error code");
     }
     if (config->mapFailureCode == config->noErrorCode) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_INVALID_CONFIG,
+        return Create_RichErrorsError(RERR_ECODE_MAP_INVALID_CONFIG,
             "Map-failure code cannot equal no-error code");
     }
     return RERR_NO_ERROR;
@@ -182,8 +183,7 @@ RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
     const RERR_ErrorMapConfig* config)
 {
     if (!map) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT,
+        return Create_RichErrorsError(RERR_ECODE_NULL_ARGUMENT,
             "Null address for error map pointer given");
     }
     *map = NULL;
@@ -291,8 +291,7 @@ int32_t RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
 bool RERR_ErrorMap_IsRegisteredThreadLocal(RERR_ErrorMapPtr map, int32_t code)
 {
     if (!map) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT,
+        return Create_RichErrorsError(RERR_ECODE_NULL_ARGUMENT,
             "Null error map pointer given");
     }
     if (code == map->noErrorCode ||
@@ -312,8 +311,7 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
     int32_t mappedCode)
 {
     if (!map) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_NULL_ARGUMENT,
+        return Create_RichErrorsError(RERR_ECODE_NULL_ARGUMENT,
             "Null error map pointer given");
     }
     if (mappedCode == map->noErrorCode) {
@@ -323,8 +321,8 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
         return RERR_Error_CreateOutOfMemory();
     }
     if (mappedCode == map->failCode) {
-        return RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-            RERR_ECODE_MAP_FAILURE, "Failed to assign an error code");
+        return Create_RichErrorsError(RERR_ECODE_MAP_FAILURE,
+            "Failed to assign an error code");
     }
 
     RERR_ErrorPtr ret = RERR_NO_ERROR;
@@ -336,8 +334,7 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
             RERR_DynArray_Erase(map->mappings, found);
         }
         else {
-            ret = RERR_Error_CreateWithCode(RERR_DOMAIN_RICHERRORS,
-                RERR_ECODE_MAP_INVALID_CODE,
+            ret = Create_RichErrorsError(RERR_ECODE_MAP_INVALID_CODE,
                 "Unregistered error code (probably a bug in error handling)");
         }
     }

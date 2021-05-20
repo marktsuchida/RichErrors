@@ -125,6 +125,7 @@ namespace RERR {
         explicit ErrorMap(Config const& config) {
             if (!config.IsComplete()) {
                 Error(RichErrorsDomain(), RERR_ECODE_MAP_INVALID_CONFIG,
+                    RERR_CodeFormat_I32,
                     "Incomplete error map configuration (programming error)").
                     ThrowIfError();
             }

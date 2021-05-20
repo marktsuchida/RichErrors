@@ -48,21 +48,11 @@
  * information, RichErrors allows explicit wrapping of error codes (together
  * with a specific message string). In order to segregate error codes arising
  * from different subsystems or third-party libraries, every error containing
- * an error code must be assigned a pre-registered "domain".
+ * an error code must be assigned a "domain" string, which specifies a
+ * namespace for the error code.
  *
- * Known limitations and possible future extensions:
- *
- * - The error code domains are global. This limitation could be removed by
- *   introducing "realm" objects to which domains and errors belong (with a
- *   default global realm).
- *
- * - Registration of error code domains is mandatory. We could probably make
- *   registration optional, auto-registering any unencountered domain
- *   (preserving the current string-interning behavior). Pre-registration could
- *   still be optionally enforced.
- *
- * - There is no possibility of localized error messages. This is by design
- *   because this library was created for use by non-localized software.
+ * There is no facility for localizing error messages; localization should be
+ * handled outside of this library.
  */
 
 #include "RichErrors/InfoMap.h"
@@ -136,8 +126,8 @@ enum {
     RERR_ECODE_DOMAIN_NAME_EMPTY = 201, ///< Domain name cannot be empty
     RERR_ECODE_DOMAIN_NAME_TOO_LONG = 202, ///< Domain name too long
     RERR_ECODE_DOMAIN_NAME_INVALID = 203, ///< Domain name contains forbidden characters
-    RERR_ECODE_DOMAIN_ALREADY_EXISTS = 204, ///< Domain alraedy registered
-    RERR_ECODE_DOMAIN_NOT_REGISTERED = 205, ///< Domain not registered
+    RERR_ECODE_DOMAIN_ALREADY_EXISTS = 204, ///< (No longer used)
+    RERR_ECODE_DOMAIN_NOT_REGISTERED = 205, ///< (No longer used)
 
     // Error maps
     RERR_ECODE_MAP_INVALID_CONFIG = 301, ///< Invalid configuration
@@ -183,25 +173,6 @@ enum {
 /// Maximum size of buffer to hold formatted error code.
 #define RERR_FORMATTED_CODE_MAX_SIZE (RERR_FORMATTED_CODE_MAX_LEN + 1)
 
-/// Unregister all previously registered error domains (for testing).
-/**
- * This function should never be called except in unit tests, because it will
- * cause domains stored in error objects to dangle.
- */
-void RERR_Domain_UnregisterAll(void);
-
-/// Register an error code domain.
-/**
- * The domain must be a non-empty string of at most 63 ASCII graphic characters
- * (space is also allowed).
- *
- * Typically the domain name should be the name of the subsystem, third-party
- * library, or operating system that generates error codes, and the phrase
- * "DOMAIN error code 123" (where DOMAIN is the domain name) should make sense.
- */
-RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
-    RERR_CodeFormat codeFormat);
-
 /// Create an error without an error code.
 /**
  * Errors without an error code can be used when it is not expected that the
@@ -220,24 +191,32 @@ RERR_ErrorPtr RERR_Error_Create(const char* message);
 
 /// Create an error with an error code.
 /**
- * The domain name must be an error code domain previously registered via
- * RERR_Domain_Register(). The code should be an error code identifying the
- * type of the error, uniquely within the domain. See RERR_Error_Create()
- * regarding the message.
+ * The domain must be a non-empty string of at most 63 ASCII graphic characters
+ * (space is also allowed).
+ *
+ * Typically the code domain should be the name of the subsystem, third-party
+ * library, or operating system that generates error codes, and the phrase
+ * "DOMAIN error code 123" (where DOMAIN is the code domain) should make
+ * sense.
+ *
+ * The code should be an error code identifying the type of the error, uniquely
+ * within the domain.
+ *
+ * See RERR_Error_Create() regarding the message.
  *
  * The returned error object is owned by the caller, who is responsible for
  * deallocation.
  *
- * If domainName is `NULL` and code is zero, this function is equivalent to
- * RERR_Error_Create(). If domainName is `NULL` but code is nonzero (likely a
+ * If codeDomain is `NULL` and code is zero, this function is equivalent to
+ * RERR_Error_Create(). If codeDomain is `NULL` but code is nonzero (likely a
  * programming error, as error codes without specific domain are not allowed),
  * this function fails with an error.
  *
  * This function may return an out-of-memory error (not containing the given
  * message, domain, and code) if memory allocation fails.
  */
-RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
-    const char* message);
+RERR_ErrorPtr RERR_Error_CreateWithCode(const char* codeDomain, int32_t code,
+    RERR_CodeFormat codeFormat, const char* message);
 
 /// Create an error with an error code and auxiliary information.
 /**
@@ -246,11 +225,11 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
  * information.
  *
  * If \p info is null, this function behaves exactly like
- * RERR_Error_CreateWithCode(). Otherwise, \p domainName and \p code must be
+ * RERR_Error_CreateWithCode(). Otherwise, \p codeDomain and \p code must be
  * valid and ownership of \p info is taken by the new error.
  */
-RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
-    RERR_InfoMapPtr info, const char* message);
+RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* codeDomain, int32_t code,
+    RERR_CodeFormat codeFormat, RERR_InfoMapPtr info, const char* message);
 
 /// Destroy an error object.
 /**
@@ -283,7 +262,7 @@ void RERR_Error_Copy(RERR_ErrorPtr source, RERR_ErrorPtr* destination);
 
 /// Create a lightweight out-of-memory error.
 /**
- * This function is equivalent to creating an error with domain name
+ * This function is equivalent to creating an error with code domain
  * #RERR_DOMAIN_CRITICAL and code ::RERR_ECODE_OUT_OF_MEMORY, except that it
  * requires no dynamic memory allocation. Note that it is safe to call any of
  * the error creation functions when memory is low, because they all handle
@@ -312,7 +291,7 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
 /// Create a nested error with error code, taking ownership of the cause.
 /**
  * The cause can later be retrieved by calling RERR_Error_GetCause() on the new
- * error. The message, domain name, and code are handled as in
+ * error. The message, code domain, code, and code format are handled as in
  * RERR_Error_CreateWithCode().
  *
  * Ownership of the error object passed in as cause is transferred to the new
@@ -327,7 +306,8 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
  * in that case, the cause error is deallocated.
  */
 RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
-    const char* domainName, int32_t code, const char* message);
+    const char* codeDomain, int32_t code, RERR_CodeFormat codeFormat,
+    const char* message);
 
 /// Created a nested error with error code and auxiliary info.
 /**
@@ -335,8 +315,8 @@ RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
  * \sa RERR_Error_CreateWithInfo()
  */
 RERR_ErrorPtr RERR_Error_WrapWithInfo(RERR_ErrorPtr cause,
-    const char* domainName, int32_t code, RERR_InfoMapPtr info,
-    const char* message);
+    const char* codeDomain, int32_t code, RERR_CodeFormat codeFormat,
+    RERR_InfoMapPtr info, const char* message);
 
 /// Return whether the given error has an error domain and code.
 bool RERR_Error_HasCode(RERR_ErrorPtr error);
@@ -353,6 +333,8 @@ const char* RERR_Error_GetDomain(RERR_ErrorPtr error);
 /// Return the error code of the given error.
 /**
  * If the given error does not have an error code, zero is returned.
+ *
+ * \sa RERR_Error_FormatCode()
  */
 int32_t RERR_Error_GetCode(RERR_ErrorPtr error);
 

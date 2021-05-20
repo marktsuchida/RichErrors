@@ -110,8 +110,8 @@ namespace RERR {
         {}
 
         /// Construct with error code.
-        Error(std::string const& domain, int32_t code, std::string const& message) noexcept :
-            ptr{ RERR_Error_CreateWithCode(domain.c_str(), code, message.c_str()) }
+        Error(std::string const& domain, int32_t code, RERR_CodeFormat format, std::string const& message) noexcept :
+            ptr{ RERR_Error_CreateWithCode(domain.c_str(), code, format, message.c_str()) }
         {}
 
         /// Construct with error code and auxiliary info.
@@ -119,8 +119,8 @@ namespace RERR {
          * Because the new error takes ownership of the info map, it must be an
          * rvalue (use `std::move()` if necessary).
          */
-        Error(std::string const& domain, int32_t code, InfoMap&& info, std::string const& message) noexcept :
-            ptr{ RERR_Error_CreateWithInfo(domain.c_str(), code, info.ReleaseCPtr(), message.c_str()) }
+        Error(std::string const& domain, int32_t code, RERR_CodeFormat format, InfoMap&& info, std::string const& message) noexcept :
+            ptr{ RERR_Error_CreateWithInfo(domain.c_str(), code, format, info.ReleaseCPtr(), message.c_str()) }
         {}
 
         /// Construct with cause, without error code.
@@ -139,8 +139,8 @@ namespace RERR {
          * Because the new error takes ownership of the cause, the cause must
          * be an rvalue (use `std::move()` if necessary).
          */
-        Error(Error&& cause, std::string const& domain, int32_t code, std::string const& message) noexcept :
-            ptr{ RERR_Error_WrapWithCode(cause.ptr, domain.c_str(), code, message.c_str()) }
+        Error(Error&& cause, std::string const& domain, int32_t code, RERR_CodeFormat format, std::string const& message) noexcept :
+            ptr{ RERR_Error_WrapWithCode(cause.ptr, domain.c_str(), code, format, message.c_str()) }
         {
             cause.ptr = nullptr;
         }
@@ -150,8 +150,8 @@ namespace RERR {
          * Because the new error takes ownership of the cause and the info map,
          * they must be rvalues (use `std::move()` if necessary).
          */
-        Error(Error&& cause, std::string const& domain, int32_t code, InfoMap&& info, std::string const& message) noexcept :
-            ptr{ RERR_Error_WrapWithInfo(cause.ptr, domain.c_str(), code, info.ReleaseCPtr(), message.c_str()) }
+        Error(Error&& cause, std::string const& domain, int32_t code, RERR_CodeFormat format, InfoMap&& info, std::string const& message) noexcept :
+            ptr{ RERR_Error_WrapWithInfo(cause.ptr, domain.c_str(), code, format, info.ReleaseCPtr(), message.c_str()) }
         {
             cause.ptr = nullptr;
         }
@@ -310,17 +310,6 @@ namespace RERR {
             return RERR_Error_IsOutOfMemory(ptr);
         }
     };
-
-    /// Unregister all domains (for testing).
-    inline void UnregisterAllDomains() noexcept {
-        RERR_Domain_UnregisterAll();
-    }
-
-    /// Register an error code domain.
-    inline Error RegisterDomain(std::string const& domain,
-        RERR_CodeFormat codeFormat) noexcept {
-        return Error(RERR_Domain_Register(domain.c_str(), codeFormat));
-    }
 
     /// An exception that wraps Error.
     class Exception : public virtual std::exception {

@@ -49,16 +49,13 @@ To return an error with an error code from some subsystem "Bar":
 ```C
 #define BAR_ERROR_DOMAIN "BarSystem"
 
-// Call e.g. RERR_Domain_Register(BAR_ERROR_DOMAIN, RERR_CodeFormat_I32)
-// during initialization.
-
 RERR_ErrorPtr foo2(...)
 {
     // ...
     BarErrorCode err = BarSystemFunction(...);
     if (err != BarError_OK) {
         return RERR_Error_CreateWithCode(BAR_ERROR_DOMAIN, err,
-                "Something went wrong in Bar");
+                RERR_CodeFormat_I32, "Something went wrong in Bar");
     }
 }
 ```
@@ -115,11 +112,8 @@ their own error codes. For this reason, RichErrors requires all errors with
 codes to indicate which "domain" they belong to. Domains are essentially
 namespaces for error codes.
 
-Domains are C strings, and it is assumed that static string constants will be
-used.
-
-Domains need to be registered before use, to prevent clashing domains (this may
-become configurable in future versions).
+Domains are C strings consisting of 63 or fewer printable characters (spaces
+are allowed).
 
 
 RichErrors Design Notes
@@ -129,9 +123,9 @@ If the system or application consists of multiple DLLs, a single, central DLL
 should link to RichErrors. All other DLLs can then call API methods of the
 central DLL that wrap RichErrors functions. In this way, all resource
 allocation and deallocation for RichErrors occurs in the central DLL, meaning
-that it is safe to pass errors (`RERR_Error_Ptr`) across DLL boundaries, even
-if the DLLs each use a different C runtime. (This matters mostly on Windows
-where different versions and configurations of MSVC use different runtimes.)
+that it is safe to pass errors (`RERR_ErrorPtr`) across DLL boundaries, even if
+the DLLs each use a different C runtime. (This matters mostly on Windows where
+different versions and configurations of MSVC use different runtimes.)
 
 
 Err2Code (`Err2Code.h`)
@@ -151,7 +145,7 @@ also don't want to maintain multiple versions of the interface.
 This is where Err2Code comes in. You provide a way for individual modules to
 declare that they return rich error information (this needs to happen before
 any other module functions are called, for obvious reasons). You also expose to
-the modules an API function that converts an `RERR_Error_Ptr` into an `int32_t`
+the modules an API function that converts an `RERR_ErrorPtr` into an `int32_t`
 (or whatever integer type the interface uses for error codes). This function
 would internally call `RERR_ErrorMap_RegisterThreadLocal()`.
 
