@@ -51,19 +51,11 @@
 
 typedef CRITICAL_SECTION Mutex;
 
-typedef INIT_ONCE CallOnceFlag;
-
-#define CALL_ONCE_FLAG_INITIALIZER INIT_ONCE_STATIC_INIT
-
 typedef DWORD ThreadID;
 
 #else // pthreads
 
 typedef pthread_mutex_t Mutex;
-
-typedef pthread_once_t CallOnceFlag;
-
-#define CALL_ONCE_FLAG_INITIALIZER PTHREAD_ONCE_INIT
 
 // Since we're not displaying, pthread_t is ok.
 typedef pthread_t ThreadID;
@@ -76,30 +68,6 @@ typedef pthread_t ThreadID;
 //
 
 void InitRecursiveMutex(Mutex* mutex);
-
-
-//
-// Call-once support
-//
-
-#if USE_WIN32THREADS
-// Not static since we are taking the pointer (won't be inlined anyway).
-inline BOOL __stdcall RERR_Internal_CallOnceCallback(PINIT_ONCE i, PVOID param, PVOID* c)
-{
-    void (*func)(void) = param;
-    func();
-    return TRUE;
-}
-#endif
-
-static inline void CallOnce(CallOnceFlag *flag, void (*func)(void))
-{
-#if USE_WIN32THREADS
-    InitOnceExecuteOnce(flag, RERR_Internal_CallOnceCallback, func, NULL);
-#else
-    pthread_once(flag, func);
-#endif
-}
 
 
 //
