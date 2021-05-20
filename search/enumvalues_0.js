@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['rerr_5fcodeformat_5fhex16_362',['RERR_CodeFormat_Hex16',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04aeba97cfe36c70328080cd12129e4ffb2',1,'RichErrors.h']]],
+  ['rerr_5fcodeformat_5fhex32_363',['RERR_CodeFormat_Hex32',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04ae13a486b5b9145be6b35a88f7c40a681',1,'RichErrors.h']]],
+  ['rerr_5fcodeformat_5fhexnopad_364',['RERR_CodeFormat_HexNoPad',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04a8c3b613099aff446ee1d75e69ad552c1',1,'RichErrors.h']]],
+  ['rerr_5fcodeformat_5fi16_365',['RERR_CodeFormat_I16',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04afc0bd328162d7a2de32cf653bf3bc6fa',1,'RichErrors.h']]],
+  ['rerr_5fcodeformat_5fi32_366',['RERR_CodeFormat_I32',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04a3db2b21f033aa34cd5fa383035d43440',1,'RichErrors.h']]],
+  ['rerr_5fcodeformat_5fu16_367',['RERR_CodeFormat_U16',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04ae54595ff8c89fd69965b8bb56279f4ea',1,'RichErrors.h']]],
+  ['rerr_5fcodeformat_5fu32_368',['RERR_CodeFormat_U32',['../_rich_errors_8h.html#abc6126af1d45847bc59afa0aa3216b04ab1701283662ec66ce638ffda864e13f2',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fcodeformat_5finvalid_369',['RERR_ECODE_CODEFORMAT_INVALID',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a38f1d8f55b92f25353e35918b5b21760',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fdomain_5falready_5fexists_370',['RERR_ECODE_DOMAIN_ALREADY_EXISTS',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a2bc82dca3a1b9e0895a35597e2c82fea',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fdomain_5fname_5fempty_371',['RERR_ECODE_DOMAIN_NAME_EMPTY',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a73763690d111b9d7857b5790dd029bd1',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fdomain_5fname_5finvalid_372',['RERR_ECODE_DOMAIN_NAME_INVALID',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a6a73448c5054bbd98f1181d2c0e96bcb',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fdomain_5fname_5ftoo_5flong_373',['RERR_ECODE_DOMAIN_NAME_TOO_LONG',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5af4d7379abe62411eb176da04fb0b4444',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fdomain_5fnot_5fregistered_374',['RERR_ECODE_DOMAIN_NOT_REGISTERED',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5adbe0942c021027b10ed046b30fe2ba75',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fmap_5ffailure_375',['RERR_ECODE_MAP_FAILURE',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5aa4f9a02409f16e0e5b0287b65f7d160e',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fmap_5finvalid_5fcode_376',['RERR_ECODE_MAP_INVALID_CODE',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a2a3b6f8a2e899c003d7499e8820c6cc8',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fmap_5finvalid_5fconfig_377',['RERR_ECODE_MAP_INVALID_CONFIG',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a8e1fa48e0b25f44ff0c9dd3f8e1f44ff',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fnull_5fargument_378',['RERR_ECODE_NULL_ARGUMENT',['../_rich_errors_8h.html#a99fb83031ce9923c84392b4e92f956b5a5a876ab1c9fc2c32f6a7fcd14b8c0c67',1,'RichErrors.h']]],
+  ['rerr_5fecode_5fout_5fof_5fmemory_379',['RERR_ECODE_OUT_OF_MEMORY',['../_rich_errors_8h.html#adf764cbdea00d65edcd07bb9953ad2b7aa09ef007f811cd6647b64ca552bbdf1a',1,'RichErrors.h']]],
+  ['rerr_5finfovaluetypebool_380',['RERR_InfoValueTypeBool',['../_info_map_8h.html#a06fc87d81c62e9abb8790b6e5713c55ba3e47efab77673b2841e68ff0aed5c1c2',1,'InfoMap.h']]],
+  ['rerr_5finfovaluetypef64_381',['RERR_InfoValueTypeF64',['../_info_map_8h.html#a06fc87d81c62e9abb8790b6e5713c55ba077a61b53e335a47ac044410b43189e1',1,'InfoMap.h']]],
+  ['rerr_5finfovaluetypei64_382',['RERR_InfoValueTypeI64',['../_info_map_8h.html#a06fc87d81c62e9abb8790b6e5713c55bab4d8d490f382e6a482e7558054387cdf',1,'InfoMap.h']]],
+  ['rerr_5finfovaluetypeinvalid_383',['RERR_InfoValueTypeInvalid',['../_info_map_8h.html#a06fc87d81c62e9abb8790b6e5713c55ba6212b50b346c21b05dde5a52ff401633',1,'InfoMap.h']]],
+  ['rerr_5finfovaluetypestring_384',['RERR_InfoValueTypeString',['../_info_map_8h.html#a06fc87d81c62e9abb8790b6e5713c55badbd587865bed53f56fbb5decaa0fa1dd',1,'InfoMap.h']]],
+  ['rerr_5finfovaluetypeu64_385',['RERR_InfoValueTypeU64',['../_info_map_8h.html#a06fc87d81c62e9abb8790b6e5713c55bac75cc19ed24139052774b422252a968b',1,'InfoMap.h']]]
+];
