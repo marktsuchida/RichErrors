@@ -15,11 +15,12 @@ main_srcs = [
 # Public headers are included solely to make them show up in the Visual Studio
 # project
 main_lib = static_library('RichErrors',
-        [
-            main_srcs,
-            public_c_headers,
-            public_cpp_headers,
-        ],
-        include_directories: public_inc,
-        dependencies: threads_dep,
-        install: true)
+    [
+        main_srcs,
+        public_c_headers,
+        public_cpp_headers,
+    ],
+    include_directories: public_inc,
+    dependencies: threads_dep,
+    install: true,
+)
