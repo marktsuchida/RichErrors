@@ -4,23 +4,21 @@ Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 SPDX-License-Identifier: BSD-2-Clause
 -->
 
-RichErrors - Error handling for C
-=================================
+# RichErrors - Error handling for C
 
 RichErrors is a small C library for doing a little better than returning
 integer codes for errors. It does not do anything akin to exception handling
 (such as in C++), but makes it easy to pass detailed error information up the
 call chain.
 
-
-RichErrors Core (`RichErrors.h`)
---------------------------------
+## RichErrors Core (`RichErrors.h`)
 
 An error in RichErrors is represented with the opaque type `RERR_ErrorPtr`.
 This type behaves similarly to a pointer, but is not always a pointer, so only
 RichErrors API functions should be used to access its values.
 
 An error consists of the following:
+
 - A string message
 - An optional 32-bit integer code, together with an error "domain" indicating
   different subsystems to which the code may belong. The domain is required if
@@ -33,10 +31,10 @@ An error consists of the following:
 
 Error objects are immutable: once created, none of their contents may change.
 
-Basic Usage
------------
+## Basic Usage
 
 To return a basic error:
+
 ```C
 RERR_ErrorPtr foo(...)
 {
@@ -46,12 +44,14 @@ RERR_ErrorPtr foo(...)
     }
 }
 ```
+
 This is the minimal usage, and calling code will not be able to
 programmatically determine the nature of the error. The advantage is that it is
 very easy to write (potentially dynamically generated) error messages, so that
 programmers will (hopefully) be motivated to do proper error handling.
 
 To return an error with an error code from some subsystem "Bar":
+
 ```C
 #define BAR_ERROR_DOMAIN "BarSystem"
 
@@ -68,12 +68,14 @@ RERR_ErrorPtr foo2(...)
     }
 }
 ```
+
 If, as is often the case, the subsystem Bar offers a function to fetch a string
 message for each error code (similar to `strerror()`), then one mighe write a
 small wrapper function that takes a Bar error code and returns an
 `RERR_ErrorPtr` with the corresponding message.
 
 To return an out-of-memory error:
+
 ```C
 // ...
 void *buffer = malloc(1000000000);
@@ -81,6 +83,7 @@ if (buffer == NULL) {
     return RERR_Error_CreateOutOfMemory();
 }
 ```
+
 The out-of-memory error behaves just like any other error, except that it is
 implemented as a special pointer value with no associated dynamically allocated
 memory, so that it is guaranteed to work even when heap memory is unavailable.
@@ -88,6 +91,7 @@ All RichErrors functions return an out-of-memory error when internal memory
 allocation fails.
 
 To check an error return value:
+
 ```C
 // ...
 RERR_ErrorPtr err = foo(...);
@@ -97,24 +101,25 @@ if (err != RERR_NO_ERROR) {
 }
 // ...
 ```
+
 Note that all errors (including out-of-memory errors) must be destroyed. The
 only exception is `RERR_NO_ERROR`.
 
 To ignore an error return value:
+
 ```C
 // ...
 RERR_Error_Destroy(foo(...));
 // ...
 ```
+
 It is safe to destroy an `RERR_NO_ERROR`. This makes it explicit that errors
 are being ignored. If you simply ignore the returned error, you will leak
 memory every time an error occurs. (And a leak checker could be used to detect
 unhandled errors--perhaps a future version of RichErrors itself will provide
 such instrumentation.)
 
-
-Error Code Domains
-------------------
+## Error Code Domains
 
 Many complex systems consist of multiple subsystems, each of which may define
 their own error codes. For this reason, RichErrors requires all errors with
@@ -127,9 +132,7 @@ used.
 Domains need to be registered before use, to prevent clashing domains (this may
 become configurable in future versions).
 
-
-RichErrors Design Notes
------------------------
+## RichErrors Design Notes
 
 If the system or application consists of multiple DLLs, a single, central DLL
 should link to RichErrors. All other DLLs can then call API methods of the
@@ -139,9 +142,7 @@ that it is safe to pass errors (`RERR_Error_Ptr`) across DLL boundaries, even
 if the DLLs each use a different C runtime. (This matters mostly on Windows
 where different versions and configurations of MSVC use different runtimes.)
 
-
-Err2Code (`Err2Code.h`)
------------------------
+## Err2Code (`Err2Code.h`)
 
 Err2Code is an add-on feature based on RichErrors, which helps with
 retrofitting rich error handling on top of a legacy API (ABI) that uses integer
@@ -197,11 +198,10 @@ if (err != 0) {
 }
 // ...
 ```
+
 (In real code, the call to `Foo()` might occur through a function pointer.)
 
-
-Err2Code Design Notes
----------------------
+## Err2Code Design Notes
 
 Err2Code uses a map from the integer error codes to registered error objects.
 The map is (at least conceptually) per-thread.
@@ -284,9 +284,7 @@ problems with clashing error codes are already present, and Err2Code will
 probably not make the situation much worse if used carefully (and in the long
 run will help eliminate any clashes).
 
-
-Performance
------------
+## Performance
 
 RichErrors will not add much overhead when no errors occur, because functions
 will simply be returning null. In the case that errors do occur, we assume that
@@ -295,18 +293,14 @@ amounts of data.
 
 Don't use errors as a substitute for control flow.
 
-
-C++ API
--------
+## C++ API
 
 It makes sense to have a C API (and ABI) between DLLs, yet use C++ for internal
 implementation of each DLL. To support error handling in such cases, RichErrors
 has a C++ API that is a wrapper around the C objects. The C++ API is a
 header-only library that depens on the C API.
 
-
-Building RichErrors
--------------------
+## Building RichErrors
 
 Meson is used for building.
 
