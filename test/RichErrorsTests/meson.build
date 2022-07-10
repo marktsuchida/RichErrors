@@ -1,3 +1,7 @@
+# This file is part of RichErrors.
+# Copyright 2019-2022 Board of Regents of the University of Wisconsin System
+# SPDX-License-Identifier: BSD-2-Clause
+
 test_srcs = [
     'DynArrayTests.cpp',
     'Err2CodeCppTests.cpp',

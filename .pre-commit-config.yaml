@@ -2,7 +2,8 @@
 # Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 # SPDX-License-Identifier: BSD-2-Clause
 
-*~
-.*.sw?
-
-.vscode/
+repos:
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: v1.0.0
+    hooks:
+      - id: reuse
