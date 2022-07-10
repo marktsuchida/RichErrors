@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "../../src/RichErrors/DynArray.h"
+#include "../src/DynArray.h"
 
 TEST_CASE("Create and destroy", "[RERR_DynArray]") {
     RERR_DynArrayPtr a = RERR_DynArray_Create(10);
