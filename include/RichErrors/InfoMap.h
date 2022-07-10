@@ -12,7 +12,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,14 +50,14 @@ extern "C" {
  * error will gracefully degrade such that it is still valid, albeit without
  * the extra information.
  */
-typedef struct RERR_InfoMap* RERR_InfoMapPtr;
+typedef struct RERR_InfoMap *RERR_InfoMapPtr;
 
 /// Iterator for info map.
 /**
  * This is an opaque pointer to be used for iterating (in a C++-like style) the
  * items of an info map.
  */
-typedef struct RERR_InfoMapItem* RERR_InfoMapIterator;
+typedef struct RERR_InfoMapItem *RERR_InfoMapIterator;
 
 /// Value type.
 typedef int32_t RERR_InfoValueType;
@@ -66,11 +65,11 @@ typedef int32_t RERR_InfoValueType;
 /// Values of ::RERR_InfoValueType.
 enum {
     RERR_InfoValueTypeInvalid = 0, ///< Indicates absence of value
-    RERR_InfoValueTypeString, ///< String value
-    RERR_InfoValueTypeBool, ///< Boolean value
-    RERR_InfoValueTypeI64, ///< Signed integer value
-    RERR_InfoValueTypeU64, ///< Unsigned integer value
-    RERR_InfoValueTypeF64, ///< Floating-point value
+    RERR_InfoValueTypeString,      ///< String value
+    RERR_InfoValueTypeBool,        ///< Boolean value
+    RERR_InfoValueTypeI64,         ///< Signed integer value
+    RERR_InfoValueTypeU64,         ///< Unsigned integer value
+    RERR_InfoValueTypeF64,         ///< Floating-point value
 };
 
 /// Create an info map.
@@ -179,7 +178,8 @@ bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map);
 bool RERR_InfoMap_HasProgrammingErrors(RERR_InfoMapPtr map);
 
 /// Get error message for incorrect construction.
-size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char* dest, size_t destSize);
+size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char *dest,
+                                         size_t destSize);
 
 /// Return the number of items in an info map.
 /**
@@ -227,7 +227,8 @@ void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity);
  * \param[in] key the key string, which must not be null
  * \param[in] value the value string, which must not be null
  */
-void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value);
+void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char *key,
+                            const char *value);
 
 /// Add or replace a boolean value in an info map.
 /**
@@ -244,7 +245,7 @@ void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* va
  * \param[in] key the key string, which must not be null
  * \param[in] value the boolean value
  */
-void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value);
+void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char *key, bool value);
 
 /// Add or replace a signed integer value in an info map.
 /**
@@ -261,7 +262,7 @@ void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value);
  * \param[in] key the key string, which must not be null
  * \param[in] value the signed integer value
  */
-void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value);
+void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char *key, int64_t value);
 
 /// Add or replace an unsigned integer value in an info map.
 /**
@@ -278,7 +279,7 @@ void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value);
  * \param[in] key the key string, which must not be null
  * \param[in] value the unsigned integer value
  */
-void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value);
+void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char *key, uint64_t value);
 
 /// Add or replace a floating point value in an info map.
 /**
@@ -295,7 +296,7 @@ void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value);
  * \param[in] key the key string, which must not be null
  * \param[in] value the floating-point value
  */
-void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value);
+void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char *key, double value);
 
 /// Remove a key from an info map.
 /**
@@ -303,7 +304,7 @@ void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value);
  *
  * If \p map is immutable or \p key is null, behavior is undefined.
  */
-void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key);
+void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char *key);
 
 /// Remove all items from an info map.
 /**
@@ -319,7 +320,7 @@ void RERR_InfoMap_Clear(RERR_InfoMapPtr map);
  * \return `false` if \p map is null or does not contain \p key, or if \p key
  * is null.
  */
-bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key);
+bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char *key);
 
 /// Get the value type for the given key.
 /**
@@ -327,7 +328,7 @@ bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key);
  * does not contain \p key.
  * \return the type of the value stored under key otherwise
  */
-RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key);
+RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char *key);
 
 /// Retrieve a string value from an info map.
 /**
@@ -347,7 +348,8 @@ RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key);
  * \return `true` if a string could be retrieved and has been set to `*value`
  * \return `false` otherwise
  */
-bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value);
+bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char *key,
+                            const char **value);
 
 /// Retrieve a boolean value from an info map.
 /**
@@ -362,7 +364,7 @@ bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** v
  * \param[in] key the key
  * \param[out] value location for the boolean value
  */
-bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value);
+bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char *key, bool *value);
 
 /// Retrieve a signed integer value from an info map.
 /**
@@ -377,7 +379,7 @@ bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value);
  * \param[in] key the key
  * \param[out] value location for the signed integer value
  */
-bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value);
+bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char *key, int64_t *value);
 
 /// Retrieve an unsigned integer value from an info map.
 /**
@@ -392,7 +394,8 @@ bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value);
  * \param[in] key the key
  * \param[out] value location for the unsigned integer value
  */
-bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value);
+bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char *key,
+                         uint64_t *value);
 
 /// Retrieve a floating point value from an info map.
 /**
@@ -407,7 +410,7 @@ bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value);
  * \param[in] key the key
  * \param[out] value location for the floating-point value
  */
-bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value);
+bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char *key, double *value);
 
 /// Get the beginning of the map as an iterator.
 /**
@@ -433,18 +436,20 @@ RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map);
  *
  *     RERR_InfoMapIterator begin = RERR_InfoMap_Begin(map);
  *     RERR_InfoMapIterator end = RERR_InfoMap_End(map);
- *     for (RERR_InfoMapIterator it = begin; it != end; it = RERR_InfoMap_Advance(map, it)) {
- *         const char* key = RERR_InfoMapIterator_GetKey(it);
+ *     for (RERR_InfoMapIterator it = begin; it != end; it =
+ * RERR_InfoMap_Advance(map, it)) { const char* key =
+ * RERR_InfoMapIterator_GetKey(it);
  *         // ...
  *     }
  *
  * Iterator support for info maps is intended for reading out items only.
  * Iterators are invalid if the map is mutable and is modified.
  */
-RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map, RERR_InfoMapIterator it);
+RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map,
+                                          RERR_InfoMapIterator it);
 
 /// Get the key of an item pointed to by an iterator.
-const char* RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it);
+const char *RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it);
 
 /// Get the value type of an item pointed to by an iterator.
 RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it);
@@ -453,7 +458,7 @@ RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it);
 /**
  * If the item does not contain a string value, behavior is undefined.
  */
-const char* RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it);
+const char *RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it);
 
 /// Get the boolean value of an item pointed to by an iterator.
 /**
@@ -469,7 +474,8 @@ int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it);
 
 /// Get the unsigned integer value of an item pointed to by an iterator.
 /**
- * If the item does not contain a unsigned integer value, behavior is undefined.
+ * If the item does not contain a unsigned integer value, behavior is
+ * undefined.
  */
 uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it);
 
@@ -478,7 +484,6 @@ uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it);
  * If the item does not contain a floating-point value, behavior is undefined.
  */
 double RERR_InfoMapIterator_GetF64(RERR_InfoMapIterator it);
-
 
 #ifdef __cplusplus
 } // extern "C"

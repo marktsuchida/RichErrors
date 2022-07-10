@@ -6,12 +6,11 @@
 
 #include "RichErrors/InfoMap.hpp"
 
-
 TEST_CASE("C++ Iteration", "[RERR::InfoMap]") {
     RERR::InfoMap m;
 
-    for (auto const& item : m) {
-        (void)item; // Avoid 'unused' warning
+    for (auto const &item : m) {
+        (void)item;     // Avoid 'unused' warning
         REQUIRE(false); // Empty
     }
 
@@ -23,7 +22,7 @@ TEST_CASE("C++ Iteration", "[RERR::InfoMap]") {
 
     REQUIRE(m.Keys().size() == 5);
 
-    for (auto const& item : m) {
+    for (auto const &item : m) {
         switch (item.GetType()) {
         case RERR_InfoValueTypeString:
             REQUIRE(item.GetKey() == "k0");

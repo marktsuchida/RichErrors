@@ -1,12 +1,12 @@
 # This file is part of RichErrors.
 # Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 # SPDX-License-Identifier: BSD-2-Clause
-
-# https://editorconfig.org
-
-root = true
-
-[*]
-charset = utf-8
-trim_trailing_whitespace = true
-insert_final_newline = true
+---
+BasedOnStyle: LLVM
+ColumnLimit: 79
+IndentWidth: 4
+---
+Language: Cpp
+PointerAlignment: Right
+BreakStringLiterals: false
+...

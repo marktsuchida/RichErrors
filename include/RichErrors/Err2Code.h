@@ -10,11 +10,9 @@
 
 #include "RichErrors/RichErrors.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /// Handle for error map.
 /**
@@ -37,7 +35,7 @@ extern "C" {
  *
  * Use RERR_ErrorMap_ClearThreadLocal() to release all registered errors.
  */
-typedef struct RERR_ErrorMap* RERR_ErrorMapPtr;
+typedef struct RERR_ErrorMap *RERR_ErrorMapPtr;
 
 /// Configuration for error map.
 /**
@@ -58,11 +56,11 @@ typedef struct RERR_ErrorMap* RERR_ErrorMapPtr;
  * indicated out-of-memory.
  */
 typedef struct RERR_ErrorMapConfig {
-    int32_t minMappedCode; ///< Minimum of code range
-    int32_t maxMappedCode; ///< Maximum of code range
-    int32_t noErrorCode; ///< Code to use when no error
+    int32_t minMappedCode;   ///< Minimum of code range
+    int32_t maxMappedCode;   ///< Maximum of code range
+    int32_t noErrorCode;     ///< Code to use when no error
     int32_t outOfMemoryCode; ///< Code used when out of memory
-    int32_t mapFailureCode; ///< Code used when mapping failed
+    int32_t mapFailureCode;  ///< Code used when mapping failed
 
     // Maintainer: Never change or add fields once released. In the unlikely
     // event that new fields are needed, a struct with a different name should
@@ -76,8 +74,8 @@ typedef struct RERR_ErrorMapConfig {
  *
  * An error is returned in the case of internal memory allocation failure.
  */
-RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr* map,
-    const RERR_ErrorMapConfig* config);
+RERR_ErrorPtr RERR_ErrorMap_Create(RERR_ErrorMapPtr *map,
+                                   const RERR_ErrorMapConfig *config);
 
 /// Destroy an error map.
 /**
@@ -96,7 +94,7 @@ void RERR_ErrorMap_Destroy(RERR_ErrorMapPtr map);
  * should not be accessed after this function returns successfully.
  */
 int32_t RERR_ErrorMap_RegisterThreadLocal(RERR_ErrorMapPtr map,
-    RERR_ErrorPtr error);
+                                          RERR_ErrorPtr error);
 
 /// Return whether an error is registered under the given code.
 /**
@@ -115,7 +113,7 @@ bool RERR_ErrorMap_IsRegisteredThreadLocal(RERR_ErrorMapPtr map, int32_t code);
  * RERR_DOMAIN_RICHERRORS and code RERR_ECODE_MAP_INVALID_CODE.
  */
 RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
-    int32_t mappedCode);
+                                                int32_t mappedCode);
 
 /// Clear the error code registrations for the current thread.
 /**
@@ -127,7 +125,6 @@ RERR_ErrorPtr RERR_ErrorMap_RetrieveThreadLocal(RERR_ErrorMapPtr map,
  * Nothing is done if the given map is NULL.
  */
 void RERR_ErrorMap_ClearThreadLocal(RERR_ErrorMapPtr map);
-
 
 #ifdef __cplusplus
 } // extern "C"

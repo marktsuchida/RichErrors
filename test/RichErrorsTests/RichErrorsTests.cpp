@@ -10,7 +10,6 @@
 
 #include <cstring>
 
-
 TEST_CASE("No-error should behave normally") {
     RERR_ErrorPtr noerr = RERR_NO_ERROR;
     REQUIRE(noerr == NULL);
@@ -25,7 +24,6 @@ TEST_CASE("No-error should behave normally") {
     RERR_Error_Destroy(noerr);
 }
 
-
 TEST_CASE("Out-of-memory error should behave normally") {
     RERR_ErrorPtr oom = RERR_Error_CreateOutOfMemory();
     REQUIRE(oom != NULL);
@@ -38,9 +36,8 @@ TEST_CASE("Out-of-memory error should behave normally") {
     RERR_Error_Destroy(oom);
 }
 
-
 TEST_CASE("Reject duplicate domain registration") {
-    const char* d = TESTSTR("domain");
+    const char *d = TESTSTR("domain");
     RERR_ErrorPtr err_first = RERR_Domain_Register(d, RERR_CodeFormat_I32);
     RERR_ErrorPtr err_second = RERR_Domain_Register(d, RERR_CodeFormat_I32);
     RERR_Domain_UnregisterAll();
@@ -50,12 +47,12 @@ TEST_CASE("Reject duplicate domain registration") {
     RERR_Error_Destroy(err_second);
 }
 
-
 TEST_CASE("Reject invalid domain registration") {
     RERR_ErrorPtr err_null = RERR_Domain_Register(NULL, RERR_CodeFormat_I32);
     REQUIRE(err_null != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_null));
-    REQUIRE(strcmp(RERR_Error_GetDomain(err_null), RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(strcmp(RERR_Error_GetDomain(err_null), RERR_DOMAIN_RICHERRORS) ==
+            0);
     REQUIRE(RERR_Error_GetCode(err_null) == RERR_ECODE_NULL_ARGUMENT);
     REQUIRE(RERR_Error_GetMessage(err_null) != NULL);
     RERR_Error_Destroy(err_null);
@@ -63,7 +60,8 @@ TEST_CASE("Reject invalid domain registration") {
     RERR_ErrorPtr err_empty = RERR_Domain_Register("", RERR_CodeFormat_I32);
     REQUIRE(err_empty != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_empty));
-    REQUIRE(strcmp(RERR_Error_GetDomain(err_empty), RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(strcmp(RERR_Error_GetDomain(err_empty), RERR_DOMAIN_RICHERRORS) ==
+            0);
     REQUIRE(RERR_Error_GetCode(err_empty) == RERR_ECODE_DOMAIN_NAME_EMPTY);
     REQUIRE(RERR_Error_GetMessage(err_empty) != NULL);
     RERR_Error_Destroy(err_empty);
@@ -72,49 +70,60 @@ TEST_CASE("Reject invalid domain registration") {
     char longname[65];
     memset(longname, 'a', sizeof(longname));
     longname[sizeof(longname) - 1] = '\0';
-    RERR_ErrorPtr err_too_long = RERR_Domain_Register(longname, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_too_long =
+        RERR_Domain_Register(longname, RERR_CodeFormat_I32);
     REQUIRE(err_too_long != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_too_long));
-    REQUIRE(strcmp(RERR_Error_GetDomain(err_too_long), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_too_long) == RERR_ECODE_DOMAIN_NAME_TOO_LONG);
+    REQUIRE(strcmp(RERR_Error_GetDomain(err_too_long),
+                   RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(RERR_Error_GetCode(err_too_long) ==
+            RERR_ECODE_DOMAIN_NAME_TOO_LONG);
     REQUIRE(RERR_Error_GetMessage(err_too_long) != NULL);
     RERR_Error_Destroy(err_too_long);
 
     longname[sizeof(longname) - 2] = '\0';
-    RERR_ErrorPtr err_not_too_long = RERR_Domain_Register(longname, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_not_too_long =
+        RERR_Domain_Register(longname, RERR_CodeFormat_I32);
     REQUIRE(err_not_too_long == RERR_NO_ERROR);
 
-    RERR_ErrorPtr err_exists = RERR_Domain_Register(longname, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_exists =
+        RERR_Domain_Register(longname, RERR_CodeFormat_I32);
     REQUIRE(err_exists != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_exists));
-    REQUIRE(strcmp(RERR_Error_GetDomain(err_exists), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_exists) == RERR_ECODE_DOMAIN_ALREADY_EXISTS);
+    REQUIRE(strcmp(RERR_Error_GetDomain(err_exists), RERR_DOMAIN_RICHERRORS) ==
+            0);
+    REQUIRE(RERR_Error_GetCode(err_exists) ==
+            RERR_ECODE_DOMAIN_ALREADY_EXISTS);
     REQUIRE(RERR_Error_GetMessage(err_exists) != NULL);
     RERR_Error_Destroy(err_exists);
 
-    RERR_ErrorPtr err_invalid = RERR_Domain_Register("\b", RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_invalid =
+        RERR_Domain_Register("\b", RERR_CodeFormat_I32);
     REQUIRE(err_invalid != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_invalid));
-    REQUIRE(strcmp(RERR_Error_GetDomain(err_invalid), RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(strcmp(RERR_Error_GetDomain(err_invalid),
+                   RERR_DOMAIN_RICHERRORS) == 0);
     REQUIRE(RERR_Error_GetCode(err_invalid) == RERR_ECODE_DOMAIN_NAME_INVALID);
     REQUIRE(RERR_Error_GetMessage(err_invalid) != NULL);
     RERR_Error_Destroy(err_invalid);
 
     // The system domain always exists
-    RERR_ErrorPtr err_system = RERR_Domain_Register(RERR_DOMAIN_RICHERRORS, RERR_CodeFormat_I32);
+    RERR_ErrorPtr err_system =
+        RERR_Domain_Register(RERR_DOMAIN_RICHERRORS, RERR_CodeFormat_I32);
     REQUIRE(err_system != RERR_NO_ERROR);
     REQUIRE(RERR_Error_HasCode(err_system));
-    REQUIRE(strcmp(RERR_Error_GetDomain(err_system), RERR_DOMAIN_RICHERRORS) == 0);
-    REQUIRE(RERR_Error_GetCode(err_system) == RERR_ECODE_DOMAIN_ALREADY_EXISTS);
+    REQUIRE(strcmp(RERR_Error_GetDomain(err_system), RERR_DOMAIN_RICHERRORS) ==
+            0);
+    REQUIRE(RERR_Error_GetCode(err_system) ==
+            RERR_ECODE_DOMAIN_ALREADY_EXISTS);
     REQUIRE(RERR_Error_GetMessage(err_system) != NULL);
     RERR_Error_Destroy(err_system);
 
     RERR_Domain_UnregisterAll();
 }
 
-
 TEST_CASE("Create without code") {
-    const char* msg = TESTSTR("msg");
+    const char *msg = TESTSTR("msg");
     RERR_ErrorPtr err = RERR_Error_Create(msg);
     REQUIRE(err != RERR_NO_ERROR);
     REQUIRE(!RERR_Error_HasCode(err));
@@ -142,10 +151,9 @@ TEST_CASE("Create without code") {
     RERR_Error_Destroy(err);
 }
 
-
 TEST_CASE("Create with code") {
-    const char* domain = TESTSTR("domain");
-    const char* msg = TESTSTR("msg");
+    const char *domain = TESTSTR("domain");
+    const char *msg = TESTSTR("msg");
     RERR_ErrorPtr e = RERR_Domain_Register(domain, RERR_CodeFormat_I32);
     REQUIRE(e == RERR_NO_ERROR);
 
@@ -185,7 +193,6 @@ TEST_CASE("Create with code") {
     RERR_Domain_UnregisterAll();
 }
 
-
 TEST_CASE("Wrap without code") {
     RERR_ErrorPtr cause = RERR_Error_Create(TESTSTR("msg"));
     RERR_ErrorPtr wrap = RERR_Error_Wrap(cause, TESTSTR("msg"));
@@ -198,11 +205,12 @@ TEST_CASE("Wrap without code") {
     RERR_Error_Destroy(wrap);
 }
 
-
-static void FormatCode(RERR_CodeFormat format, int32_t code, char* dest, size_t destSize) {
+static void FormatCode(RERR_CodeFormat format, int32_t code, char *dest,
+                       size_t destSize) {
     REQUIRE(RERR_Domain_Register("test", format) == RERR_NO_ERROR);
 
-    RERR_ErrorPtr err = RERR_Error_CreateWithCode("test", code, TESTSTR("msg"));
+    RERR_ErrorPtr err =
+        RERR_Error_CreateWithCode("test", code, TESTSTR("msg"));
     REQUIRE(err != RERR_NO_ERROR);
 
     RERR_Error_FormatCode(err, dest, destSize);
@@ -210,7 +218,6 @@ static void FormatCode(RERR_CodeFormat format, int32_t code, char* dest, size_t 
     RERR_Error_Destroy(err);
     RERR_Domain_UnregisterAll();
 }
-
 
 TEST_CASE("Code formatting") {
     char buf[RERR_FORMATTED_CODE_MAX_SIZE];
@@ -236,19 +243,25 @@ TEST_CASE("Code formatting") {
     FormatCode(RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
     CHECK(strcmp(buf, "0x00000000") == 0);
 
-    FormatCode(RERR_CodeFormat_Hex32 | RERR_CodeFormat_HexNoPad, -1, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_Hex32 | RERR_CodeFormat_HexNoPad, -1, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0xffffffff") == 0);
-    FormatCode(RERR_CodeFormat_Hex32 | RERR_CodeFormat_HexNoPad, 0, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_Hex32 | RERR_CodeFormat_HexNoPad, 0, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0x0") == 0);
 
-    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "-1 (0xffffffff)") == 0);
-    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, 0, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0 (0x00000000)") == 0);
 
-    FormatCode(RERR_CodeFormat_U32 | RERR_CodeFormat_Hex32, -1, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_U32 | RERR_CodeFormat_Hex32, -1, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "4294967295 (0xffffffff)") == 0);
-    FormatCode(RERR_CodeFormat_U32 | RERR_CodeFormat_Hex32, 0, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_U32 | RERR_CodeFormat_Hex32, 0, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0 (0x00000000)") == 0);
 
     FormatCode(RERR_CodeFormat_I16, -1, buf, sizeof(buf));
@@ -266,19 +279,25 @@ TEST_CASE("Code formatting") {
     FormatCode(RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
     CHECK(strcmp(buf, "0x0000") == 0);
 
-    FormatCode(RERR_CodeFormat_Hex16 | RERR_CodeFormat_HexNoPad, -1, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_Hex16 | RERR_CodeFormat_HexNoPad, -1, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0xffff") == 0);
-    FormatCode(RERR_CodeFormat_Hex16 | RERR_CodeFormat_HexNoPad, 0, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_Hex16 | RERR_CodeFormat_HexNoPad, 0, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0x0") == 0);
 
-    FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, -1, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, -1, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "-1 (0xffff)") == 0);
-    FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_I16 | RERR_CodeFormat_Hex16, 0, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0 (0x0000)") == 0);
 
-    FormatCode(RERR_CodeFormat_U16 | RERR_CodeFormat_Hex16, -1, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_U16 | RERR_CodeFormat_Hex16, -1, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "65535 (0xffff)") == 0);
-    FormatCode(RERR_CodeFormat_U16 | RERR_CodeFormat_Hex16, 0, buf, sizeof(buf));
+    FormatCode(RERR_CodeFormat_U16 | RERR_CodeFormat_Hex16, 0, buf,
+               sizeof(buf));
     CHECK(strcmp(buf, "0 (0x0000)") == 0);
 
     // No truncation (too short for primary)
@@ -286,6 +305,7 @@ TEST_CASE("Code formatting") {
     CHECK(strcmp(buf, "???") == 0);
 
     // Leave out secondary if it won't fit
-    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf, strlen("-1 (0x") + 1);
+    FormatCode(RERR_CodeFormat_I32 | RERR_CodeFormat_Hex32, -1, buf,
+               strlen("-1 (0x") + 1);
     CHECK(strcmp(buf, "-1") == 0);
 }

@@ -6,9 +6,7 @@
 
 #include "Threads.h"
 
-
-void InitRecursiveMutex(Mutex* mutex)
-{
+void InitRecursiveMutex(Mutex *mutex) {
 #if USE_WIN32THREADS
     InitializeCriticalSection(mutex);
 #else

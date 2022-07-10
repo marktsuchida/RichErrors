@@ -36,11 +36,10 @@
  * implementation.
  */
 
-
 struct Value {
     RERR_InfoValueType type;
     union {
-        const char* string; // Uniquely owned
+        const char *string; // Uniquely owned
         bool boolean;
         int64_t i64;
         uint64_t u64;
@@ -48,31 +47,27 @@ struct Value {
     } value;
 };
 
-
 struct RERR_InfoMapItem {
-    const char* key; // Uniquely owned
+    const char *key; // Uniquely owned
     struct Value value;
 };
-
 
 enum {
     FLAG_IMMUTABLE = 1,
     FLAG_OUT_OF_MEMORY = 2,
-    FLAG_ERROR_ATTEMPT_TO_MUTATE_IMMUTABLE = 4, // only this flag may change once immutable
+    FLAG_ERROR_ATTEMPT_TO_MUTATE_IMMUTABLE =
+        4, // only this flag may change once immutable
     FLAG_ERROR_NULL_KEY_GIVEN = 8,
     FLAG_ERROR_NULL_VALUE_GIVEN = 16,
 };
 
-
 struct RERR_InfoMap {
-    uint32_t flags; // See enum constants above
+    uint32_t flags;         // See enum constants above
     RERR_DynArrayPtr items; // Sorted by key strcmp
-    size_t refCount; // Always 1 unless frozen
+    size_t refCount;        // Always 1 unless frozen
 };
 
-
-#define INFOMAP_OUT_OF_MEMORY ((RERR_InfoMapPtr) -1)
-
+#define INFOMAP_OUT_OF_MEMORY ((RERR_InfoMapPtr)-1)
 
 /*
  * We handle allocation failures in two ways.
@@ -87,35 +82,28 @@ struct RERR_InfoMap {
  * readout, but the other flags and refCount remain valid.
  */
 
-
-static inline void FreeConst(const void* m)
-{
-    free((void*)m);
-}
-
+static inline void FreeConst(const void *m) { free((void *)m); }
 
 // Precondition: it != NULL
-static inline void ClearItem(RERR_InfoMapIterator it)
-{
+static inline void ClearItem(RERR_InfoMapIterator it) {
     FreeConst(it->key);
 
     switch (it->value.type) {
-        case RERR_InfoValueTypeString:
-            FreeConst(it->value.value.string);
-            break;
-        default:
-            break;
+    case RERR_InfoValueTypeString:
+        FreeConst(it->value.value.string);
+        break;
+    default:
+        break;
     }
 }
-
 
 // Precondition: src != NULL
 // Precondition: dst != NULL
 // Precondition: src != dst
-static bool DeepCopyItem(struct RERR_InfoMapItem* restrict dst, struct RERR_InfoMapItem* restrict src)
-{
-    char* keyCopy = NULL;
-    char* strCopy = NULL;
+static bool DeepCopyItem(struct RERR_InfoMapItem *restrict dst,
+                         struct RERR_InfoMapItem *restrict src) {
+    char *keyCopy = NULL;
+    char *strCopy = NULL;
 
     size_t keyLen = strlen(src->key);
     keyCopy = malloc(keyLen + 1);
@@ -126,20 +114,20 @@ static bool DeepCopyItem(struct RERR_InfoMapItem* restrict dst, struct RERR_Info
     dst->key = keyCopy;
 
     switch (src->value.type) {
-        case RERR_InfoValueTypeString:
-            dst->value.type = RERR_InfoValueTypeString;
-            size_t len = strlen(src->value.value.string);
-            strCopy = malloc(len + 1);
-            if (!strCopy) {
-                goto error;
-            }
-            strncpy(strCopy, src->value.value.string, len + 1);
-            dst->value.value.string = strCopy;
-            break;
+    case RERR_InfoValueTypeString:
+        dst->value.type = RERR_InfoValueTypeString;
+        size_t len = strlen(src->value.value.string);
+        strCopy = malloc(len + 1);
+        if (!strCopy) {
+            goto error;
+        }
+        strncpy(strCopy, src->value.value.string, len + 1);
+        dst->value.value.string = strCopy;
+        break;
 
-        default:
-            memcpy(&dst->value, &src->value, sizeof(src->value));
-            break;
+    default:
+        memcpy(&dst->value, &src->value, sizeof(src->value));
+        break;
     }
 
     return true;
@@ -150,10 +138,8 @@ error:
     return false;
 }
 
-
 // Precondition: map != NULL
-static void Clear(RERR_InfoMapPtr map)
-{
+static void Clear(RERR_InfoMapPtr map) {
     RERR_InfoMapIterator begin = RERR_DynArray_Begin(map->items);
     RERR_InfoMapIterator end = RERR_DynArray_End(map->items);
     for (RERR_InfoMapIterator it = begin; it != end; ++it) {
@@ -162,10 +148,8 @@ static void Clear(RERR_InfoMapPtr map)
     RERR_DynArray_Clear(map->items);
 }
 
-
 // Precondition: map != NULL
-static RERR_InfoMapPtr MutableCopy(RERR_InfoMapPtr source)
-{
+static RERR_InfoMapPtr MutableCopy(RERR_InfoMapPtr source) {
     RERR_InfoMapPtr ret = RERR_InfoMap_Create();
     if (!ret) {
         goto error;
@@ -177,7 +161,8 @@ static RERR_InfoMapPtr MutableCopy(RERR_InfoMapPtr source)
     RERR_InfoMapIterator begin = RERR_DynArray_Begin(source->items);
     RERR_InfoMapIterator end = RERR_DynArray_End(source->items);
     for (RERR_InfoMapIterator it = begin; it != end; ++it) {
-        RERR_InfoMapIterator ins = RERR_DynArray_Insert(ret->items, RERR_DynArray_End(ret->items));
+        RERR_InfoMapIterator ins =
+            RERR_DynArray_Insert(ret->items, RERR_DynArray_End(ret->items));
         if (!ins) {
             goto error;
         }
@@ -195,29 +180,22 @@ error:
     return NULL;
 }
 
-
-static int ItemKeyCompare(const void* item, const void* key)
-{
-    const struct RERR_InfoMapItem* i = item;
-    const char* k = key;
+static int ItemKeyCompare(const void *item, const void *key) {
+    const struct RERR_InfoMapItem *i = item;
+    const char *k = key;
     return strcmp(i->key, k);
 }
 
-
-static inline RERR_InfoMapIterator Find(RERR_InfoMapPtr map, const char* key)
-{
+static inline RERR_InfoMapIterator Find(RERR_InfoMapPtr map, const char *key) {
     return RERR_DynArray_BSearch(map->items, key, ItemKeyCompare);
 }
 
-
-static void SwitchToOutOfMemory(RERR_InfoMapPtr map)
-{
+static void SwitchToOutOfMemory(RERR_InfoMapPtr map) {
     Clear(map); // TODO May shrink, which is a wasted step
     RERR_DynArray_Destroy(map->items);
     map->items = NULL;
     map->flags |= FLAG_OUT_OF_MEMORY;
 }
-
 
 // Ensures capacity and finds insertion point (or NULL on error)
 // Precondition: map != NULL
@@ -225,15 +203,15 @@ static void SwitchToOutOfMemory(RERR_InfoMapPtr map)
 // Postcondition: *it == NULL || (*it)->key contains copy of key
 // Postcondition: (*it)->value is invalid
 // Returns true if successful; false on allocation failure
-static bool SetKey(RERR_InfoMapPtr map, const char* key, RERR_InfoMapIterator* it)
-{
+static bool SetKey(RERR_InfoMapPtr map, const char *key,
+                   RERR_InfoMapIterator *it) {
     *it = RERR_DynArray_BSearchInsertionPoint(map->items, key, ItemKeyCompare);
 
     // Found exact, so need to overwrite
     if (*it != RERR_DynArray_End(map->items) && strcmp((*it)->key, key) == 0) {
         // Overwriting value in place.
         // Evacuate key while we clear the item.
-        const char* saveKey = (*it)->key;
+        const char *saveKey = (*it)->key;
         (*it)->key = NULL;
         ClearItem(*it);
         (*it)->key = saveKey;
@@ -243,7 +221,7 @@ static bool SetKey(RERR_InfoMapPtr map, const char* key, RERR_InfoMapIterator* i
     bool ret = true;
 
     size_t keyLen = strlen(key);
-    char* keyCopy = malloc(keyLen + 1);
+    char *keyCopy = malloc(keyLen + 1);
     if (!keyCopy) {
         SwitchToOutOfMemory(map);
         ret = false;
@@ -266,9 +244,7 @@ exit:
     return ret;
 }
 
-
-RERR_InfoMapPtr RERR_InfoMap_Create(void)
-{
+RERR_InfoMapPtr RERR_InfoMap_Create(void) {
     RERR_InfoMapPtr ret = calloc(1, sizeof(struct RERR_InfoMap));
     if (!ret) {
         return INFOMAP_OUT_OF_MEMORY;
@@ -285,15 +261,11 @@ RERR_InfoMapPtr RERR_InfoMap_Create(void)
     return ret;
 }
 
-
-RERR_InfoMapPtr RERR_InfoMap_CreateOutOfMemory(void)
-{
+RERR_InfoMapPtr RERR_InfoMap_CreateOutOfMemory(void) {
     return INFOMAP_OUT_OF_MEMORY;
 }
 
-
-void RERR_InfoMap_Destroy(RERR_InfoMapPtr map)
-{
+void RERR_InfoMap_Destroy(RERR_InfoMapPtr map) {
     if (!map) {
         return;
     }
@@ -313,9 +285,7 @@ void RERR_InfoMap_Destroy(RERR_InfoMapPtr map)
     free(map);
 }
 
-
-RERR_InfoMapPtr RERR_InfoMap_Copy(RERR_InfoMapPtr map)
-{
+RERR_InfoMapPtr RERR_InfoMap_Copy(RERR_InfoMapPtr map) {
     if (!map) {
         return NULL;
     }
@@ -331,9 +301,7 @@ RERR_InfoMapPtr RERR_InfoMap_Copy(RERR_InfoMapPtr map)
     return MutableCopy(map);
 }
 
-
-RERR_InfoMapPtr RERR_InfoMap_MutableCopy(RERR_InfoMapPtr map)
-{
+RERR_InfoMapPtr RERR_InfoMap_MutableCopy(RERR_InfoMapPtr map) {
     if (!map) {
         return NULL;
     }
@@ -343,17 +311,13 @@ RERR_InfoMapPtr RERR_InfoMap_MutableCopy(RERR_InfoMapPtr map)
     return MutableCopy(map);
 }
 
-
-RERR_InfoMapPtr RERR_InfoMap_ImmutableCopy(RERR_InfoMapPtr map)
-{
+RERR_InfoMapPtr RERR_InfoMap_ImmutableCopy(RERR_InfoMapPtr map) {
     RERR_InfoMapPtr ret = RERR_InfoMap_Copy(map);
     RERR_InfoMap_MakeImmutable(ret);
     return ret;
 }
 
-
-void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map)
-{
+void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map) {
     if (!map) {
         return;
     }
@@ -365,9 +329,7 @@ void RERR_InfoMap_MakeImmutable(RERR_InfoMapPtr map)
     // TODO Shrink if there is excess capacity
 }
 
-
-bool RERR_InfoMap_IsMutable(RERR_InfoMapPtr map)
-{
+bool RERR_InfoMap_IsMutable(RERR_InfoMapPtr map) {
     if (!map) {
         return false;
     }
@@ -378,9 +340,7 @@ bool RERR_InfoMap_IsMutable(RERR_InfoMapPtr map)
     return !(map->flags & FLAG_IMMUTABLE);
 }
 
-
-void RERR_InfoMap_MakeOutOfMemory(RERR_InfoMapPtr map)
-{
+void RERR_InfoMap_MakeOutOfMemory(RERR_InfoMapPtr map) {
     if (!map) {
         return;
     }
@@ -397,24 +357,20 @@ void RERR_InfoMap_MakeOutOfMemory(RERR_InfoMapPtr map)
     SwitchToOutOfMemory(map);
 }
 
-
-bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map)
-{
+bool RERR_InfoMap_IsOutOfMemory(RERR_InfoMapPtr map) {
     return map == INFOMAP_OUT_OF_MEMORY ||
-        (map && (map->flags & FLAG_OUT_OF_MEMORY));
+           (map && (map->flags & FLAG_OUT_OF_MEMORY));
 }
 
-
-bool RERR_InfoMap_HasProgrammingErrors(RERR_InfoMapPtr map)
-{
+bool RERR_InfoMap_HasProgrammingErrors(RERR_InfoMapPtr map) {
     const uint32_t errorFlags = FLAG_ERROR_ATTEMPT_TO_MUTATE_IMMUTABLE |
-        FLAG_ERROR_NULL_KEY_GIVEN | FLAG_ERROR_NULL_VALUE_GIVEN;
+                                FLAG_ERROR_NULL_KEY_GIVEN |
+                                FLAG_ERROR_NULL_VALUE_GIVEN;
     return map->flags & errorFlags;
 }
 
-
-static inline void ConcatString(char* restrict dest, const char* restrict src, size_t destSize)
-{
+static inline void ConcatString(char *restrict dest, const char *restrict src,
+                                size_t destSize) {
     if (!dest || destSize == 0 || !src) {
         return;
     }
@@ -425,12 +381,13 @@ static inline void ConcatString(char* restrict dest, const char* restrict src, s
     }
 }
 
-
-size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char* dest, size_t destSize)
-{
-    static const char* const err1 = "Attempt(s) made to mutate immutable map.";
-    static const char* const err2 = "Null key(s) passed to mutating function(s).";
-    static const char* const err3 = "Null value(s) passed to mutating function(s).";
+size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char *dest,
+                                         size_t destSize) {
+    static const char *const err1 = "Attempt(s) made to mutate immutable map.";
+    static const char *const err2 =
+        "Null key(s) passed to mutating function(s).";
+    static const char *const err3 =
+        "Null value(s) passed to mutating function(s).";
 
     if (dest && destSize > 0) {
         dest[0] = '\0';
@@ -463,9 +420,7 @@ size_t RERR_InfoMap_GetProgrammingErrors(RERR_InfoMapPtr map, char* dest, size_t
     return totalLen + 1;
 }
 
-
-size_t RERR_InfoMap_GetSize(RERR_InfoMapPtr map)
-{
+size_t RERR_InfoMap_GetSize(RERR_InfoMapPtr map) {
     if (!map) {
         return 0;
     }
@@ -476,9 +431,7 @@ size_t RERR_InfoMap_GetSize(RERR_InfoMapPtr map)
     return RERR_DynArray_GetSize(map->items);
 }
 
-
-bool RERR_InfoMap_IsEmpty(RERR_InfoMapPtr map)
-{
+bool RERR_InfoMap_IsEmpty(RERR_InfoMapPtr map) {
     if (!map) {
         return true;
     }
@@ -489,9 +442,7 @@ bool RERR_InfoMap_IsEmpty(RERR_InfoMapPtr map)
     return RERR_DynArray_IsEmpty(map->items);
 }
 
-
-void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity)
-{
+void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity) {
     if (!map || map->flags & FLAG_IMMUTABLE) {
         return;
     }
@@ -502,9 +453,8 @@ void RERR_InfoMap_ReserveCapacity(RERR_InfoMapPtr map, size_t capacity)
     RERR_DynArray_ReserveCapacity(map->items, capacity);
 }
 
-
-void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* value)
-{
+void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char *key,
+                            const char *value) {
     if (!map) {
         return;
     }
@@ -528,7 +478,7 @@ void RERR_InfoMap_SetString(RERR_InfoMapPtr map, const char* key, const char* va
     }
 
     size_t strLen = strlen(value);
-    char* strCopy = malloc(strLen + 1);
+    char *strCopy = malloc(strLen + 1);
     if (!strCopy) {
         SwitchToOutOfMemory(map);
         goto exit;
@@ -549,9 +499,7 @@ exit:
     free(strCopy);
 }
 
-
-void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value)
-{
+void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char *key, bool value) {
     if (!map) {
         return;
     }
@@ -580,9 +528,7 @@ void RERR_InfoMap_SetBool(RERR_InfoMapPtr map, const char* key, bool value)
     it->value.value.boolean = value;
 }
 
-
-void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value)
-{
+void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char *key, int64_t value) {
     if (!map) {
         return;
     }
@@ -611,9 +557,8 @@ void RERR_InfoMap_SetI64(RERR_InfoMapPtr map, const char* key, int64_t value)
     it->value.value.i64 = value;
 }
 
-
-void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value)
-{
+void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char *key,
+                         uint64_t value) {
     if (!map) {
         return;
     }
@@ -642,9 +587,7 @@ void RERR_InfoMap_SetU64(RERR_InfoMapPtr map, const char* key, uint64_t value)
     it->value.value.u64 = value;
 }
 
-
-void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value)
-{
+void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char *key, double value) {
     if (!map) {
         return;
     }
@@ -673,9 +616,7 @@ void RERR_InfoMap_SetF64(RERR_InfoMapPtr map, const char* key, double value)
     it->value.value.f64 = value;
 }
 
-
-void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key)
-{
+void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char *key) {
     if (!map) {
         return;
     }
@@ -703,9 +644,7 @@ void RERR_InfoMap_Remove(RERR_InfoMapPtr map, const char* key)
     RERR_DynArray_Erase(map->items, found);
 }
 
-
-void RERR_InfoMap_Clear(RERR_InfoMapPtr map)
-{
+void RERR_InfoMap_Clear(RERR_InfoMapPtr map) {
     if (!map) {
         return;
     }
@@ -723,9 +662,7 @@ void RERR_InfoMap_Clear(RERR_InfoMapPtr map)
     Clear(map);
 }
 
-
-bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key)
-{
+bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char *key) {
     if (!map || !key || RERR_InfoMap_IsOutOfMemory(map)) {
         return false;
     }
@@ -734,9 +671,7 @@ bool RERR_InfoMap_HasKey(RERR_InfoMapPtr map, const char* key)
     return found != NULL;
 }
 
-
-RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key)
-{
+RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char *key) {
     if (!map || !key || RERR_InfoMap_IsOutOfMemory(map)) {
         return RERR_InfoValueTypeInvalid;
     }
@@ -749,9 +684,8 @@ RERR_InfoValueType RERR_InfoMap_GetType(RERR_InfoMapPtr map, const char* key)
     return found->value.type;
 }
 
-
-bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** value)
-{
+bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char *key,
+                            const char **value) {
     if (!value) {
         return false;
     }
@@ -770,9 +704,7 @@ bool RERR_InfoMap_GetString(RERR_InfoMapPtr map, const char* key, const char** v
     return true;
 }
 
-
-bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value)
-{
+bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char *key, bool *value) {
     if (!value) {
         return false;
     }
@@ -791,9 +723,8 @@ bool RERR_InfoMap_GetBool(RERR_InfoMapPtr map, const char* key, bool* value)
     return true;
 }
 
-
-bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value)
-{
+bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char *key,
+                         int64_t *value) {
     if (!value) {
         return false;
     }
@@ -812,9 +743,8 @@ bool RERR_InfoMap_GetI64(RERR_InfoMapPtr map, const char* key, int64_t* value)
     return true;
 }
 
-
-bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value)
-{
+bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char *key,
+                         uint64_t *value) {
     if (!value) {
         return false;
     }
@@ -833,9 +763,7 @@ bool RERR_InfoMap_GetU64(RERR_InfoMapPtr map, const char* key, uint64_t* value)
     return true;
 }
 
-
-bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value)
-{
+bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char *key, double *value) {
     if (!value) {
         return false;
     }
@@ -854,9 +782,7 @@ bool RERR_InfoMap_GetF64(RERR_InfoMapPtr map, const char* key, double* value)
     return true;
 }
 
-
-RERR_InfoMapIterator RERR_InfoMap_Begin(RERR_InfoMapPtr map)
-{
+RERR_InfoMapIterator RERR_InfoMap_Begin(RERR_InfoMapPtr map) {
     if (!map || RERR_InfoMap_IsOutOfMemory(map)) {
         // begin and end must be equal even if map is "empty"
         return NULL;
@@ -864,9 +790,7 @@ RERR_InfoMapIterator RERR_InfoMap_Begin(RERR_InfoMapPtr map)
     return RERR_DynArray_Begin(map->items);
 }
 
-
-RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map)
-{
+RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map) {
     if (!map || RERR_InfoMap_IsOutOfMemory(map)) {
         // begin and end must be equal even if map is "empty"
         return NULL;
@@ -874,9 +798,8 @@ RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map)
     return RERR_DynArray_End(map->items);
 }
 
-
-RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map, RERR_InfoMapIterator it)
-{
+RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map,
+                                          RERR_InfoMapIterator it) {
 #ifndef NDEBUG
     if (!it || it == RERR_InfoMap_End(map)) {
         abort();
@@ -890,9 +813,7 @@ RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map, RERR_InfoMapItera
     return RERR_DynArray_Advance(map->items, it);
 }
 
-
-const char* RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it)
-{
+const char *RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it) {
     if (!it) {
 #ifndef NDEBUG
         abort();
@@ -902,9 +823,7 @@ const char* RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it)
     return it->key;
 }
 
-
-RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it)
-{
+RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it) {
     if (!it) {
 #ifndef NDEBUG
         abort();
@@ -914,9 +833,7 @@ RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it)
     return it->value.type;
 }
 
-
-const char* RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it)
-{
+const char *RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeString) {
 #ifndef NDEBUG
         abort();
@@ -926,9 +843,7 @@ const char* RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it)
     return it->value.value.string;
 }
 
-
-bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it)
-{
+bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeBool) {
 #ifndef NDEBUG
         abort();
@@ -938,9 +853,7 @@ bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it)
     return it->value.value.boolean;
 }
 
-
-int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it)
-{
+int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeI64) {
 #ifndef NDEBUG
         abort();
@@ -950,9 +863,7 @@ int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it)
     return it->value.value.i64;
 }
 
-
-uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it)
-{
+uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeU64) {
 #ifndef NDEBUG
         abort();
@@ -962,9 +873,7 @@ uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it)
     return it->value.value.u64;
 }
 
-
-double RERR_InfoMapIterator_GetF64(RERR_InfoMapIterator it)
-{
+double RERR_InfoMapIterator_GetF64(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeF64) {
 #ifndef NDEBUG
         abort();

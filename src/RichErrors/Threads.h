@@ -19,7 +19,6 @@
 #include <pthread.h>
 #endif
 
-
 //
 // Types and values
 //
@@ -47,13 +46,11 @@ typedef pthread_t ThreadID;
 
 #endif
 
-
 //
 // Mutex initialization
 //
 
-void InitRecursiveMutex(Mutex* mutex);
-
+void InitRecursiveMutex(Mutex *mutex);
 
 //
 // Call-once support
@@ -61,16 +58,15 @@ void InitRecursiveMutex(Mutex* mutex);
 
 #if USE_WIN32THREADS
 // Not static since we are taking the pointer (won't be inlined anyway).
-inline BOOL __stdcall RERR_Internal_CallOnceCallback(PINIT_ONCE i, PVOID param, PVOID* c)
-{
+inline BOOL __stdcall RERR_Internal_CallOnceCallback(PINIT_ONCE i, PVOID param,
+                                                     PVOID *c) {
     void (*func)(void) = param;
     func();
     return TRUE;
 }
 #endif
 
-static inline void CallOnce(CallOnceFlag *flag, void (*func)(void))
-{
+static inline void CallOnce(CallOnceFlag *flag, void (*func)(void)) {
 #if USE_WIN32THREADS
     InitOnceExecuteOnce(flag, RERR_Internal_CallOnceCallback, func, NULL);
 #else
@@ -78,13 +74,11 @@ static inline void CallOnce(CallOnceFlag *flag, void (*func)(void))
 #endif
 }
 
-
 //
 // Mutex lock and unlock
 //
 
-static inline void LockMutex(Mutex* mutex)
-{
+static inline void LockMutex(Mutex *mutex) {
 #if USE_WIN32THREADS
     EnterCriticalSection(mutex);
 #else
@@ -92,8 +86,7 @@ static inline void LockMutex(Mutex* mutex)
 #endif
 }
 
-static inline void UnlockMutex(Mutex* mutex)
-{
+static inline void UnlockMutex(Mutex *mutex) {
 #if USE_WIN32THREADS
     LeaveCriticalSection(mutex);
 #else
@@ -101,13 +94,11 @@ static inline void UnlockMutex(Mutex* mutex)
 #endif
 }
 
-
 //
 // Thread id
 //
 
-static inline ThreadID GetThisThreadId(void)
-{
+static inline ThreadID GetThisThreadId(void) {
 #if USE_WIN32THREADS
     return GetCurrentThreadId();
 #else

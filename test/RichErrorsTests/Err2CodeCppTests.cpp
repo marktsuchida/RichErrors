@@ -8,15 +8,14 @@
 
 #include "TestDefs.h"
 
-
 TEST_CASE("Err2Code C++ Example") {
-    RERR::ErrorMap map(RERR::ErrorMap::Config().
-        SetNoErrorCode(0).
-        SetOutOfMemoryCode(-1).
-        SetMapFailureCode(-2).
-        SetMappedRange(1, 32767));
+    RERR::ErrorMap map(RERR::ErrorMap::Config()
+                           .SetNoErrorCode(0)
+                           .SetOutOfMemoryCode(-1)
+                           .SetMapFailureCode(-2)
+                           .SetMappedRange(1, 32767));
 
-    const char* msg = TESTSTR("msg");
+    const char *msg = TESTSTR("msg");
     int32_t code = map.RegisterThreadLocal(RERR::Error(msg));
     REQUIRE(code == 1);
 

@@ -47,11 +47,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /// Handle for error information.
 /**
@@ -74,10 +72,10 @@ extern "C" {
  * RERR_Error_GetCode(), RERR_Error_GetMessage(), RERR_Error_HasCause(),
  * RERR_Error_GetCause(), RERR_Error_IsOutOfMemory().
  */
-typedef struct RERR_Error* RERR_ErrorPtr;
+typedef struct RERR_Error *RERR_ErrorPtr;
 
 /// Value of type ::RERR_ErrorPtr representing success (lack of error).
-#define RERR_NO_ERROR ((RERR_ErrorPtr) NULL)
+#define RERR_NO_ERROR ((RERR_ErrorPtr)NULL)
 
 /// Error domain for critical errors.
 /**
@@ -110,16 +108,17 @@ enum {
     RERR_ECODE_NULL_ARGUMENT = 101, ///< Argument NULL when not allowed
 
     // Domain errors
-    RERR_ECODE_DOMAIN_NAME_EMPTY = 201, ///< Domain name cannot be empty
+    RERR_ECODE_DOMAIN_NAME_EMPTY = 201,    ///< Domain name cannot be empty
     RERR_ECODE_DOMAIN_NAME_TOO_LONG = 202, ///< Domain name too long
-    RERR_ECODE_DOMAIN_NAME_INVALID = 203, ///< Domain name contains forbidden characters
+    RERR_ECODE_DOMAIN_NAME_INVALID =
+        203, ///< Domain name contains forbidden characters
     RERR_ECODE_DOMAIN_ALREADY_EXISTS = 204, ///< Domain alraedy registered
     RERR_ECODE_DOMAIN_NOT_REGISTERED = 205, ///< Domain not registered
 
     // Error maps
     RERR_ECODE_MAP_INVALID_CONFIG = 301, ///< Invalid configuration
-    RERR_ECODE_MAP_INVALID_CODE = 302, ///< Unregistered code
-    RERR_ECODE_MAP_FAILURE = 303, ///< Could not assign code
+    RERR_ECODE_MAP_INVALID_CODE = 302,   ///< Unregistered code
+    RERR_ECODE_MAP_FAILURE = 303,        ///< Could not assign code
 
     // Code formats
     RERR_ECODE_CODEFORMAT_INVALID = 401, ///< Invalid error code format
@@ -143,11 +142,11 @@ typedef uint32_t RERR_CodeFormat;
  * others use 16-bit integers for error codes.
  */
 enum {
-    RERR_CodeFormat_I32 = 1, ///< 32-bit signed integer, decimal
-    RERR_CodeFormat_U32 = 2, ///< 32-bit unsigned integer, decimal
-    RERR_CodeFormat_Hex32 = 4, ///< 32-bit unsigned integer, hexadecimal
-    RERR_CodeFormat_I16 = 8, ///< 16-bit signed integer, decimal
-    RERR_CodeFormat_U16 = 16, ///< 16-bit unsigned integer, decimal
+    RERR_CodeFormat_I32 = 1,    ///< 32-bit signed integer, decimal
+    RERR_CodeFormat_U32 = 2,    ///< 32-bit unsigned integer, decimal
+    RERR_CodeFormat_Hex32 = 4,  ///< 32-bit unsigned integer, hexadecimal
+    RERR_CodeFormat_I16 = 8,    ///< 16-bit signed integer, decimal
+    RERR_CodeFormat_U16 = 16,   ///< 16-bit unsigned integer, decimal
     RERR_CodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
 
     /// Modifier to remove leading zeros from hex formats
@@ -176,8 +175,8 @@ void RERR_Domain_UnregisterAll(void);
  * library, or operating system that generates error codes, and the phrase
  * "DOMAIN error code 123" (where DOMAIN is the domain name) should make sense.
  */
-RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
-    RERR_CodeFormat codeFormat);
+RERR_ErrorPtr RERR_Domain_Register(const char *domainName,
+                                   RERR_CodeFormat codeFormat);
 
 /// Create an error without an error code.
 /**
@@ -193,7 +192,7 @@ RERR_ErrorPtr RERR_Domain_Register(const char* domainName,
  * This function may return an out-of-memory error (not containing the given
  * message) if memory allocation fails.
  */
-RERR_ErrorPtr RERR_Error_Create(const char* message);
+RERR_ErrorPtr RERR_Error_Create(const char *message);
 
 /// Create an error with an error code.
 /**
@@ -213,8 +212,8 @@ RERR_ErrorPtr RERR_Error_Create(const char* message);
  * This function may return an out-of-memory error (not containing the given
  * message, domain, and code) if memory allocation fails.
  */
-RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
-    const char* message);
+RERR_ErrorPtr RERR_Error_CreateWithCode(const char *domainName, int32_t code,
+                                        const char *message);
 
 /// Create an error with an error code and auxiliary information.
 /**
@@ -226,8 +225,9 @@ RERR_ErrorPtr RERR_Error_CreateWithCode(const char* domainName, int32_t code,
  * RERR_Error_CreateWithCode(). Otherwise, \p domainName and \p code must be
  * valid and ownership of \p info is taken by the new error.
  */
-RERR_ErrorPtr RERR_Error_CreateWithInfo(const char* domainName, int32_t code,
-    RERR_InfoMapPtr info, const char* message);
+RERR_ErrorPtr RERR_Error_CreateWithInfo(const char *domainName, int32_t code,
+                                        RERR_InfoMapPtr info,
+                                        const char *message);
 
 /// Destroy an error object.
 /**
@@ -256,7 +256,7 @@ void RERR_Error_Destroy(RERR_ErrorPtr error);
  * the source remains owned by the caller, who is also responsible for
  * destroying the destination when done with it.
  */
-void RERR_Error_Copy(RERR_ErrorPtr source, RERR_ErrorPtr* destination);
+void RERR_Error_Copy(RERR_ErrorPtr source, RERR_ErrorPtr *destination);
 
 /// Create a lightweight out-of-memory error.
 /**
@@ -284,7 +284,7 @@ RERR_ErrorPtr RERR_Error_CreateOutOfMemory(void);
  * message or cause) if internal memory allocation fails. Even in that case,
  * the cause error is deallocated.
  */
-RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
+RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char *message);
 
 /// Create a nested error with error code, taking ownership of the cause.
 /**
@@ -304,7 +304,8 @@ RERR_ErrorPtr RERR_Error_Wrap(RERR_ErrorPtr cause, const char* message);
  * in that case, the cause error is deallocated.
  */
 RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
-    const char* domainName, int32_t code, const char* message);
+                                      const char *domainName, int32_t code,
+                                      const char *message);
 
 /// Created a nested error with error code and auxiliary info.
 /**
@@ -312,8 +313,9 @@ RERR_ErrorPtr RERR_Error_WrapWithCode(RERR_ErrorPtr cause,
  * \sa RERR_Error_CreateWithInfo()
  */
 RERR_ErrorPtr RERR_Error_WrapWithInfo(RERR_ErrorPtr cause,
-    const char* domainName, int32_t code, RERR_InfoMapPtr info,
-    const char* message);
+                                      const char *domainName, int32_t code,
+                                      RERR_InfoMapPtr info,
+                                      const char *message);
 
 /// Return whether the given error has an error domain and code.
 bool RERR_Error_HasCode(RERR_ErrorPtr error);
@@ -325,7 +327,7 @@ bool RERR_Error_HasCode(RERR_ErrorPtr error);
  *
  * The returned string is valid for the lifetime of the error object.
  */
-const char* RERR_Error_GetDomain(RERR_ErrorPtr error);
+const char *RERR_Error_GetDomain(RERR_ErrorPtr error);
 
 /// Return the error code of the given error.
 /**
@@ -341,7 +343,7 @@ int32_t RERR_Error_GetCode(RERR_ErrorPtr error);
  * If the given error does not have an error code, a short message to that
  * effect will be copied to `dest`.
  */
-void RERR_Error_FormatCode(RERR_ErrorPtr error, char* dest, size_t destSize);
+void RERR_Error_FormatCode(RERR_ErrorPtr error, char *dest, size_t destSize);
 
 /// Return whether the given error has non-empty auxiliary info.
 bool RERR_Error_HasInfo(RERR_ErrorPtr error);
@@ -362,7 +364,7 @@ RERR_InfoMapPtr RERR_Error_GetInfo(RERR_ErrorPtr error);
  *
  * The returned string is valid for the lifetime of the error object.
  */
-const char* RERR_Error_GetMessage(RERR_ErrorPtr error);
+const char *RERR_Error_GetMessage(RERR_ErrorPtr error);
 
 /// Return whether the given error has a cause, or original error.
 bool RERR_Error_HasCause(RERR_ErrorPtr error);
@@ -383,7 +385,6 @@ RERR_ErrorPtr RERR_Error_GetCause(RERR_ErrorPtr error);
  * a result of allocation failure.
  */
 bool RERR_Error_IsOutOfMemory(RERR_ErrorPtr error);
-
 
 #ifdef __cplusplus
 } // extern "C"

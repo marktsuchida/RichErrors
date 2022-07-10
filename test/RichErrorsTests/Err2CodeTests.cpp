@@ -10,7 +10,6 @@
 
 #include <cstring>
 
-
 TEST_CASE("Map creation parameters") {
     RERR_ErrorMapConfig config;
     RERR_ErrorMapPtr map;
@@ -36,7 +35,8 @@ TEST_CASE("Map creation parameters") {
     REQUIRE(err == RERR_NO_ERROR);
     REQUIRE(map != NULL);
     REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, config.noErrorCode));
-    REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, config.outOfMemoryCode));
+    REQUIRE(
+        RERR_ErrorMap_IsRegisteredThreadLocal(map, config.outOfMemoryCode));
     REQUIRE(RERR_ErrorMap_IsRegisteredThreadLocal(map, config.mapFailureCode));
     RERR_ErrorMap_Destroy(map);
 
@@ -55,7 +55,6 @@ TEST_CASE("Map creation parameters") {
     REQUIRE(RERR_Error_GetCode(err) == RERR_ECODE_MAP_INVALID_CONFIG);
     RERR_Error_Destroy(err);
 }
-
 
 TEST_CASE("Basic map and retrieve") {
     RERR_ErrorMapConfig config;
@@ -108,7 +107,6 @@ TEST_CASE("Basic map and retrieve") {
     RERR_ErrorMap_Destroy(map);
 }
 
-
 TEST_CASE("Code exhaustion") {
     RERR_ErrorMapConfig config;
     RERR_ErrorMapPtr map;
@@ -157,7 +155,6 @@ TEST_CASE("Code exhaustion") {
     RERR_ErrorMap_Destroy(map);
 }
 
-
 TEST_CASE("Clear") {
     RERR_ErrorMap_ClearThreadLocal(NULL); // Must not crash
 
@@ -181,7 +178,8 @@ TEST_CASE("Clear") {
 
     RERR_ErrorPtr retrieved = RERR_ErrorMap_RetrieveThreadLocal(map, code);
     REQUIRE(retrieved != RERR_NO_ERROR);
-    REQUIRE(strcmp(RERR_Error_GetDomain(retrieved), RERR_DOMAIN_RICHERRORS) == 0);
+    REQUIRE(strcmp(RERR_Error_GetDomain(retrieved), RERR_DOMAIN_RICHERRORS) ==
+            0);
     REQUIRE(RERR_Error_GetCode(retrieved) == RERR_ECODE_MAP_INVALID_CODE);
     RERR_Error_Destroy(retrieved);
 

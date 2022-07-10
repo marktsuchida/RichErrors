@@ -9,7 +9,6 @@
 
 #include <string.h>
 
-
 TEST_CASE("Null behavior", "[RERR_InfoMap]") {
     RERR_InfoMap_Destroy(nullptr);
 
@@ -33,7 +32,6 @@ TEST_CASE("Null behavior", "[RERR_InfoMap]") {
 
     RERR_InfoMap_Destroy(m);
 }
-
 
 TEST_CASE("Lifecycle", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_Create();
@@ -64,13 +62,12 @@ TEST_CASE("Lifecycle", "[RERR_InfoMap]") {
     RERR_InfoMap_Destroy(m);
 }
 
-
 TEST_CASE("Strings", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_Create();
     REQUIRE(m != nullptr);
 
-    const char* key;
-    const char* value;
+    const char *key;
+    const char *value;
 
     key = TESTSTR("key");
     value = TESTSTR("value");
@@ -102,13 +99,12 @@ TEST_CASE("Strings", "[RERR_InfoMap]") {
 
     REQUIRE(RERR_InfoMap_GetType(m, key) == RERR_InfoValueTypeString);
 
-    const char* s;
+    const char *s;
     REQUIRE(RERR_InfoMap_GetString(m, key, &s));
     REQUIRE(strcmp(s, value) == 0);
 
     RERR_InfoMap_Destroy(m);
 }
-
 
 TEST_CASE("Numeic", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_Create();
@@ -143,7 +139,6 @@ TEST_CASE("Numeic", "[RERR_InfoMap]") {
     RERR_InfoMap_Destroy(m);
 }
 
-
 TEST_CASE("Out of memory", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_CreateOutOfMemory();
     REQUIRE(m != nullptr);
@@ -162,7 +157,6 @@ TEST_CASE("Out of memory", "[RERR_InfoMap]") {
     REQUIRE(!RERR_InfoMap_IsMutable(m));
     RERR_InfoMap_Destroy(m);
 }
-
 
 TEST_CASE("Programming errors", "[RERR_InfoMap]") {
     SECTION("No errors") {
@@ -186,7 +180,7 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
         size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
         REQUIRE(size > 0);
-        char* msg = (char*)malloc(size);
+        char *msg = (char *)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
         REQUIRE(strlen(msg) + 1 == size);
@@ -203,7 +197,7 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
         size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
         REQUIRE(size > 0);
-        char* msg = (char*)malloc(size);
+        char *msg = (char *)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
         if (msg != nullptr) { // Avoid MSVC 'msg may be null' warning
@@ -223,7 +217,7 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
         size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
         REQUIRE(size > 0);
-        char* msg = (char*)malloc(size);
+        char *msg = (char *)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
         if (msg != nullptr) { // Avoid MSVC 'msg may be null' warning
@@ -245,7 +239,7 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         REQUIRE(RERR_InfoMap_HasProgrammingErrors(m));
         size_t size = RERR_InfoMap_GetProgrammingErrors(m, nullptr, 0);
         REQUIRE(size > 0);
-        char* msg = (char*)malloc(size);
+        char *msg = (char *)malloc(size);
         REQUIRE(msg != nullptr);
         RERR_InfoMap_GetProgrammingErrors(m, msg, size);
         if (msg != nullptr) { // Avoid MSVC 'msg may be null' warning
@@ -255,7 +249,6 @@ TEST_CASE("Programming errors", "[RERR_InfoMap]") {
         RERR_InfoMap_Destroy(m);
     }
 }
-
 
 TEST_CASE("Iteration", "[RERR_InfoMap]") {
     RERR_InfoMapPtr m = RERR_InfoMap_Create();
@@ -269,8 +262,9 @@ TEST_CASE("Iteration", "[RERR_InfoMap]") {
 
     RERR_InfoMapIterator begin = RERR_InfoMap_Begin(m);
     RERR_InfoMapIterator end = RERR_InfoMap_End(m);
-    for (RERR_InfoMapIterator it = begin; it != end; it = RERR_InfoMap_Advance(m, it)) {
-        const char* key = RERR_InfoMapIterator_GetKey(it);
+    for (RERR_InfoMapIterator it = begin; it != end;
+         it = RERR_InfoMap_Advance(m, it)) {
+        const char *key = RERR_InfoMapIterator_GetKey(it);
         REQUIRE(strncmp(key, "k", 1) == 0);
         REQUIRE(RERR_InfoMapIterator_GetType(it) != RERR_InfoValueTypeInvalid);
         switch (RERR_InfoMapIterator_GetType(it)) {

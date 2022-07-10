@@ -10,7 +10,6 @@
 
 #include <utility>
 
-
 TEST_CASE("C++ Example") {
     RERR::Error noerror;
     REQUIRE(noerror.IsSuccess());
@@ -21,7 +20,7 @@ TEST_CASE("C++ Example") {
     REQUIRE(RERR::Error::OutOfMemory().GetCode() == RERR_ECODE_OUT_OF_MEMORY);
     REQUIRE(RERR::Error::OutOfMemory().FormatCode() == "-1");
 
-    const char* domain = TESTSTR("domain");
+    const char *domain = TESTSTR("domain");
     RERR::Error e = RERR::RegisterDomain(domain, RERR_CodeFormat_I32);
     REQUIRE(e.IsSuccess());
 
@@ -54,22 +53,20 @@ TEST_CASE("C++ Example") {
     REQUIRE(cptr == RERR_NO_ERROR);
 
     // Throw
-    const char* msg = TESTSTR("msg");
+    const char *msg = TESTSTR("msg");
     try {
         RERR::Error(msg).ThrowIfError();
-    }
-    catch (RERR::Exception const& e) {
+    } catch (RERR::Exception const &e) {
         REQUIRE(e.what() != nullptr);
         REQUIRE(e.Error().GetMessage() == msg);
     }
 
-    const char* msg2 = TESTSTR("msg");
+    const char *msg2 = TESTSTR("msg");
     try {
         RERR_ErrorPtr lvalueErr = RERR_Error_Create(msg2);
         // RERR::ThrowIfError(lvalueErr); // error
         RERR::ThrowIfError(std::move(lvalueErr));
-    }
-    catch (RERR::Exception const& e) {
+    } catch (RERR::Exception const &e) {
         REQUIRE(e.Error().GetMessage() == msg2);
     }
 
