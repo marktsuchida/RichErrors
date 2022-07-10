@@ -9,6 +9,8 @@ threads_dep = dependency('threads')
 
 public_inc = include_directories('include')
 
+catch_dep = dependency('catch2')
+
 subdir('include')
 subdir('src/RichErrors')
 subdir('test/RichErrorsTests')

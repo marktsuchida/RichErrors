@@ -2,7 +2,7 @@
 // Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include "../catch2/catch.hpp"
+#include <catch2/catch.hpp>
 
 #include "RichErrors/RichErrors.hpp"
 

@@ -14,8 +14,10 @@ test_srcs = [
     'main.cpp',
 ]
 
-test_exe = executable('RichErrorsTests', test_srcs,
-        include_directories: public_inc,
-        link_with: main_lib)
+test_exe = executable('tests', test_srcs,
+    include_directories: public_inc,
+    link_with: main_lib,
+    dependencies: [catch_dep],
+)
 
 test('RichErrors Tests', test_exe)
