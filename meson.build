@@ -17,3 +17,8 @@ subdir('include')
 subdir('src')
 subdir('test')
 subdir('doc')
+
+richerrors_dep = declare_dependency(
+    include_directories: public_inc,
+    link_with: main_lib,
+)
