@@ -21,12 +21,11 @@ jobs:
           sudo python3 -m pip install meson
       - name: Build docs
         run: |
-          meson setup builddir
-          cd builddir
-          ninja doc/doxygen
+          meson setup -Ddocs=enabled builddir
+          meson compile -C builddir docs
       - name: Publish docs (main branch only)
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./builddir/doc/doxygen/html
+          publish_dir: ./builddir/doc/apidoc/html

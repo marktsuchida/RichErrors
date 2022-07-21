@@ -17,6 +17,7 @@ public_cpp_headers = files(
 install_headers(public_c_headers,
     subdir: 'RichErrors',
 )
+
 install_headers(public_cpp_headers,
     subdir: 'RichErrors',
 )

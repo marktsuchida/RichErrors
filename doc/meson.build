@@ -3,26 +3,33 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 doxygen = find_program('doxygen',
-    required: false,
+    required: get_option('docs'),
 )
 
+doxyfile = configure_file(
+    configuration: {
+        'DOXYGEN_INPUT': join_paths(
+            meson.current_source_dir(),
+            '..',
+            'include',
+        ),
+        'DOXYGEN_OUTPUT': join_paths(
+            meson.current_build_dir(),
+            'apidoc',
+        ),
+    },
+    input: 'Doxyfile.in',
+    output: 'Doxyfile',
+)
+
+doc_install_dir = join_paths(get_option('datadir'), 'doc', 'RichErrors')
+
 if doxygen.found()
-    # The only way to specify the input and output location for doxygen is by
-    # editing the Doxyfile.
-    doxygen_conf = configuration_data()
-    doxygen_conf.set('DOXYGEN_INPUT', meson.source_root() + '/include')
-    doxygen_conf.set('DOXYGEN_OUTPUT', meson.current_build_dir() + '/doxygen')
-
-    doxyfile = configure_file(
-        configuration: doxygen_conf,
-        input: 'Doxyfile.in',
-        output: 'Doxyfile',
-    )
-
-    custom_target('doc',
-        build_by_default: true,
+    custom_target('docs',
         command: [doxygen, doxyfile],
         depend_files: [public_c_headers, public_cpp_headers],
-        output: ['doxygen'],
+        output: ['apidoc'],
+        install: true,
+        install_dir: doc_install_dir,
     )
 endif
