@@ -1,0 +1,64 @@
+# This file is part of RichErrors.
+# Copyright 2019-2022 Board of Regents of the University of Wisconsin System
+# SPDX-License-Identifier: BSD-2-Clause
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+        include:
+          - os: ubuntu
+            runner: ubuntu-latest
+          - os: macos
+            runner: macos-latest
+          - os: windows
+            runner: windows-latest
+            options: '--vsenv'
+    name: test-${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - uses: ilammy/msvc-dev-cmd@v1
+      - run: |
+          python -m pip install --upgrade pip meson ninja
+      - name: Build and test
+        run: |
+          meson setup ${{ matrix.options }} --buildtype=release builddir
+          meson dist -C builddir
+
+  docs:
+    needs: test
+    concurrency:
+      group: publish-gh-pages
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: |
+          python -m pip install --upgrade pip meson ninja
+      - run: |
+          sudo apt-get install -y doxygen
+      - run: |
+          meson setup -Ddocs=enabled builddir
+          meson compile -C builddir docs
+      - if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: builddir/doc/apidoc/html
