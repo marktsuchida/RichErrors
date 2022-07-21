@@ -5,3 +5,6 @@
 option('docs', type: 'feature', value: 'auto',
     description: 'Build and install API documentation (requires Doxygen)',
 )
+option('tests', type: 'feature', value: 'enabled',
+    description: 'Build unit tests',
+)

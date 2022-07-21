@@ -14,6 +14,11 @@ test_srcs = [
     'main.cpp',
 ]
 
+catch_dep = dependency('catch2',
+    required: get_option('tests'),
+    disabler: true,
+)
+
 test_exe = executable('tests', test_srcs,
     include_directories: public_inc,
     link_with: main_lib,
