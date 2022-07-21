@@ -24,3 +24,5 @@ richerrors_dep = declare_dependency(
     include_directories: public_inc,
     link_with: richerrors_lib,
 )
+
+meson.override_dependency('RichErrors', richerrors_dep)
