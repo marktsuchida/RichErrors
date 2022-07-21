@@ -4,7 +4,11 @@
 
 project('RichErrors',
     'c', 'cpp',
-    default_options: ['c_std=c11', 'cpp_std=c++14'],
+    default_options: [
+        'c_std=c11',
+        'cpp_std=c++14',
+        'default_library=static',
+    ],
 )
 
 threads_dep = dependency('threads')
@@ -18,5 +22,5 @@ subdir('doc')
 
 richerrors_dep = declare_dependency(
     include_directories: public_inc,
-    link_with: main_lib,
+    link_with: richerrors_lib,
 )

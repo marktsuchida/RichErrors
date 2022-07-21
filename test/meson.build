@@ -2,7 +2,7 @@
 # Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 # SPDX-License-Identifier: BSD-2-Clause
 
-test_srcs = [
+test_src = [
     'DynArrayTests.cpp',
     'Err2CodeCppTests.cpp',
     'Err2CodeTests.cpp',
@@ -10,7 +10,6 @@ test_srcs = [
     'InfoMapTests.cpp',
     'RichErrorsCppTests.cpp',
     'RichErrorsTests.cpp',
-    'TestDefs.h',
     'main.cpp',
 ]
 
@@ -19,9 +18,9 @@ catch_dep = dependency('catch2',
     disabler: true,
 )
 
-test_exe = executable('tests', test_srcs,
+test_exe = executable('tests', test_src,
     include_directories: public_inc,
-    link_with: main_lib,
+    link_with: richerrors_lib,
     dependencies: [catch_dep],
 )
 
