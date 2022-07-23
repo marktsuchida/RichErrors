@@ -94,7 +94,7 @@ static RERR_ErrorPtr Domain_Check(const char *domainName) {
                                          RERR_ECODE_DOMAIN_NAME_TOO_LONG, msg);
     }
 
-    for (int i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         // Allow ASCII graphic or space only.
         if (domainName[i] < ' ' || domainName[i] > '~') {
             return RERR_Error_CreateWithCode(

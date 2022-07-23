@@ -8,6 +8,7 @@ project('RichErrors',
         'c_std=c11',
         'cpp_std=c++14',
         'default_library=static',
+        'warning_level=3',
     ],
 )
 
