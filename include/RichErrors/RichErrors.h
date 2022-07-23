@@ -150,7 +150,7 @@ enum {
     RERR_CodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
 
     /// Modifier to remove leading zeros from hex formats
-    RERR_CodeFormat_HexNoPad = 1 << 31,
+    RERR_CodeFormat_HexNoPad = (int)(1U << 31),
 };
 
 /// Maximum length of formatted error code.
