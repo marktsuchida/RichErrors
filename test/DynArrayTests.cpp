@@ -46,7 +46,7 @@ TEST_CASE("Front insert and erase", "[RERR_DynArray]") {
     for (size_t i = 0; i < 10; ++i) {
         REQUIRE(RERR_DynArray_GetSize(a) == i);
         auto p = RERR_DynArray_Insert(a, RERR_DynArray_Begin(a));
-        *static_cast<int *>(p) = i + 42;
+        *static_cast<size_t *>(p) = i + 42;
         REQUIRE(*static_cast<size_t *>(RERR_DynArray_Front(a)) == i + 42);
         REQUIRE(*static_cast<size_t *>(RERR_DynArray_Back(a)) == 42);
     }
