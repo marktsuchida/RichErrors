@@ -60,7 +60,10 @@ void InitRecursiveMutex(Mutex *mutex);
 // Not static since we are taking the pointer (won't be inlined anyway).
 inline BOOL __stdcall RERR_Internal_CallOnceCallback(PINIT_ONCE i, PVOID param,
                                                      PVOID *c) {
-    void (*func)(void) = param;
+    (void)i;
+    (void)c;
+    typedef void (*voidvoidfunc)(void);
+    voidvoidfunc func = (voidvoidfunc)param;
     func();
     return TRUE;
 }
@@ -68,7 +71,8 @@ inline BOOL __stdcall RERR_Internal_CallOnceCallback(PINIT_ONCE i, PVOID param,
 
 static inline void CallOnce(CallOnceFlag *flag, void (*func)(void)) {
 #if USE_WIN32THREADS
-    InitOnceExecuteOnce(flag, RERR_Internal_CallOnceCallback, func, NULL);
+    InitOnceExecuteOnce(flag, RERR_Internal_CallOnceCallback, (void *)func,
+                        NULL);
 #else
     pthread_once(flag, func);
 #endif

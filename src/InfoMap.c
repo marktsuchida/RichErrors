@@ -7,6 +7,7 @@
 
 #include "DynArray.h"
 
+#include <assert.h>
 #include <math.h> // for nan()
 #include <string.h>
 
@@ -800,11 +801,7 @@ RERR_InfoMapIterator RERR_InfoMap_End(RERR_InfoMapPtr map) {
 
 RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map,
                                           RERR_InfoMapIterator it) {
-#ifndef NDEBUG
-    if (!it || it == RERR_InfoMap_End(map)) {
-        abort();
-    }
-#endif
+    assert(it && it != RERR_InfoMap_End(map));
 
     // In the current array-based implementation we could advance the iterator
     // without having a reference to the whole map, but we demand such a
@@ -814,20 +811,16 @@ RERR_InfoMapIterator RERR_InfoMap_Advance(RERR_InfoMapPtr map,
 }
 
 const char *RERR_InfoMapIterator_GetKey(RERR_InfoMapIterator it) {
+    assert(it);
     if (!it) {
-#ifndef NDEBUG
-        abort();
-#endif
         return NULL;
     }
     return it->key;
 }
 
 RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it) {
+    assert(it);
     if (!it) {
-#ifndef NDEBUG
-        abort();
-#endif
         return RERR_InfoValueTypeInvalid;
     }
     return it->value.type;
@@ -835,9 +828,7 @@ RERR_InfoValueType RERR_InfoMapIterator_GetType(RERR_InfoMapIterator it) {
 
 const char *RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeString) {
-#ifndef NDEBUG
-        abort();
-#endif
+        assert(false);
         return NULL;
     }
     return it->value.value.string;
@@ -845,9 +836,7 @@ const char *RERR_InfoMapIterator_GetString(RERR_InfoMapIterator it) {
 
 bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeBool) {
-#ifndef NDEBUG
-        abort();
-#endif
+        assert(false);
         return false;
     }
     return it->value.value.boolean;
@@ -855,9 +844,7 @@ bool RERR_InfoMapIterator_GetBool(RERR_InfoMapIterator it) {
 
 int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeI64) {
-#ifndef NDEBUG
-        abort();
-#endif
+        assert(false);
         return 0;
     }
     return it->value.value.i64;
@@ -865,9 +852,7 @@ int64_t RERR_InfoMapIterator_GetI64(RERR_InfoMapIterator it) {
 
 uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeU64) {
-#ifndef NDEBUG
-        abort();
-#endif
+        assert(false);
         return 0;
     }
     return it->value.value.u64;
@@ -875,9 +860,7 @@ uint64_t RERR_InfoMapIterator_GetU64(RERR_InfoMapIterator it) {
 
 double RERR_InfoMapIterator_GetF64(RERR_InfoMapIterator it) {
     if (!it || it->value.type != RERR_InfoValueTypeF64) {
-#ifndef NDEBUG
-        abort();
-#endif
+        assert(false);
         return nan("");
     }
     return it->value.value.f64;

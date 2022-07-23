@@ -31,13 +31,15 @@ static inline char *Advance(RERR_DynArrayPtr arr, char *it) {
 static inline size_t RoundUpToPowerOf2(size_t s) {
     // https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 
+    const bool is_64bit = sizeof(size_t) > 4;
+
     --s;
     s |= s >> 1;
     s |= s >> 2;
     s |= s >> 4;
     s |= s >> 8;
     s |= s >> 16;
-    if (sizeof(size_t) > 4) {
+    if (is_64bit) {
         s |= s >> 32;
     }
     ++s;

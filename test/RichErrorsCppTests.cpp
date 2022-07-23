@@ -36,8 +36,8 @@ TEST_CASE("C++ Example") {
     REQUIRE(wrapped.HasCause());
 
     REQUIRE(wrapped.GetCauseChain().size() == 2);
-    for (auto e : wrapped.GetCauseChain()) {
-        REQUIRE(!e.GetMessage().empty());
+    for (auto e2 : wrapped.GetCauseChain()) {
+        REQUIRE(!e2.GetMessage().empty());
     }
 
     // C++ to C

@@ -125,9 +125,6 @@ enum {
 };
 
 /// Error code formatting mode.
-typedef uint32_t RERR_CodeFormat;
-
-/// Constants for type ::RERR_CodeFormat.
 /**
  * Usually a single value should be chosen. However, the bitwise or of two
  * values are allowed if both have the same number of bits and one is decimal,
@@ -141,17 +138,17 @@ typedef uint32_t RERR_CodeFormat;
  * prefer hexadecimal notation (for example Microsoft's `HRESULT` codes), and
  * others use 16-bit integers for error codes.
  */
-enum {
-    RERR_CodeFormat_I32 = 1,    ///< 32-bit signed integer, decimal
-    RERR_CodeFormat_U32 = 2,    ///< 32-bit unsigned integer, decimal
-    RERR_CodeFormat_Hex32 = 4,  ///< 32-bit unsigned integer, hexadecimal
-    RERR_CodeFormat_I16 = 8,    ///< 16-bit signed integer, decimal
-    RERR_CodeFormat_U16 = 16,   ///< 16-bit unsigned integer, decimal
-    RERR_CodeFormat_Hex16 = 32, ///< 16-bit unsigned integer, hexadecimal
+typedef uint32_t RERR_CodeFormat;
 
-    /// Modifier to remove leading zeros from hex formats
-    RERR_CodeFormat_HexNoPad = (int)(1U << 31),
-};
+#define RERR_CodeFormat_I32 1    ///< 32-bit signed integer, decimal
+#define RERR_CodeFormat_U32 2    ///< 32-bit unsigned integer, decimal
+#define RERR_CodeFormat_Hex32 4  ///< 32-bit unsigned integer, hexadecimal
+#define RERR_CodeFormat_I16 8    ///< 16-bit signed integer, decimal
+#define RERR_CodeFormat_U16 16   ///< 16-bit unsigned integer, decimal
+#define RERR_CodeFormat_Hex16 32 ///< 16-bit unsigned integer, hexadecimal
+
+/// Modifier to remove leading zeros from hex formats
+#define RERR_CodeFormat_HexNoPad (1U << 31)
 
 /// Maximum length of formatted error code.
 #define RERR_FORMATTED_CODE_MAX_LEN 63
