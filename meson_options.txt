@@ -2,9 +2,15 @@
 # Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 # SPDX-License-Identifier: BSD-2-Clause
 
-option('docs', type: 'feature', value: 'auto',
+option(
+    'docs',
+    type: 'feature',
+    value: 'auto',
     description: 'Build and install API documentation (requires Doxygen)',
 )
-option('tests', type: 'feature', value: 'enabled',
+option(
+    'tests',
+    type: 'feature',
+    value: 'enabled',
     description: 'Build unit tests',
 )

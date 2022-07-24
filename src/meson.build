@@ -10,7 +10,8 @@ richerrors_src = [
     'Threads.c',
 ]
 
-richerrors_lib = library('RichErrors',
+richerrors_lib = library(
+    'RichErrors',
     richerrors_src,
     include_directories: public_inc,
     dependencies: threads_dep,

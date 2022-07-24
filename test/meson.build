@@ -13,12 +13,15 @@ test_src = [
     'main.cpp',
 ]
 
-catch_dep = dependency('catch2',
+catch_dep = dependency(
+    'catch2',
     required: get_option('tests'),
     disabler: true,
 )
 
-test_exe = executable('tests', test_src,
+test_exe = executable(
+    'tests',
+    test_src,
     include_directories: public_inc,
     link_with: richerrors_lib,
     dependencies: [catch_dep],

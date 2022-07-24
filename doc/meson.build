@@ -2,7 +2,8 @@
 # Copyright 2019-2022 Board of Regents of the University of Wisconsin System
 # SPDX-License-Identifier: BSD-2-Clause
 
-doxygen = find_program('doxygen',
+doxygen = find_program(
+    'doxygen',
     required: get_option('docs'),
 )
 
@@ -25,7 +26,8 @@ doxyfile = configure_file(
 doc_install_dir = join_paths(get_option('datadir'), 'doc', 'RichErrors')
 
 if doxygen.found()
-    custom_target('docs',
+    custom_target(
+        'docs',
         command: [doxygen, doxyfile],
         depend_files: [public_c_headers, public_cpp_headers],
         output: ['apidoc'],
