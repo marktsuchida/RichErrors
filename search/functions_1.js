@@ -6,5 +6,5 @@ var searchData=
   ['clearthreadlocal_211',['ClearThreadLocal',['../classRERR_1_1ErrorMap.html#adfddd91d67f524886fc74014011a537c',1,'RERR::ErrorMap']]],
   ['config_212',['Config',['../classRERR_1_1ErrorMap_1_1Config.html#a6ab3fc694046f7af869479e9c9f67ca7',1,'RERR::ErrorMap::Config']]],
   ['const_5fiterator_213',['const_iterator',['../classRERR_1_1InfoMap_1_1const__iterator.html#a66355b5331b70fa1883a7e7fb79b9021',1,'RERR::InfoMap::const_iterator::const_iterator(RERR_InfoMapPtr ptr, RERR_InfoMapIterator it)'],['../classRERR_1_1InfoMap_1_1const__iterator.html#abdefca51d553d29c565b08e091f8cd19',1,'RERR::InfoMap::const_iterator::const_iterator()']]],
-  ['criticaldomain_214',['CriticalDomain',['../namespaceRERR.html#a5ecf6d347db592ed698c861c273614e8',1,'RERR']]]
+  ['criticaldomain_214',['CriticalDomain',['../namespaceRERR.html#a9d97eb492ba5dc5721b32dae8c8ea3fc',1,'RERR']]]
 ];

@@ -72,5 +72,5 @@ var searchData=
   ['rerr_5finfomapiterator_5fgetu64_329',['RERR_InfoMapIterator_GetU64',['../InfoMap_8h.html#a867e2d2bbbac224580ab4193f7e2250b',1,'InfoMap.h']]],
   ['reservecapacity_330',['ReserveCapacity',['../classRERR_1_1InfoMap.html#a36ac103321fa9994a1fb01db384639d8',1,'RERR::InfoMap']]],
   ['retrievethreadlocal_331',['RetrieveThreadLocal',['../classRERR_1_1ErrorMap.html#a7a4e775d334ed26e47073884a02f2067',1,'RERR::ErrorMap']]],
-  ['richerrorsdomain_332',['RichErrorsDomain',['../namespaceRERR.html#a6abbcaf9c21bc985f1fa936cb9822324',1,'RERR']]]
+  ['richerrorsdomain_332',['RichErrorsDomain',['../namespaceRERR.html#a930430e88f0f33699feb52a8d194bb2e',1,'RERR']]]
 ];
